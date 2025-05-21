@@ -1,115 +1,123 @@
 <script lang="ts">
-	import TextField, { HelperLine } from '@smui/textfield';
+	import TextField from '@smui/textfield';
 	import Select, { Option } from '@smui/select';
 	import Checkbox from '@smui/checkbox';
 	import Slider from '@smui/slider';
 	import Button from '@smui/button';
 
+	import type { PageProps } from './$types';
+
+	import { enhance } from '$app/forms';
+
+	// Trades list onMount
+	let { data }: PageProps = $props();
+
 	type TradeFormErrors = {
 		ticker?: string;
 		tradeType?: string;
 		price?: string;
+		takeProfit?: string;
+		stopLoss?: string;
 		amount?: string;
 		leverage?: string;
 	};
 
-	let ticker = '';
-	let tradeType = '';
-	let price = '';
-	let amount = '';
-	let useLeverage = false;
-	let leverage = 1;
-	let comment = '';
-
-	let errors: TradeFormErrors = {};
-
-	function handleSubmit() {
-		errors = {};
-		if (!ticker) errors.ticker = 'Ticker is required';
-		if (!tradeType) errors.tradeType = 'Trade type is required';
-		if (!price) errors.price = 'Price is required';
-		if (!amount) errors.amount = 'Amount is required';
-		if (useLeverage && (leverage < 1 || leverage > 100)) {
-			errors.leverage = 'Leverage must be between 1 and 100';
-		}
-		if (Object.keys(errors).length === 0) {
-			console.log({
-				ticker,
-				type: tradeType,
-				price,
-				amount,
-				leverage: useLeverage ? leverage : undefined,
-				comment,
-			});
-		}
-	}
+	let symbol: string | null = $state(null);
+	// let tradeType: 'buy' | 'sell' = $state('buy');
+	let tradeType: 'buy' | 'sell' = $state('buy');
+	let price: number | null = $state(null);
+	let amount: number | null = $state(null);
+	let useLeverage: boolean = $state(false);
+	let leverage: number = $state(1);
+	let takeProfit: number | null = $state(null);
+	let stopLoss: number | null = $state(null);
+	let comment: string | null = $state(null);
 </script>
 
-<form on:submit|preventDefault={handleSubmit} class="trade-form">
+<form method="POST" class="trade-form" use:enhance>
 	<TextField
 		label="Ticker"
-		bind:value={ticker}
+		input$name="symbol"
+		bind:value={symbol}
 		required
 		variant="outlined"
-		invalid={!!errors.ticker}
 		input$style="text-transform: uppercase"
 	/>
+
 	<Select
 		label="Trade Type"
+		input$name="type"
 		bind:value={tradeType}
 		required
 		variant="outlined"
-		invalid={!!errors.tradeType}
 	>
 		<Option value="buy">Buy</Option>
 		<Option value="sell">Sell</Option>
 	</Select>
+	<input type="hidden" name="type" value={tradeType} />
 
 	<TextField
 		label="Price"
+		input$name="price"
 		bind:value={price}
 		required
 		type="number"
 		variant="outlined"
 		input$min="0"
-		invalid={!!errors.price}
-	>
-		{#if errors.price}
-			<HelperLine>Error in the field</HelperLine>
-		{/if}
-	</TextField>
+		input$step="0.0001"
+	/>
 
 	<TextField
-		label="Amount"
+		label="Quantity"
+		input$name="quantity"
 		bind:value={amount}
 		required
 		type="number"
 		input$min="0"
 		variant="outlined"
-		invalid={!!errors.amount}
 	/>
+
+	<TextField
+		label="Take Profit"
+		input$name="take_profit"
+		bind:value={takeProfit}
+		type="number"
+		variant="outlined"
+		input$min="0"
+		input$step="0.0001"
+	/>
+
+	<TextField
+		label="Stop Loss"
+		input$name="stop_loss"
+		bind:value={stopLoss}
+		type="number"
+		variant="outlined"
+		input$min="0"
+		input$step="0.0001"
+	/>
+
 	<div class="leverage-row">
-		<Checkbox bind:checked={useLeverage} />
-		<label for={'leverage'}>Use Leverage</label>
+		<Checkbox input$name="use_leverage" bind:checked={useLeverage} />
+		<label for="use_leverage">Use Leverage</label>
 		{#if useLeverage}
 			<Slider
 				bind:value={leverage}
+				input$name="leverage"
 				min={1}
 				max={100}
 				step={1}
 				class="leverage-slider"
 			/>
 			<span>{leverage}x</span>
-			{#if errors.leverage}
-				<div class="error">{errors.leverage}</div>
-			{/if}
 		{/if}
 	</div>
 	<TextField
 		label="Comment"
+		input$name="comment"
 		bind:value={comment}
 		variant={'outlined'}
-		textarea
+		input$max="64"
 	/>
 	<Button type="submit" variant="raised">Submit Trade</Button>
 </form>
@@ -132,10 +140,5 @@
 			flex-shrink: 0;
 			margin: 0 1rem;
 		}
-	}
-	.error {
-		color: red;
-		font-size: 0.9em;
-		margin-left: 0.5em;
 	}
 </style>
