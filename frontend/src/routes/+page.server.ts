@@ -1,28 +1,45 @@
 import type { Actions } from './$types';
+import { superValidate } from 'sveltekit-superforms';
+import { formSchema } from './schema';
+import { fail } from '@sveltejs/kit';
+import { zod } from 'sveltekit-superforms/adapters';
+
+export const load = async () => {
+	const loadTrades = async () => {
+		const BASE_URL = 'http://localhost:8000/api/v1/trades/';
+		const response = await fetch(BASE_URL);
+		if (!response.ok) {
+			throw new Error('Failed to fetch trades');
+		}
+		const trades = await response.json();
+		return trades;
+	};
+
+	const loadForm = async () => await superValidate(zod(formSchema));
+
+	return { trades: await loadTrades(), form: await loadForm() };
+};
 
 export const actions = {
 	default: async (event) => {
-		const formData = await event.request.formData();
-
-		const symbol = formData.get('symbol')?.toString().toUpperCase();
-		const type = formData.get('type');
-		const price = formData.get('price');
-		const quantity = formData.get('quantity');
-		const stopLoss = formData.get('stop_loss');
-		const takeProfit = formData.get('take_profit');
-		const use_leverage = formData.get('use_leverage');
-		const leverage = formData.get('leverage');
-		const comment = formData.get('comment');
+		const form = await superValidate(event, zod(formSchema));
+		if (!form.valid) {
+			return fail(400, {
+				form,
+				error: 'Form validation failed. Please check your input.',
+			});
+		}
+		const data = form.data;
 
 		const trade = {
-			symbol,
-			type,
-			price: price ? Number(price) : null,
-			quantity: quantity ? Number(quantity) : null,
-			stop_loss: stopLoss ? Number(stopLoss) : null,
-			take_profit: takeProfit ? Number(takeProfit) : null,
-			leverage: use_leverage ? Number(leverage) : null,
-			comment: comment ? comment.toString() : null,
+			symbol: data.symbol.toUpperCase(),
+			type: data.tradeType,
+			price: Number(data.price),
+			quantity: Number(data.quantity),
+			stop_loss: data.stopLoss ? Number(data.stopLoss) : null,
+			take_profit: data.takeProfit ? Number(data.takeProfit) : null,
+			leverage: data.useLeverage ? Number(data.leverage) : null,
+			comment: data.comment ? data.comment.toString() : null,
 		};
 
 		const response = await fetch('http://localhost:8000/api/v1/trades/', {
@@ -37,6 +54,6 @@ export const actions = {
 		}
 
 		const newTrade = await response.json();
-		return { success: true, trade: newTrade };
+		return { form, trade: newTrade };
 	},
 } satisfies Actions;
