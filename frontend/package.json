@@ -36,5 +36,8 @@
 		"onlyBuiltDependencies": [
 			"esbuild"
 		]
+	},
+	"dependencies": {
+		"svelte-headless-table": "^0.18.3"
 	}
 }

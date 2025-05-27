@@ -4,7 +4,11 @@
 	import * as Form from '$lib/components/ui/form';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
-	import { RadioGroup, RadioGroupItem } from '$lib/components/ui/radio-group';
+	import {
+		RadioGroup,
+		RadioGroupItem,
+		RadioGroupInput,
+	} from '$lib/components/ui/radio-group';
 	import { Slider } from '$lib/components/ui/slider';
 	import { formSchema, type FormSchema } from './schema';
 	import {
@@ -18,6 +22,7 @@
 
 	const form = superForm(data, {
 		validators: zodClient(formSchema),
+		id: 'trade-form',
 	});
 
 	const { form: formData, enhance } = form;
@@ -34,10 +39,15 @@
 						bind:value={$formData.tradeType}
 						class="flex gap-4 mt-2"
 					>
-						<RadioGroupItem value="buy" id="tradeType-buy" />
-						<Label for="tradeType-buy">Buy</Label>
-						<RadioGroupItem value="sell" id="tradeType-sell" />
-						<Label for="tradeType-sell">Sell</Label>
+						<Form.Control let:attrs>
+							<RadioGroupItem value="buy" {...attrs} />
+							<Label for="tradeType-buy">Buy</Label>
+						</Form.Control>
+						<Form.Control let:attrs>
+							<RadioGroupItem value="sell" {...attrs} />
+							<Label for="tradeType-sell">Sell</Label>
+						</Form.Control>
+						<RadioGroupInput name="tradeType" />
 					</RadioGroup>
 				</Form.Control>
 				<div class="form-error">

@@ -3,16 +3,21 @@ import { superValidate } from 'sveltekit-superforms';
 import { formSchema } from './schema';
 import { fail } from '@sveltejs/kit';
 import { zod } from 'sveltekit-superforms/adapters';
+import type { Trade } from '$lib/types';
+import {
+	convertApiTradeToUiTrade,
+	convertUiTradeFormToApiTrade,
+} from '$lib/tradeConverters';
 
 export const load = async () => {
-	const loadTrades = async () => {
+	const loadTrades = async (): Promise<Trade[]> => {
 		const BASE_URL = 'http://localhost:8000/api/v1/trades/';
 		const response = await fetch(BASE_URL);
 		if (!response.ok) {
 			throw new Error('Failed to fetch trades');
 		}
 		const trades = await response.json();
-		return trades;
+		return trades.map(convertApiTradeToUiTrade);
 	};
 
 	const loadForm = async () => await superValidate(zod(formSchema));
@@ -29,23 +34,11 @@ export const actions = {
 				error: 'Form validation failed. Please check your input.',
 			});
 		}
-		const data = form.data;
-
-		const trade = {
-			symbol: data.symbol.toUpperCase(),
-			type: data.tradeType,
-			price: Number(data.price),
-			quantity: Number(data.quantity),
-			stop_loss: data.stopLoss ? Number(data.stopLoss) : null,
-			take_profit: data.takeProfit ? Number(data.takeProfit) : null,
-			leverage: data.useLeverage ? Number(data.leverage) : null,
-			comment: data.comment ? data.comment.toString() : null,
-		};
 
 		const response = await fetch('http://localhost:8000/api/v1/trades/', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify(trade),
+			body: JSON.stringify(convertUiTradeFormToApiTrade(form.data)),
 		});
 
 		if (!response.ok) {
