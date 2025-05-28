@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { TradeType } from '$lib/types';
 
-	export let tradeType: TradeType;
+	const {tradeType}: {tradeType: TradeType} = $props();
 </script>
 
 <span

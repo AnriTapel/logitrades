@@ -3,8 +3,19 @@
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { Button } from '$lib/components/ui/button';
 
-	// TODO: use in action item click callback?
-	export const id: string = '';
+	let {id, onEdit, onDelete}: {
+		id: number;
+		onEdit: (id: number) => void;
+		onDelete: (id: number) => void;
+	} = $props();
+
+	function handleEditClick() {
+		onEdit(id);
+	}
+
+	function handleDeleteClick() {
+		onDelete(id);
+	}
 </script>
 
 <DropdownMenu.Root>
@@ -20,7 +31,7 @@
 		</Button>
 	</DropdownMenu.Trigger>
 	<DropdownMenu.Content>
-		<DropdownMenu.Item>Edit</DropdownMenu.Item>
-		<DropdownMenu.Item>Delete</DropdownMenu.Item>
+		<DropdownMenu.Item on:click={handleEditClick}>Edit</DropdownMenu.Item>
+		<DropdownMenu.Item on:click={handleDeleteClick}>Delete</DropdownMenu.Item>
 	</DropdownMenu.Content>
 </DropdownMenu.Root>

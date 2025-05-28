@@ -10,7 +10,7 @@
 		RadioGroupInput,
 	} from '$lib/components/ui/radio-group';
 	import { Slider } from '$lib/components/ui/slider';
-	import { formSchema, type FormSchema } from './schema';
+	import {formSchema, type TradeFormInput} from './schema';
 	import {
 		type SuperValidated,
 		type Infer,
@@ -18,7 +18,7 @@
 	} from 'sveltekit-superforms';
 	import { zodClient } from 'sveltekit-superforms/adapters';
 
-	export let data: SuperValidated<Infer<FormSchema>>;
+	const { data }: {data: SuperValidated<TradeFormInput>} = $props();
 
 	const form = superForm(data, {
 		validators: zodClient(formSchema),

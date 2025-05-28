@@ -16,7 +16,7 @@
 	import ArrowUpDown from 'lucide-svelte/icons/arrow-up-down';
 	import { Button } from '$lib/components/ui/button';
 
-	export let trades: Array<Trade>;
+	const { trades }: { trades: Trade[] } = $props();
 
 	const table = createTable(readable(trades), {
 		addSortBy: addSortBy({
