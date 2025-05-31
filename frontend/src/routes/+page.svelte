@@ -3,7 +3,7 @@
 	import TradeForm from './trade-form.svelte';
 	import TradesTable from './trades-table.svelte';
 
-	export let data: PageData;
+	let {data} = $props<{data: PageData}>();
 </script>
 
 <TradeForm data={data.form} />

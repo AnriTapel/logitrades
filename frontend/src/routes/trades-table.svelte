@@ -3,8 +3,8 @@
 
 	import * as Table from '$lib/components/ui/table';
 	import DataTableActions from './trades-table-actions.svelte';
-	import TradeTypeCell from './trade-type-cell.svelte';
-	import { formatIntToCurrency, formatISODate } from '$lib/formatters';
+	import TradeTypeCell from '$lib/components/custom/trade-type-cell.svelte';
+	import { formatIntToCurrency, formatISOToDateTimeStr } from '$lib/formatters';
 	import {
 		createTable,
 		Render,
@@ -85,7 +85,7 @@
 		table.column({
 			accessor: 'createdAt',
 			header: 'Created at',
-			cell: ({ value }) => (value ? formatISODate(value) : '-'),
+			cell: ({ value }) => (value ? formatISOToDateTimeStr(value) : '-'),
 		}),
 		table.column({
 			accessor: 'comment',

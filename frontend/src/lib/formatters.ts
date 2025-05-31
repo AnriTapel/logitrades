@@ -1,4 +1,4 @@
-export const formatISODate = (dateStr: string): string => {
+export const formatISOToDateTimeStr = (dateStr: string): string => {
 	const date = new Date(dateStr);
 	return date.toLocaleDateString('en-US', {
 		year: 'numeric',
