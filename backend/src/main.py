@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from . import database, models
 from pydantic import BaseModel
+from datetime import datetime
 from typing import List, Optional, Literal
 
 app = FastAPI()
@@ -22,6 +23,7 @@ class TradeCreate(BaseModel):
     type: Literal["buy", "sell"] 
     price: float
     quantity: float
+    open_at: str
     take_profit: Optional[float] = None
     stop_loss: Optional[float] = None
     leverage: Optional[float] = None

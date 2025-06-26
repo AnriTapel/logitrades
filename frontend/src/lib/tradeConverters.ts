@@ -13,6 +13,7 @@ export const convertApiTradeToUiTrade = (trade: any): Trade => {
 		takeProfit: trade.take_profit,
 		leverage: trade.leverage,
 		comment: trade.comment || '',
+		openedAt: trade.open_at,
 		createdAt: trade.created_at,
 	};
 };
@@ -23,6 +24,7 @@ export const convertUiTradeFormToApiTrade = (trade: TradeFormInput): any => {
 		type: trade.tradeType,
 		price: trade.price,
 		quantity: trade.quantity,
+		open_at: trade.openedAt,
 		stop_loss: trade.stopLoss || null,
 		take_profit: trade.takeProfit || null,
 		leverage: trade.useLeverage ? trade.leverage : null,

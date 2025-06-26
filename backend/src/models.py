@@ -10,6 +10,7 @@ class Trades(Base):
     symbol = Column(String, index=True)
     price = Column(Float, nullable=False)
     type = Column(String, index=True, nullable=False)
+    open_at = Column(String, nullable=False)
     quantity = Column(Float, nullable=False)
     leverage = Column(Float, nullable=True)
     comment = Column(String, nullable=True)

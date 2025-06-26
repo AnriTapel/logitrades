@@ -19,6 +19,7 @@ export const formSchema = z.object({
 		.number()
 		.step(0.001, { message: 'Price must be a number with 2 decimal places' })
 		.min(0.001, { message: 'Price must be greater than 0' }),
+	openedAt: z.string().datetime(),
 	takeProfit: z
 		.number()
 		.step(0.001, {

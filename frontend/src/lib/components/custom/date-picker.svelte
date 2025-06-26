@@ -20,11 +20,13 @@
 		label = 'Date',
 		placeholder = 'Pick a date',
 		withTime,
+		name = '',
 	}: {
 		value?: string;
 		label?: string;
 		placeholder?: string;
 		withTime?: boolean;
+		name?: string;
 	} = $props();
 
 	onMount(() => {
@@ -50,6 +52,8 @@
 	<label class="text-sm font-bold text-gray-700" for="date-picker"
 		>{label}</label
 	>
+
+	<input type="hidden" {name} {value} />
 
 	<Root>
 		<Trigger asChild let:builder>

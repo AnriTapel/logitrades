@@ -5,6 +5,7 @@ export type Trade = {
 	leverage?: number;
 	quantity: number;
 	price: number;
+	openedAt?: string;
 	createdAt?: string;
 	takeProfit?: number;
 	stopLoss?: number;

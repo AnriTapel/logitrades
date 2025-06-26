@@ -1,27 +1,37 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
 	import { Checkbox } from '$lib/components/ui/checkbox';
-	import { Field, Control, Label as FormLabel, FieldErrors } from '$lib/components/ui/form';
+	import {
+		Field,
+		Control,
+		Label as FormLabel,
+		FieldErrors,
+	} from '$lib/components/ui/form';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
+	import DatePicker from '$lib/components/custom/date-picker.svelte';
 	import {
 		RadioGroup,
 		RadioGroupItem,
 		RadioGroupInput,
 	} from '$lib/components/ui/radio-group';
 	import { Slider } from '$lib/components/ui/slider';
-	import {formSchema, type TradeFormInput} from './schema';
-	import {
-		type SuperValidated,
-		superForm,
-	} from 'sveltekit-superforms';
+	import { formSchema, type TradeFormInput } from './schema';
+	import { type SuperValidated, superForm } from 'sveltekit-superforms';
 	import { zodClient } from 'sveltekit-superforms/adapters';
 
-	const { data }: {data: SuperValidated<TradeFormInput>} = $props();
+	const { data }: { data: SuperValidated<TradeFormInput> } = $props();
 
 	const form = superForm(data, {
 		validators: zodClient(formSchema),
 		id: 'trade-form',
+		onError: ({ result }) => {
+			console.log('Validation errors:', result);
+		},
+		onSubmit: ({ formData }) => {
+			console.log('Form data being validated:', Object.fromEntries(formData));
+			return true;
+		},
 	});
 
 	const { form: formData, enhance } = form;
@@ -94,9 +104,24 @@
 						{...attrs}
 						type="number"
 						min="0"
-						step="0.001"
+						step="1"
 						bind:value={$formData.quantity}
 						required
+					/>
+				</Control>
+				<FieldErrors />
+			</Field>
+		</div>
+
+		<div class="form-field">
+			<Field {form} name="openedAt" class="form-field">
+				<Control let:attrs>
+					<DatePicker
+						{...attrs}
+						name="openedAt"
+						bind:value={$formData.openedAt}
+						withTime
+						label="Opened at*"
 					/>
 				</Control>
 				<FieldErrors />

@@ -83,6 +83,11 @@
 			},
 		}),
 		table.column({
+			accessor: 'openedAt',
+			header: 'Opened at',
+			cell: ({ value }) => (value ? formatISOToDateTimeStr(value) : '-'),
+		}),
+		table.column({
 			accessor: 'createdAt',
 			header: 'Created at',
 			cell: ({ value }) => (value ? formatISOToDateTimeStr(value) : '-'),
@@ -100,7 +105,11 @@
 			accessor: ({ id }) => id,
 			header: '',
 			cell: ({ value }) => {
-				return createRender(DataTableActions, { id: value.toString() });
+				return createRender(DataTableActions, {
+					id: value.toString(),
+					onEdit: () => {},
+					onDelete: () => {},
+				});
 			},
 			plugins: {
 				addSortBy: {
