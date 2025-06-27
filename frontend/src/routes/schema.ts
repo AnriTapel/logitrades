@@ -9,7 +9,7 @@ export const formSchema = z.object({
 		}),
 	tradeType: z.enum(['buy', 'sell']),
 	useLeverage: z.boolean(),
-	leverage: z.number().array().max(1).optional(),
+	leverage: z.number().array().length(1).default([1]),
 	quantity: z
 		.number()
 		.step(1, { message: 'Quantity must be a whole number' })
@@ -26,14 +26,16 @@ export const formSchema = z.object({
 			message: 'Take Profit must be a number with 2 decimal places',
 		})
 		.min(0.001, { message: 'Take Profit must be greater than 0' })
-		.optional(),
+		.optional()
+		.nullable(),
 	stopLoss: z
 		.number()
 		.step(0.001, {
 			message: 'Stop Loss must be a number with 2 decimal places',
 		})
 		.min(0.001, { message: 'Stop Loss must be greater than 0' })
-		.optional(),
+		.optional()
+		.nullable(),
 	comment: z.string().max(128).optional(),
 });
 

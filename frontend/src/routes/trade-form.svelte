@@ -25,13 +25,6 @@
 	const form = superForm(data, {
 		validators: zodClient(formSchema),
 		id: 'trade-form',
-		onError: ({ result }) => {
-			console.log('Validation errors:', result);
-		},
-		onSubmit: ({ formData }) => {
-			console.log('Form data being validated:', Object.fromEntries(formData));
-			return true;
-		},
 	});
 
 	const { form: formData, enhance } = form;
@@ -134,17 +127,18 @@
 			<Field {form} name="useLeverage">
 				<Control let:attrs>
 					<div class="flex items-center gap-2">
+						<input name="useLeverage" value={$formData.useLeverage} hidden />
 						<Checkbox {...attrs} bind:checked={$formData.useLeverage} />
 						<FormLabel>Use Leverage</FormLabel>
 					</div>
 				</Control>
-				<FieldErrors />
 			</Field>
 
 			<Field {form} name="leverage">
 				<Control let:attrs>
 					<div class="flex items-center gap-4 mt-2">
 						<FormLabel>Leverage</FormLabel>
+						<input name="leverage" value={$formData.leverage} hidden />
 						<Slider
 							{...attrs}
 							disabled={!$formData.useLeverage}

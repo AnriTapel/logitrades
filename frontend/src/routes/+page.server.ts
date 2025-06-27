@@ -27,7 +27,6 @@ export const load = async () => {
 
 export const actions = {
 	default: async (event) => {
-		console.log('event.request.body', event.request.body);
 		const form = await superValidate(event, zod(formSchema));
 		if (!form.valid) {
 			return fail(400, {
@@ -43,7 +42,6 @@ export const actions = {
 		});
 
 		if (!response.ok) {
-			console.error('Failed to save trade:', response);
 			return { form, error: 'Failed to save trade.' };
 		}
 
