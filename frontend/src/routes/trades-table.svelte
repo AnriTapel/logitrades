@@ -16,7 +16,10 @@
 	import ArrowUpDown from 'lucide-svelte/icons/arrow-up-down';
 	import { Button } from '$lib/components/ui/button';
 
-	const { trades }: { trades: Trade[] } = $props();
+	const {
+		trades,
+		onDelete,
+	}: { trades: Trade[]; onDelete: (tradeId: number) => void } = $props();
 
 	const table = createTable(readable(trades), {
 		addSortBy: addSortBy({
@@ -108,7 +111,7 @@
 				return createRender(DataTableActions, {
 					id: value.toString(),
 					onEdit: () => {},
-					onDelete: () => {},
+					onDelete: onDelete,
 				});
 			},
 			plugins: {

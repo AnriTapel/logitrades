@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, Depends, Request
+from fastapi import FastAPI, APIRouter, Depends, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from . import database, models
@@ -53,5 +53,14 @@ def create_trade(trade: TradeCreate, db: Session = Depends(database.get_db)):
 def read_trades(db: Session = Depends(database.get_db)):
     return db.query(models.Trades).all()
 
+@router.delete("/trades/{trade_id}")
+def delete_trade(trade_id: int, db: Session = Depends(database.get_db)):
+    print(trade_id)
+    trade = db.query(models.Trades).filter(models.Trades.id == trade_id).first()
+    if trade is None:
+        raise HTTPException(status_code=404, detail="Trade not found")
+    db.delete(trade)
+    db.commit()
+    return {"message": "Trade deleted successfully"}
 
 app.include_router(router)

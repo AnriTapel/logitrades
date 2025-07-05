@@ -3,7 +3,11 @@
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { Button } from '$lib/components/ui/button';
 
-	let {id, onEdit, onDelete}: {
+	let {
+		id,
+		onEdit,
+		onDelete,
+	}: {
 		id: number;
 		onEdit: (id: number) => void;
 		onDelete: (id: number) => void;
