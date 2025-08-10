@@ -11,7 +11,7 @@
 		Subscribe,
 		createRender,
 	} from 'svelte-headless-table';
-	import { readable } from 'svelte/store';
+	import { type Writable } from 'svelte/store';
 	import { addSortBy } from 'svelte-headless-table/plugins';
 	import ArrowUpDown from 'lucide-svelte/icons/arrow-up-down';
 	import { Button } from '$lib/components/ui/button';
@@ -19,9 +19,10 @@
 	const {
 		trades,
 		onDelete,
-	}: { trades: Trade[]; onDelete: (tradeId: number) => void } = $props();
+	}: { trades: Writable<Trade[]>; onDelete: (tradeId: number) => void } =
+		$props();
 
-	const table = createTable(readable(trades), {
+	const table = createTable(trades, {
 		addSortBy: addSortBy({
 			initialSortKeys: [{ id: 'createdAt', order: 'desc' }],
 		}),
