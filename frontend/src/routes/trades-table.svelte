@@ -127,8 +127,6 @@
 		table.createViewModel(columns);
 </script>
 
-<h2 class="text-xl mt-8">Trades history</h2>
-
 <Table.Root {...$tableAttrs}>
 	<Table.Header>
 		{#each $headerRows as headerRow}

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import * as Dialog from '$lib/components/ui/dialog';
 	import type { Snippet } from 'svelte';
+	import Button from '../button/button.svelte';
 
 	let {
 		open,
@@ -35,10 +36,16 @@
 	function handleSubmit() {
 		onSubmit?.();
 	}
+
+	function handleOpenChange(isOpen: boolean) {
+		if (!isOpen) {
+			onCancel?.();
+		}
+	}
 </script>
 
-<Dialog.Root {open}>
-	<Dialog.Content>
+<Dialog.Root {open} closeOnOutsideClick={false} onOpenChange={handleOpenChange}>
+	<Dialog.Content class="max-w-max">
 		{#if title}
 			<h2 class="text-lg font-semibold mb-1">{title}</h2>
 		{/if}
@@ -58,23 +65,19 @@
 		<!-- Footer buttons -->
 		<div class="flex justify-end gap-2">
 			{#if showCancel}
-				<button
-					type="button"
-					class="px-4 py-2 rounded border border-gray-300 bg-white text-gray-700 hover:bg-gray-100"
-					onclick={handleCancel}
-				>
+				<Button variant="secondary" onclick={handleCancel}>
 					{cancelText}
-				</button>
+				</Button>
 			{/if}
 			{#if showSubmit}
-				<button
-					type="button"
-					class="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+				<Button
+					type="submit"
+					variant="default"
 					onclick={handleSubmit}
 					{disabled}
 				>
 					{submitText}
-				</button>
+				</Button>
 			{/if}
 		</div>
 	</Dialog.Content>

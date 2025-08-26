@@ -43,7 +43,7 @@
 	});
 
 	const df = new DateFormatter('en-US', {
-		dateStyle: 'long',
+		dateStyle: 'medium',
 		timeStyle: withTime ? 'short' : undefined,
 	});
 </script>
@@ -61,7 +61,7 @@
 				variant="outline"
 				builders={[builder]}
 				class={cn(
-					'w-[280px] justify-start text-left font-normal',
+					'w-auto justify-start text-left font-normal',
 					!zonedDateTime && 'text-muted-foreground'
 				)}
 			>
