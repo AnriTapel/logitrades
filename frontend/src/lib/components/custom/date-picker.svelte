@@ -16,7 +16,7 @@
 	let zonedDateTime = $state<ZonedDateTime>();
 
 	let {
-		value = $bindable(),
+		value = $bindable<string>(),
 		label = 'Date',
 		placeholder = 'Pick a date',
 		withTime,
@@ -30,16 +30,20 @@
 	} = $props();
 
 	onMount(() => {
-		if (!value) {
-			zonedDateTime = parseAbsoluteToLocal(new Date().toISOString());
-			value = zonedDateTime.toAbsoluteString();
-		} else {
+		if (value) {
+			// use incoming value
 			zonedDateTime = parseAbsoluteToLocal(value);
+		} else {
+			// just initialize zonedDateTime, but don't overwrite bound `value`
+			zonedDateTime = parseAbsoluteToLocal(new Date().toISOString());
 		}
 	});
 
+	// keep sync from zonedDateTime → value
 	$effect(() => {
-		value = zonedDateTime?.toAbsoluteString() || '';
+		if (zonedDateTime) {
+			value = zonedDateTime.toAbsoluteString();
+		}
 	});
 
 	const df = new DateFormatter('en-US', {

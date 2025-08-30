@@ -31,3 +31,19 @@ export const convertUiTradeFormToApiTrade = (trade: TradeFormInput): any => {
 		comment: trade.comment || null,
 	};
 };
+
+export const convertApiTradeToTradeFormInput = (trade: any): TradeFormInput => {
+	return {
+		id: trade.id,
+		symbol: trade.symbol,
+		tradeType: trade.type,
+		price: trade.price,
+		quantity: trade.quantity,
+		stopLoss: trade.stopLoss || undefined,
+		takeProfit: trade.takeProfit || undefined,
+		leverage: trade.leverage ? [trade.leverage] : [1],
+		useLeverage: trade.leverage !== 1 && trade.leverage !== null,
+		comment: trade.comment || undefined,
+		openedAt: trade.open_at,
+	};
+};

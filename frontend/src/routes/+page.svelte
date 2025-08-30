@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { invalidateAll } from '$app/navigation';
+	import { invalidateAll, goto } from '$app/navigation';
 	import { deleteTrade } from '$lib';
 	import type { PageData } from './$types';
 	import TradeForm from './trade-form.svelte';
@@ -19,12 +19,18 @@
 		await invalidateAll();
 	}
 
+	async function handleTradeEdit(tradeId: number) {
+		await goto(`?edit=${tradeId}`, { keepFocus: true });
+		isTradeFormOpen = true;
+	}
+
 	function handleOpenTradeForm() {
 		isTradeFormOpen = true;
 	}
 
 	function handleCloseTradeForm() {
 		isTradeFormOpen = false;
+		goto('?', { keepFocus: true }); // Remove edit param
 	}
 </script>
 
@@ -34,11 +40,17 @@
 		<Button on:click={handleOpenTradeForm}>Add Trade</Button>
 	</div>
 
-	<TradeForm
-		data={data.form}
-		open={isTradeFormOpen}
-		onCancel={handleCloseTradeForm}
-	/>
+	{#if isTradeFormOpen}
+		<TradeForm
+			data={data.form}
+			onCancel={handleCloseTradeForm}
+			isEdit={Boolean(location.search.includes('edit'))}
+		/>
+	{/if}
 
-	<TradesTable trades={tradesStore} onDelete={handleTradeDelete} />
+	<TradesTable
+		trades={tradesStore}
+		onDelete={handleTradeDelete}
+		onEdit={handleTradeEdit}
+	/>
 </div>

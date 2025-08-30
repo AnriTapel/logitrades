@@ -63,4 +63,15 @@ def delete_trade(trade_id: int, db: Session = Depends(database.get_db)):
     db.commit()
     return {"message": "Trade deleted successfully"}
 
+@router.put("/trades/{trade_id}", response_model=Trade)
+def update_trade(trade_id: int, trade: TradeCreate, db: Session = Depends(database.get_db)):
+    db_trade = db.query(models.Trades).filter(models.Trades.id == trade_id).first()
+    if db_trade is None:
+        raise HTTPException(status_code=404, detail="Trade not found")
+    for key, value in trade.dict().items():
+        setattr(db_trade, key, value)
+    db.commit()
+    db.refresh(db_trade)
+    return db_trade
+
 app.include_router(router)

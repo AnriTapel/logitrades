@@ -23,20 +23,30 @@
 
 	export const {
 		data,
-		open = false,
+		isEdit = false,
 		onCancel,
 	}: {
 		data: SuperValidated<TradeFormInput>;
-		open?: boolean;
+		isEdit?: boolean;
 		onCancel: () => void;
 	} = $props();
 
 	const form = superForm(data, {
 		validators: zodClient(formSchema),
 		id: 'trade-form',
+		onResult: ({ result }) => {
+			// Check if operation was successful (no validation errors or server errors)
+			if (result.type === 'success') {
+				onCancel();
+			}
+		},
 	});
 
 	const { form: formData, enhance } = form;
+
+	const modalTitle = isEdit
+		? `Edit Trade Note #${$formData.id}`
+		: 'Create Trade Note';
 
 	const handleSubmit = async (): Promise<void> => {
 		const result = await form.validateForm();
@@ -60,12 +70,16 @@
 </script>
 
 <CommonDialog
-	{open}
-	title="Create Trade Note"
+	open
+	title={modalTitle}
 	onSubmit={handleSubmit}
 	onCancel={handleCancel}
 >
-	<form method="POST" use:enhance>
+	<form method="POST" use:enhance action={isEdit ? '?/update' : '?/create'}>
+		{#if isEdit && $formData.id}
+			<input type="hidden" name="id" value={$formData.id} />
+		{/if}
+
 		<Field {form} name="tradeType" class="col-span-2">
 			<Control let:attrs>
 				<FormLabel>Trade Type *</FormLabel>

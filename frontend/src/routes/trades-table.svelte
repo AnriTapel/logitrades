@@ -19,8 +19,12 @@
 	const {
 		trades,
 		onDelete,
-	}: { trades: Writable<Trade[]>; onDelete: (tradeId: number) => void } =
-		$props();
+		onEdit,
+	}: {
+		trades: Writable<Trade[]>;
+		onDelete: (tradeId: number) => void;
+		onEdit: (tradeId: number) => void;
+	} = $props();
 
 	const table = createTable(trades, {
 		addSortBy: addSortBy({
@@ -111,8 +115,8 @@
 			cell: ({ value }) => {
 				return createRender(DataTableActions, {
 					id: value.toString(),
-					onEdit: () => {},
-					onDelete: onDelete,
+					onEdit,
+					onDelete,
 				});
 			},
 			plugins: {
