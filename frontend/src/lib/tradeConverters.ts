@@ -32,18 +32,13 @@ export const convertUiTradeFormToApiTrade = (trade: TradeFormInput): any => {
 	};
 };
 
-export const convertApiTradeToTradeFormInput = (trade: any): TradeFormInput => {
+export const convertUiTradeToTradeFormInput = (
+	trade: Trade
+): TradeFormInput => {
 	return {
-		id: trade.id,
-		symbol: trade.symbol,
-		tradeType: trade.type,
-		price: trade.price,
-		quantity: trade.quantity,
-		stopLoss: trade.stopLoss || undefined,
-		takeProfit: trade.takeProfit || undefined,
+		...trade,
 		leverage: trade.leverage ? [trade.leverage] : [1],
 		useLeverage: trade.leverage !== 1 && trade.leverage !== null,
-		comment: trade.comment || undefined,
-		openedAt: trade.open_at,
+		openedAt: trade.openedAt ?? new Date().toISOString().slice(0, 16), // default to current date-time in ISO format without seconds
 	};
 };

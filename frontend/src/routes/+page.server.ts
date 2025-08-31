@@ -5,7 +5,7 @@ import { fail } from '@sveltejs/kit';
 import { zod } from 'sveltekit-superforms/adapters';
 import type { Trade } from '$lib/types';
 import {
-	convertApiTradeToTradeFormInput,
+	convertUiTradeToTradeFormInput,
 	convertApiTradeToUiTrade,
 	convertUiTradeFormToApiTrade,
 } from '$lib/tradeConverters';
@@ -30,7 +30,7 @@ export const load = async ({ url }) => {
 		const tradeToEdit = trades.find((trade) => trade.id === Number(tradeId));
 		form = tradeToEdit
 			? await superValidate(
-					convertApiTradeToTradeFormInput(tradeToEdit),
+					convertUiTradeToTradeFormInput(tradeToEdit),
 					zod(formSchema)
 			  )
 			: await superValidate(zod(formSchema));
