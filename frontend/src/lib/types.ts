@@ -1,15 +1,15 @@
-export type Trade = {
+export type TradeType = 'buy' | 'sell';
+export interface Trade {
 	id: number;
 	symbol: string;
 	tradeType: TradeType;
-	leverage?: number;
+	openPrice: number;
 	quantity: number;
-	price: number;
-	openedAt?: string;
-	createdAt?: string;
-	takeProfit?: number;
 	stopLoss?: number;
-	comment?: string;
-};
-
-export type TradeType = 'buy' | 'sell';
+	takeProfit?: number;
+	leverage?: number;
+	openedAt: string;
+	closePrice?: number;
+	closedAt?: string;
+	createdAt: string;
+}

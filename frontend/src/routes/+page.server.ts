@@ -73,7 +73,6 @@ export const actions = {
 			});
 		}
 
-		console.log('Updated data', form.data);
 		const response = await fetch(
 			`http://localhost:8000/api/v1/trades/${form.data.id}`,
 			{

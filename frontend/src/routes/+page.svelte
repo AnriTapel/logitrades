@@ -48,9 +48,11 @@
 		/>
 	{/if}
 
-	<TradesTable
-		trades={tradesStore}
-		onDelete={handleTradeDelete}
-		onEdit={handleTradeEdit}
-	/>
+	{#if $tradesStore.length > 0}
+		<TradesTable
+			trades={tradesStore}
+			onDelete={handleTradeDelete}
+			onEdit={handleTradeEdit}
+		/>
+	{/if}
 </div>

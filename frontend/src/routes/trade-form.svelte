@@ -18,7 +18,7 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Slider } from '$lib/components/ui/slider';
 	import { Checkbox } from '$lib/components/ui/checkbox';
-	import DatePicker from '$lib/components/custom/date-picker.svelte';
+	import { DatePicker } from '$lib';
 	import Button from '$lib/components/ui/button/button.svelte';
 
 	export const {
@@ -116,15 +116,15 @@
 			<FieldErrors />
 		</Field>
 
-		<Field {form} name="price">
+		<Field {form} name="openPrice">
 			<Control let:attrs>
-				<FormLabel>Price *</FormLabel>
+				<FormLabel>Open Price *</FormLabel>
 				<Input
 					{...attrs}
 					type="number"
 					min="0"
 					step="0.001"
-					bind:value={$formData.price}
+					bind:value={$formData.openPrice}
 					required
 				/>
 			</Control>
@@ -219,10 +219,29 @@
 			<FieldErrors />
 		</Field>
 
-		<Field {form} name="comment">
+		<Field {form} name="closePrice">
 			<Control let:attrs>
-				<FormLabel>Comment</FormLabel>
-				<Input {...attrs} bind:value={$formData.comment} />
+				<FormLabel>Close Price</FormLabel>
+				<Input
+					{...attrs}
+					type="number"
+					min="0"
+					step="0.001"
+					bind:value={$formData.closePrice}
+				/>
+			</Control>
+			<FieldErrors />
+		</Field>
+
+		<Field {form} name="closedAt">
+			<Control let:attrs>
+				<DatePicker
+					{...attrs}
+					name="closedAt"
+					bind:value={$formData.closedAt}
+					withTime
+					label="Closed at"
+				/>
 			</Control>
 			<FieldErrors />
 		</Field>
@@ -233,7 +252,7 @@
 	form {
 		display: grid;
 		grid-template-columns: repeat(3, 250px);
-		grid-template-rows: 5rem repeat(3, 6.5rem);
+		grid-template-rows: 6rem repeat(3, 6.5rem);
 		column-gap: 2rem;
 		margin-inline: auto;
 	}

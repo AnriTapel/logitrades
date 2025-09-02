@@ -7,13 +7,14 @@ export const convertApiTradeToUiTrade = (trade: any): Trade => {
 		id: trade.id,
 		symbol: trade.symbol,
 		tradeType: trade.type,
-		price: trade.price,
+		openPrice: trade.open_price, // updated to match backend field name
 		quantity: trade.quantity,
 		stopLoss: trade.stop_loss,
 		takeProfit: trade.take_profit,
 		leverage: trade.leverage,
-		comment: trade.comment || '',
-		openedAt: trade.open_at,
+		openedAt: trade.opened_at,
+		closePrice: trade.close_price,
+		closedAt: trade.closed_at,
 		createdAt: trade.created_at,
 	};
 };
@@ -22,13 +23,14 @@ export const convertUiTradeFormToApiTrade = (trade: TradeFormInput): any => {
 	return {
 		symbol: trade.symbol,
 		type: trade.tradeType,
-		price: trade.price,
+		open_price: trade.openPrice, // updated to match backend field name
 		quantity: trade.quantity,
-		open_at: trade.openedAt,
+		opened_at: trade.openedAt,
 		stop_loss: trade.stopLoss || null,
 		take_profit: trade.takeProfit || null,
 		leverage: trade.useLeverage ? trade.leverage[0] : null,
-		comment: trade.comment || null,
+		close_price: trade.closePrice || null,
+		closed_at: trade.closedAt || null,
 	};
 };
 
@@ -40,5 +42,6 @@ export const convertUiTradeToTradeFormInput = (
 		leverage: trade.leverage ? [trade.leverage] : [1],
 		useLeverage: trade.leverage !== 1 && trade.leverage !== null,
 		openedAt: trade.openedAt ?? new Date().toISOString().slice(0, 16), // default to current date-time in ISO format without seconds
+		closePrice: trade.closePrice,
 	};
 };

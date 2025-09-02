@@ -16,10 +16,12 @@ export const formSchema = z.object({
 		.step(1, { message: 'Quantity must be a whole number' })
 		.min(1, { message: 'Quantity must be greater than 0' })
 		.max(1000000, { message: 'Quantity must be less than 1,000,000' }),
-	price: z
+	openPrice: z
 		.number()
-		.step(0.001, { message: 'Price must be a number with 2 decimal places' })
-		.min(0.001, { message: 'Price must be greater than 0' }),
+		.step(0.001, {
+			message: 'Open Price must be a number with 2 decimal places',
+		})
+		.min(0.001, { message: 'Open Price must be greater than 0' }),
 	openedAt: z.string().datetime(),
 	takeProfit: z
 		.number()
@@ -37,7 +39,15 @@ export const formSchema = z.object({
 		.min(0.001, { message: 'Stop Loss must be greater than 0' })
 		.optional()
 		.nullable(),
-	comment: z.string().max(128).optional(),
+	closePrice: z
+		.number()
+		.step(0.001, {
+			message: 'Close Price must be a number with 2 decimal places',
+		})
+		.min(0.001, { message: 'Close Price must be greater than 0' })
+		.optional()
+		.nullable(),
+	closedAt: z.string().datetime().optional(),
 });
 
 export type FormSchema = typeof formSchema;

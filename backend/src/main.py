@@ -21,13 +21,14 @@ router = APIRouter(prefix="/api/v1")
 class TradeCreate(BaseModel):
     symbol: str
     type: Literal["buy", "sell"] 
-    price: float
+    open_price: float  # renamed from price
     quantity: float
-    open_at: str
+    opened_at: str
     take_profit: Optional[float] = None
     stop_loss: Optional[float] = None
     leverage: Optional[float] = None
-    comment: Optional[str] = None
+    close_price: Optional[float] = None
+    closed_at: Optional[str] = None
 
 class Trade(TradeCreate):
     id: int
@@ -35,7 +36,7 @@ class Trade(TradeCreate):
 
 # Dependency to get DB session
 def get_db_connection():
-    db = next(db())
+    db = next(database.get_db())
     return db
 
 @router.post("/trades/", response_model=Trade)

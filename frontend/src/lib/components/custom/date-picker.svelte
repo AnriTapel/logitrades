@@ -16,7 +16,7 @@
 	let zonedDateTime = $state<ZonedDateTime>();
 
 	let {
-		value = $bindable<string>(),
+		value = $bindable<string | undefined>(),
 		label = 'Date',
 		placeholder = 'Pick a date',
 		withTime,
