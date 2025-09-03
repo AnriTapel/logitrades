@@ -6,9 +6,11 @@
 	import TradesTable from './trades-table.svelte';
 	import { tradesStore } from '$lib/stores/trades';
 	import { Button } from '$lib/components/ui/button';
+	import ImportDialog from './import-dialog.svelte';
 
 	let { data } = $props<{ data: PageData }>();
 	let isTradeFormOpen = $state(false);
+	let isImportDialogOpen = $state(false);
 
 	$effect(() => {
 		tradesStore.set(data.trades);
@@ -32,13 +34,28 @@
 		isTradeFormOpen = false;
 		goto('?', { keepFocus: true }); // Remove edit param
 	}
+
+	function handleOpenImportDialog() {
+		isImportDialogOpen = true;
+	}
+
+	function handleCloseImportDialog() {
+		isImportDialogOpen = false;
+	}
 </script>
 
 <div class="container mx-auto p-4">
 	<div class="flex justify-between items-center mb-4">
 		<h1 class="text-2xl font-bold">Your trades</h1>
-		<Button on:click={handleOpenTradeForm}>Add Trade</Button>
+		<div class="flex gap-2">
+			<Button on:click={handleOpenTradeForm}>Add Trade</Button>
+			<Button on:click={handleOpenImportDialog} variant="outline">Import from CSV</Button>
+		</div>
 	</div>
+
+	{#if isImportDialogOpen}
+		<ImportDialog onCancel={handleCloseImportDialog} />
+	{/if}
 
 	{#if isTradeFormOpen}
 		<TradeForm
