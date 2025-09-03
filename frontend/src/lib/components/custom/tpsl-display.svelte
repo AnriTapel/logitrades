@@ -1,10 +1,13 @@
 <script lang="ts">
 	import { formatIntToCurrency } from '$lib/formatters';
 
-	const { takeProfit, stopLoss } = $props<{
+	const {
+		takeProfit,
+		stopLoss,
+	}: {
 		takeProfit: number | null;
 		stopLoss: number | null;
-	}>();
+	} = $props();
 
 	const takeProfitDisplay = takeProfit ? formatIntToCurrency(takeProfit) : '-';
 	const stopLossDisplay = stopLoss ? formatIntToCurrency(stopLoss) : '-';

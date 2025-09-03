@@ -1,8 +1,11 @@
 <script lang="ts">
-	const { status, className } = $props<{
+	const {
+		status,
+		className,
+	}: {
 		status: 'open' | 'closed';
 		className?: string;
-	}>();
+	} = $props();
 </script>
 
 <div

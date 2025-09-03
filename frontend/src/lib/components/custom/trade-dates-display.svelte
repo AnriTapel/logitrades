@@ -3,10 +3,13 @@
 	import ClockArrowUp from 'lucide-svelte/icons/clock-arrow-up';
 	import ClockArrowDown from 'lucide-svelte/icons/clock-arrow-down';
 
-	const { openedAt, closedAt } = $props<{
+	const {
+		openedAt,
+		closedAt,
+	}: {
 		openedAt: string;
 		closedAt?: string;
-	}>();
+	} = $props();
 </script>
 
 <div class="flex flex-col gap-1 w-[190px]">
