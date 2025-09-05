@@ -29,6 +29,15 @@
 			// TODO: Show an error message to the user
 		}
 	}
+
+	function downloadCSVTemplate() {
+		const link = document.createElement('a');
+		link.href = '/trade_import_template.csv';
+		link.download = 'trade_import_template.csv';
+		document.body.appendChild(link);
+		link.click();
+		document.body.removeChild(link);
+	}
 </script>
 
 <CommonDialog
@@ -40,12 +49,17 @@
 	onSubmit={handleImport}
 	disabled={!selectedFile}
 >
-	<div class="grid w-full max-w-sm items-center gap-1.5">
-		<Input
-			id="csv-import"
-			type="file"
-			accept=".csv"
-			on:change={handleFileSelect}
-		/>
-	</div>
+	<p class="text-sm text-muted-foreground mb-2">
+		Not sure about the format?
+		<button class="text-primary hover:underline" onclick={downloadCSVTemplate}>
+			Download a template
+		</button>
+	</p>
+
+	<Input
+		id="csv-import"
+		type="file"
+		accept=".csv"
+		on:change={handleFileSelect}
+	/>
 </CommonDialog>
