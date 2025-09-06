@@ -7,11 +7,6 @@
 		FieldErrors,
 	} from '$lib/components/ui/form';
 	import { Label } from '$lib/components/ui/label';
-	import {
-		RadioGroup,
-		RadioGroupItem,
-		RadioGroupInput,
-	} from '$lib/components/ui/radio-group';
 	import { formSchema, type TradeFormInput } from './schema';
 	import { type SuperValidated, superForm } from 'sveltekit-superforms';
 	import { zodClient } from 'sveltekit-superforms/adapters';
@@ -20,6 +15,7 @@
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import { DatePicker } from '$lib';
 	import Button from '$lib/components/ui/button/button.svelte';
+	import ToggleGroup from '$lib/components/custom/toggle-group.svelte';
 
 	export const {
 		data,
@@ -83,21 +79,15 @@
 		<Field {form} name="tradeType" class="col-span-2">
 			<Control let:attrs>
 				<FormLabel>Trade Type *</FormLabel>
-				<RadioGroup
+				<ToggleGroup
 					{...attrs}
+					type="single"
 					bind:value={$formData.tradeType}
-					class="flex gap-4 mt-2"
-				>
-					<Control let:attrs>
-						<RadioGroupItem value="buy" {...attrs} />
-						<Label for="tradeType-buy">Buy</Label>
-					</Control>
-					<Control let:attrs>
-						<RadioGroupItem value="sell" {...attrs} />
-						<Label for="tradeType-sell">Sell</Label>
-					</Control>
-					<RadioGroupInput name="tradeType" />
-				</RadioGroup>
+					options={[
+						{ label: 'Long', value: 'buy' },
+						{ label: 'Short', value: 'sell' },
+					]}
+				/>
 			</Control>
 		</Field>
 
