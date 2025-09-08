@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Trade } from '$lib/types';
 	import { formatIntToCurrency } from '$lib/formatters';
-	import { calcAbsolutePnl, calcPnlPercentage } from '$lib/pnl';
+	import { calcAbsolutePnl, calcPnlPercentage } from '$lib/calcFunctions';
 
 	const { trade }: { trade: Trade } = $props();
 

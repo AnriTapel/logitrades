@@ -1,6 +1,4 @@
 <script lang="ts">
-	import type { Trade } from '$lib/types';
-
 	import * as Table from '$lib/components/ui/table';
 	import DataTableActions from './trades-table-actions.svelte';
 	import {
@@ -17,18 +15,16 @@
 		Subscribe,
 		createRender,
 	} from 'svelte-headless-table';
-	import { type Writable } from 'svelte/store';
+	import { tradesStore } from '$lib/stores/trades';
 	const {
-		trades,
 		onDelete,
 		onEdit,
 	}: {
-		trades: Writable<Trade[]>;
 		onDelete: (tradeId: number) => void;
 		onEdit: (tradeId: number) => void;
 	} = $props();
 
-	const table = createTable(trades);
+	const table = createTable(tradesStore);
 
 	const columns = table.createColumns([
 		table.column({

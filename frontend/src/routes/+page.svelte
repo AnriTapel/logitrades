@@ -5,8 +5,8 @@
 	import TradeForm from './trade-form.svelte';
 	import TradesTable from './trades-table.svelte';
 	import { tradesStore } from '$lib/stores/trades';
-	import { Button } from '$lib/components/ui/button';
 	import ImportDialog from './import-dialog.svelte';
+	import TopBar from './top-bar.svelte';
 
 	let { data } = $props<{ data: PageData }>();
 	let isTradeFormOpen = $state(false);
@@ -45,13 +45,7 @@
 </script>
 
 <div class="container mx-auto p-4">
-	<div class="flex justify-between items-center mb-4">
-		<h1 class="text-2xl font-bold">Your trades</h1>
-		<div class="flex gap-2">
-			<Button on:click={handleOpenTradeForm}>Add Trade</Button>
-			<Button on:click={handleOpenImportDialog} variant="outline">Import from CSV</Button>
-		</div>
-	</div>
+	<TopBar {handleOpenTradeForm} {handleOpenImportDialog} />
 
 	{#if isImportDialogOpen}
 		<ImportDialog onCancel={handleCloseImportDialog} />
@@ -65,11 +59,5 @@
 		/>
 	{/if}
 
-	{#if $tradesStore.length > 0}
-		<TradesTable
-			trades={tradesStore}
-			onDelete={handleTradeDelete}
-			onEdit={handleTradeEdit}
-		/>
-	{/if}
+	<TradesTable onDelete={handleTradeDelete} onEdit={handleTradeEdit} />
 </div>

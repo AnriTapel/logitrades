@@ -19,10 +19,7 @@ export function calcAbsolutePnl(trade: Trade): number | null {
 		}
 	}
 
-	const pnl =
-		(closePrice - openPrice) * quantity * (tradeType === 'buy' ? 1 : -1);
-
-	return pnl * leverage;
+	return (closePrice - openPrice) * quantity * (tradeType === 'buy' ? 1 : -1);
 }
 
 export function calcPnlPercentage(trade: Trade): number | null {
@@ -59,4 +56,22 @@ export function calculatePnl(trade: Trade): number {
 		(closePrice - openPrice) * quantity * (tradeType === 'buy' ? 1 : -1);
 
 	return pnl * leverage;
+}
+
+export function pnlForPeriod(trades: Trade[]): number {
+	return trades.reduce((total, trade) => total + calculatePnl(trade), 0);
+}
+
+export function totalTradedVolumeForPeriod(trades: Trade[]): number {
+	return trades.reduce((total, trade) => {
+		const closePrice = trade.closePrice || 0;
+		return total + (trade.openPrice + closePrice) * trade.quantity;
+	}, 0);
+}
+
+export function totalEquityInOpenedTrades(trades: Trade[]): number {
+	return trades.reduce(
+		(total, trade) => total + trade.openPrice * trade.quantity,
+		0
+	);
 }

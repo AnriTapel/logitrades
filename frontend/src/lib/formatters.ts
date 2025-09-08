@@ -17,3 +17,10 @@ export const formatIntToCurrency = (value: number): string => {
 		maximumFractionDigits: 2,
 	}).format(value);
 };
+
+export const formatNumber = (value: number, fractionDigits = 2): string => {
+	return new Intl.NumberFormat('en-US', {
+		minimumFractionDigits: fractionDigits,
+		maximumFractionDigits: fractionDigits,
+	}).format(value);
+};
