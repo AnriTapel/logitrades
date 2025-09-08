@@ -81,7 +81,7 @@
 				<FormLabel>Trade Type *</FormLabel>
 				<ToggleGroup
 					{...attrs}
-					type="single"
+					name="tradeType"
 					bind:value={$formData.tradeType}
 					options={[
 						{ label: 'Long', value: 'buy' },
