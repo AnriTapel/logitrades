@@ -1,4 +1,5 @@
 import type { TradeFormInput } from '../routes/schema';
+import { formatDateTimeISO } from './formatters';
 import type { Trade } from './types';
 
 // TODO: resolve any type
@@ -12,10 +13,10 @@ export const convertApiTradeToUiTrade = (trade: any): Trade => {
 		stopLoss: trade.stop_loss,
 		takeProfit: trade.take_profit,
 		leverage: trade.leverage,
-		openedAt: trade.opened_at,
+		openedAt: formatDateTimeISO(trade.opened_at),
 		closePrice: trade.close_price,
-		closedAt: trade.closed_at,
-		createdAt: trade.created_at,
+		closedAt: trade.closed_at ? formatDateTimeISO(trade.closed_at) : undefined,
+		createdAt: formatDateTimeISO(trade.created_at),
 	};
 };
 
@@ -28,7 +29,7 @@ export const convertUiTradeFormToApiTrade = (trade: TradeFormInput): any => {
 		opened_at: trade.openedAt,
 		stop_loss: trade.stopLoss || null,
 		take_profit: trade.takeProfit || null,
-		leverage: trade.useLeverage ? trade.leverage[0] : null,
+		leverage: trade.useLeverage ? trade.leverage : null,
 		close_price: trade.closePrice || null,
 		closed_at: trade.closedAt || null,
 	};
@@ -39,9 +40,9 @@ export const convertUiTradeToTradeFormInput = (
 ): TradeFormInput => {
 	return {
 		...trade,
-		leverage: trade.leverage ? [trade.leverage] : [1],
+		leverage: trade.leverage || 1,
 		useLeverage: trade.leverage !== 1 && trade.leverage !== null,
-		openedAt: trade.openedAt ?? new Date().toISOString().slice(0, 16), // default to current date-time in ISO format without seconds
+		openedAt: trade.openedAt ?? formatDateTimeISO(new Date().toISOString()), // default to current date-time in ISO format without seconds
 		closePrice: trade.closePrice,
 	};
 };

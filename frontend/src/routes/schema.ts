@@ -1,3 +1,6 @@
+import { formatDateTimeISO } from '$lib/formatters';
+import { parseDateTime } from '@internationalized/date';
+import { get } from 'svelte/store';
 import { z } from 'zod';
 
 export const formSchema = z.object({
@@ -10,11 +13,11 @@ export const formSchema = z.object({
 		}),
 	tradeType: z.enum(['buy', 'sell']),
 	useLeverage: z.boolean(),
-	leverage: z.number().array().length(1).default([1]),
+	leverage: z.number().default(1),
 	quantity: z
 		.number()
-		.step(1, { message: 'Quantity must be a whole number' })
-		.min(1, { message: 'Quantity must be greater than 0' })
+		.step(0.1, { message: 'Quantity must be a whole number' })
+		.min(0.1, { message: 'Quantity must be greater than 0' })
 		.max(1000000, { message: 'Quantity must be less than 1,000,000' }),
 	openPrice: z
 		.number()
@@ -22,7 +25,7 @@ export const formSchema = z.object({
 			message: 'Open Price must be a number with 2 decimal places',
 		})
 		.min(0.001, { message: 'Open Price must be greater than 0' }),
-	openedAt: z.string().datetime(),
+	openedAt: z.string().datetime().default(formatDateTimeISO(new Date())),
 	takeProfit: z
 		.number()
 		.step(0.001, {
@@ -47,7 +50,7 @@ export const formSchema = z.object({
 		.min(0.001, { message: 'Close Price must be greater than 0' })
 		.optional()
 		.nullable(),
-	closedAt: z.string().datetime().optional(),
+	closedAt: z.string().datetime().optional().nullable(),
 });
 
 export type FormSchema = typeof formSchema;

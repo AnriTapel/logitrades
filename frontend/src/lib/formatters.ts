@@ -24,3 +24,8 @@ export const formatNumber = (value: number, fractionDigits = 2): string => {
 		maximumFractionDigits: fractionDigits,
 	}).format(value);
 };
+
+export const formatDateTimeISO = (date: Date | string): string => {
+	const d = typeof date === 'string' ? new Date(date) : date;
+	return d.toISOString();
+};

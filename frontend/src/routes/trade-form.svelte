@@ -77,17 +77,19 @@
 		{/if}
 
 		<Field {form} name="tradeType" class="col-span-2">
-			<Control let:attrs>
-				<FormLabel>Trade Type *</FormLabel>
-				<ToggleGroup
-					{...attrs}
-					name="tradeType"
-					bind:value={$formData.tradeType}
-					options={[
-						{ label: 'Long', value: 'buy' },
-						{ label: 'Short', value: 'sell' },
-					]}
-				/>
+			<Control>
+				{#snippet children({ props })}
+					<FormLabel>Trade Type *</FormLabel>
+					<ToggleGroup
+						{...props}
+						name="tradeType"
+						bind:value={$formData.tradeType}
+						options={[
+							{ label: 'Long', value: 'buy' },
+							{ label: 'Short', value: 'sell' },
+						]}
+					/>
+				{/snippet}
 			</Control>
 		</Field>
 
@@ -95,71 +97,81 @@
 			type="button"
 			variant="secondary"
 			class="ml-auto"
-			on:click={handleClearForm}>Clear</Button
+			onclick={handleClearForm}>Clear</Button
 		>
 
 		<Field {form} name="symbol">
-			<Control let:attrs>
-				<FormLabel>Symbol *</FormLabel>
-				<Input {...attrs} bind:value={$formData.symbol} required />
+			<Control>
+				{#snippet children({ props })}
+					<FormLabel>Symbol *</FormLabel>
+					<Input {...props} bind:value={$formData.symbol} required />
+				{/snippet}
 			</Control>
 			<FieldErrors />
 		</Field>
 
 		<Field {form} name="openPrice">
-			<Control let:attrs>
-				<FormLabel>Open Price *</FormLabel>
-				<Input
-					{...attrs}
-					type="number"
-					min="0"
-					step="0.001"
-					bind:value={$formData.openPrice}
-					required
-				/>
+			<Control>
+				{#snippet children({ props })}
+					<FormLabel>Open Price *</FormLabel>
+					<Input
+						{...props}
+						type="number"
+						min="0"
+						step="0.001"
+						bind:value={$formData.openPrice}
+						required
+					/>
+				{/snippet}
 			</Control>
 			<FieldErrors />
 		</Field>
 
 		<Field {form} name="quantity">
-			<Control let:attrs>
-				<FormLabel>Quantity *</FormLabel>
-				<Input
-					{...attrs}
-					type="number"
-					min="0"
-					step="1"
-					bind:value={$formData.quantity}
-					required
-				/>
+			<Control>
+				{#snippet children({ props })}
+					<FormLabel>Quantity *</FormLabel>
+					<Input
+						{...props}
+						type="number"
+						min="0"
+						step="1"
+						bind:value={$formData.quantity}
+						required
+					/>
+				{/snippet}
 			</Control>
 			<FieldErrors />
 		</Field>
 
 		<Field {form} name="takeProfit">
-			<Control let:attrs>
-				<FormLabel>Take Profit</FormLabel>
-				<Input
-					{...attrs}
-					type="number"
-					min="0"
-					step="0.001"
-					bind:value={$formData.takeProfit}
-				/>
+			<Control>
+				{#snippet children({ props })}
+					<FormLabel>Take Profit</FormLabel>
+					<Input
+						{...props}
+						type="number"
+						min="0"
+						step="0.001"
+						bind:value={$formData.takeProfit}
+					/>
+				{/snippet}
 			</Control>
 			<FieldErrors />
 		</Field>
 
 		<Field {form} name="stopLoss">
-			<Control let:attrs>
-				<FormLabel>Stop Loss</FormLabel>
-				<Input
-					{...attrs}
-					type="number"
-					min="0"
-					step="any"
-					bind:value={$formData.stopLoss}
-				/>
+			<Control>
+				{#snippet children({ props })}
+					<FormLabel>Stop Loss</FormLabel>
+					<Input
+						{...props}
+						type="number"
+						min="0"
+						step="any"
+						bind:value={$formData.stopLoss}
+					/>
+				{/snippet}
 			</Control>
 			<FieldErrors />
 		</Field>
@@ -168,70 +180,85 @@
 			<Label for="leverage">Leverage</Label>
 			<div class="leverage-controls">
 				<Field {form} name="useLeverage">
-					<Control let:attrs>
-						<div class="flex items-center gap-2">
-							<input name="useLeverage" value={$formData.useLeverage} hidden />
-							<Checkbox {...attrs} bind:checked={$formData.useLeverage} />
-						</div>
+					<Control>
+						{#snippet children({ props })}
+							<div class="flex items-center gap-2">
+								<input
+									name="useLeverage"
+									value={$formData.useLeverage}
+									hidden
+								/>
+								<Checkbox {...props} bind:checked={$formData.useLeverage} />
+							</div>
+						{/snippet}
 					</Control>
 				</Field>
 
 				<Field {form} name="leverage">
-					<Control let:attrs>
-						<div class="flex items-center gap-4">
-							<input name="leverage" value={$formData.leverage} hidden />
-							<Slider
-								{...attrs}
-								disabled={!$formData.useLeverage}
-								min={1}
-								max={50}
-								step={1}
-								bind:value={$formData.leverage}
-								class="w-24"
-							/>
-							<span>{$formData.leverage}x</span>
-						</div>
+					<Control>
+						{#snippet children({ props })}
+							<div class="flex items-center gap-4">
+								<input name="leverage" value={$formData.leverage} hidden />
+								<Slider
+									type="single"
+									{...props}
+									disabled={!$formData.useLeverage}
+									min={1}
+									max={50}
+									step={1}
+									bind:value={$formData.leverage}
+									class="w-24"
+								/>
+								<span>{$formData.leverage}x</span>
+							</div>
+						{/snippet}
 					</Control>
 				</Field>
 			</div>
 		</div>
 
 		<Field {form} name="openedAt">
-			<Control let:attrs>
-				<DatePicker
-					{...attrs}
-					name="openedAt"
-					bind:value={$formData.openedAt}
-					withTime
-					label="Opened at*"
-				/>
+			<Control>
+				{#snippet children({ props })}
+					<DatePicker
+						{...props}
+						name="openedAt"
+						bind:value={$formData.openedAt}
+						withTime
+						label="Opened at*"
+					/>
+				{/snippet}
 			</Control>
 			<FieldErrors />
 		</Field>
 
 		<Field {form} name="closePrice">
-			<Control let:attrs>
-				<FormLabel>Close Price</FormLabel>
-				<Input
-					{...attrs}
-					type="number"
-					min="0"
-					step="0.001"
-					bind:value={$formData.closePrice}
-				/>
+			<Control>
+				{#snippet children({ props })}
+					<FormLabel>Close Price</FormLabel>
+					<Input
+						{...props}
+						type="number"
+						min="0"
+						step="0.001"
+						bind:value={$formData.closePrice}
+					/>
+				{/snippet}
 			</Control>
 			<FieldErrors />
 		</Field>
 
 		<Field {form} name="closedAt">
-			<Control let:attrs>
-				<DatePicker
-					{...attrs}
-					name="closedAt"
-					bind:value={$formData.closedAt}
-					withTime
-					label="Closed at"
-				/>
+			<Control>
+				{#snippet children({ props })}
+					<DatePicker
+						{...props}
+						name="closedAt"
+						bind:value={$formData.closedAt}
+						withTime
+						label="Closed at"
+					/>
+				{/snippet}
 			</Control>
 			<FieldErrors />
 		</Field>

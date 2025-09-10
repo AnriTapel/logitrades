@@ -72,8 +72,8 @@
 	{/if}
 
 	<div class="flex gap-2">
-		<Button on:click={handleOpenTradeForm}>Add Trade</Button>
-		<Button on:click={handleOpenImportDialog} variant="outline"
+		<Button onclick={handleOpenTradeForm}>Add Trade</Button>
+		<Button onclick={handleOpenImportDialog} variant="outline"
 			>Import from CSV</Button
 		>
 	</div>

@@ -1,5 +1,4 @@
-export { default as DatePicker } from './date-picker.svelte';
-export { default as TimePicker } from './time-picker.svelte';
+export { default as DatePicker } from './date-time-picker.svelte';
 export { default as TradeTypeCell } from './trade-type-cell.svelte';
 export { default as StatusBadge } from './status-badge.svelte';
 export { default as PnLDisplay } from './pnl-display.svelte';

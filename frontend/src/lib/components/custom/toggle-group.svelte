@@ -18,6 +18,7 @@
 
 <input type="hidden" {name} {value} />
 <ToggleGroup.Root
+	type="single"
 	bind:value
 	{disabled}
 	aria-label={label}

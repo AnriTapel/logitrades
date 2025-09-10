@@ -14,7 +14,7 @@
 		disabled = false,
 		onCancel = () => {},
 		onSubmit = () => {},
-		children = undefined,
+		children,
 	} = $props<{
 		open: boolean;
 		title?: string;
@@ -44,7 +44,7 @@
 	}
 </script>
 
-<Dialog.Root {open} closeOnOutsideClick={false} onOpenChange={handleOpenChange}>
+<Dialog.Root {open} onOpenChange={handleOpenChange}>
 	<Dialog.Content class="max-w-max">
 		{#if title}
 			<h2 class="text-lg font-semibold mb-1">{title}</h2>
