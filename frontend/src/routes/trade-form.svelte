@@ -194,23 +194,19 @@
 					</Control>
 				</Field>
 
-				<Field {form} name="leverage">
+				<Field {form} name="leverage" class="grow">
 					<Control>
 						{#snippet children({ props })}
-							<div class="flex items-center gap-4">
-								<input name="leverage" value={$formData.leverage} hidden />
-								<Slider
-									type="single"
-									{...props}
-									disabled={!$formData.useLeverage}
-									min={1}
-									max={50}
-									step={1}
-									bind:value={$formData.leverage}
-									class="w-24"
-								/>
-								<span>{$formData.leverage}x</span>
-							</div>
+							<Input
+								{...props}
+								name="leverage"
+								type="number"
+								min={1}
+								max={50}
+								step={1}
+								disabled={!$formData.useLeverage}
+								bind:value={$formData.leverage}
+							/>
 						{/snippet}
 					</Control>
 				</Field>
@@ -275,6 +271,7 @@
 	}
 
 	.leverage-controls {
+		width: 100%;
 		display: flex;
 		align-items: center;
 		gap: 1.5rem;
