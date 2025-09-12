@@ -13,3 +13,38 @@ export interface Trade {
 	closedAt?: string;
 	createdAt: string;
 }
+
+// Charts types/interfaces
+export type BarChartData = {
+	labels: string[];
+	datasets: Array<{
+		label: string;
+		data: number[];
+		backgroundColor?: string | string[];
+		borderColor?: string | string[];
+		borderWidth?: number;
+	}>;
+};
+
+export type LineChartData = {
+	labels: string[];
+	datasets: Array<{
+		label: string;
+		data: number[];
+		borderColor?: string;
+		backgroundColor?: string;
+		tension?: number;
+		fill?: boolean;
+	}>;
+};
+
+export type PieChartData = {
+	labels: string[];
+	datasets: Array<{
+		label: string;
+		data: number[];
+		backgroundColor?: string[];
+		borderColor?: string[];
+		borderWidth?: number;
+	}>;
+};

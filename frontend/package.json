@@ -50,6 +50,7 @@
 		]
 	},
 	"dependencies": {
+		"chart.js": "^4.5.0",
 		"svelte-headless-table": "^0.18.3"
 	}
 }
