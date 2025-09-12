@@ -9,8 +9,12 @@
 		stopLoss: number | null;
 	} = $props();
 
-	const takeProfitDisplay = takeProfit ? formatIntToCurrency(takeProfit) : '-';
-	const stopLossDisplay = stopLoss ? formatIntToCurrency(stopLoss) : '-';
+	const takeProfitDisplay = $derived(
+		takeProfit ? formatIntToCurrency(takeProfit) : '-'
+	);
+	const stopLossDisplay = $derived(
+		stopLoss ? formatIntToCurrency(stopLoss) : '-'
+	);
 </script>
 
 <div class="flex flex-col gap-1 w-[120px]">

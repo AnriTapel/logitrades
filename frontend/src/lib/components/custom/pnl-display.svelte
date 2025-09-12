@@ -5,8 +5,8 @@
 
 	const { trade }: { trade: Trade } = $props();
 
-	const pnlAbsolute = calcAbsolutePnl(trade);
-	const pnlPercent = calcPnlPercentage(trade);
+	const pnlAbsolute = $derived(calcAbsolutePnl(trade));
+	const pnlPercent = $derived(calcPnlPercentage(trade));
 </script>
 
 <div class="w-[100px] flex flex-col gap-1 items-end">
