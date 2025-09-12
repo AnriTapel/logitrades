@@ -16,8 +16,8 @@ export const formSchema = z.object({
 	leverage: z.number().default(1),
 	quantity: z
 		.number()
-		.step(0.1, { message: 'Quantity must be a whole number' })
-		.min(0.1, { message: 'Quantity must be greater than 0' })
+		.step(0.1, { message: 'Quantity must be a multiple of 0.1' })
+		.min(0.1, { message: 'Quantity must be greater than 0.1' })
 		.max(1000000, { message: 'Quantity must be less than 1,000,000' }),
 	openPrice: z
 		.number()

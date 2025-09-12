@@ -134,8 +134,8 @@
 					<Input
 						{...props}
 						type="number"
-						min="0"
-						step="1"
+						min="0.1"
+						step="0.1"
 						bind:value={$formData.quantity}
 						required
 					/>
