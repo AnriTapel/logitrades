@@ -10,6 +10,25 @@ import {
 	convertUiTradeFormToApiTrade,
 } from '$lib/tradeConverters';
 
+const sortTradesByClosedAt = (
+	{ closedAt: closedAtA, openedAt: openedAtA }: Trade,
+	{ closedAt: closedAtB, openedAt: openedAtB }: Trade
+): number => {
+	if (closedAtA && closedAtB) {
+		return closedAtB.localeCompare(closedAtA);
+	}
+
+	if (closedAtA && !closedAtB) {
+		return 1;
+	}
+
+	if (closedAtB && !closedAtA) {
+		return -1;
+	}
+
+	return openedAtB.localeCompare(openedAtA);
+};
+
 const loadTrades = async (): Promise<Trade[]> => {
 	const BASE_URL = 'http://localhost:8000/api/v1/trades/';
 	const response = await fetch(BASE_URL);
@@ -17,7 +36,8 @@ const loadTrades = async (): Promise<Trade[]> => {
 		throw new Error('Failed to fetch trades');
 	}
 	const trades = await response.json();
-	return trades.map(convertApiTradeToUiTrade);
+	console.log(trades);
+	return trades.map(convertApiTradeToUiTrade).sort(sortTradesByClosedAt);
 };
 
 export const load = async ({ url }) => {
@@ -43,7 +63,9 @@ export const load = async ({ url }) => {
 
 export const actions = {
 	create: async (event) => {
+		console.log('create event');
 		const form = await superValidate(event, zod(formSchema));
+		console.log(form.errors);
 		if (!form.valid) {
 			return fail(400, {
 				form,
