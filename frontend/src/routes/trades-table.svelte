@@ -28,10 +28,6 @@
 
 	const columns = table.createColumns([
 		table.column({
-			accessor: 'id',
-			header: 'ID',
-		}),
-		table.column({
 			accessor: 'symbol',
 			header: 'Symbol',
 		}),
