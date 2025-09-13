@@ -3,9 +3,6 @@
 	import { Chart, registerables } from 'chart.js';
 	import type { Trade, LineChartData } from '$lib/types';
 
-	// Register all Chart.js components
-	Chart.register(...registerables);
-
 	interface Props {
 		data: LineChartData;
 		title?: string;
@@ -94,10 +91,12 @@
 	});
 
 	onMount(() => {
+		Chart.register(...registerables);
+
 		if (canvas && data) {
 			chart = new Chart(canvas, {
 				type: 'line',
-				data,
+				data: $state.snapshot(data),
 				options: getFinancialOptions(),
 			});
 		}

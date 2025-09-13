@@ -11,7 +11,6 @@
 	import { type SuperValidated, superForm } from 'sveltekit-superforms';
 	import { zodClient } from 'sveltekit-superforms/adapters';
 	import { Input } from '$lib/components/ui/input';
-	import { Slider } from '$lib/components/ui/slider';
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import { DatePicker } from '$lib';
 	import Button from '$lib/components/ui/button/button.svelte';

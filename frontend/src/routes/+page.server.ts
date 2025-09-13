@@ -36,7 +36,6 @@ const loadTrades = async (): Promise<Trade[]> => {
 		throw new Error('Failed to fetch trades');
 	}
 	const trades = await response.json();
-	console.log(trades);
 	return trades.map(convertApiTradeToUiTrade).sort(sortTradesByClosedAt);
 };
 
@@ -63,9 +62,7 @@ export const load = async ({ url }) => {
 
 export const actions = {
 	create: async (event) => {
-		console.log('create event');
 		const form = await superValidate(event, zod(formSchema));
-		console.log(form.errors);
 		if (!form.valid) {
 			return fail(400, {
 				form,

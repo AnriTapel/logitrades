@@ -349,8 +349,7 @@ export function createEquityCurveData(
 			...trade,
 			pnl: (trade.closePrice! - trade.openPrice) * trade.quantity,
 			closeDate: new Date(trade.closedAt!),
-		}))
-		.sort((a, b) => a.closeDate.getTime() - b.closeDate.getTime());
+		}));
 
 	// Group trades by timeframe
 	const equityByTimeframe = new Map<string, number>();
