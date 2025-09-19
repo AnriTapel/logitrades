@@ -19,8 +19,66 @@ export function calcAbsolutePnl(trade: Trade): number | null {
 		}
 	}
 
-	return (closePrice - openPrice) * quantity * (tradeType === 'buy' ? 1 : -1);
+	return (
+		(closePrice - openPrice) *
+		quantity *
+		leverage *
+		(tradeType === 'buy' ? 1 : -1)
+	);
 }
+
+export function calcWinrate(trades: Trade[]): number {
+	if (trades.length === 0) {
+		return 0;
+	}
+	const winningTrades = trades.filter((trade) => {
+		const pnl = calcAbsolutePnl(trade);
+		return pnl !== null && pnl > 0;
+	});
+	return (winningTrades.length / trades.length) * 100;
+}
+
+export const calcAverageWin = (trades: Trade[]): number => {
+	const winningTrades = trades
+		.map((trade) => calcAbsolutePnl(trade))
+		.filter((pnl): pnl is number => pnl !== null && pnl > 0);
+	if (winningTrades.length === 0) {
+		return 0;
+	}
+	const totalWin = winningTrades.reduce((sum, pnl) => sum + pnl, 0);
+	return totalWin / winningTrades.length;
+};
+
+export const calcAverageLoss = (trades: Trade[]): number => {
+	const losingTrades = trades
+		.map((trade) => calcAbsolutePnl(trade))
+		.filter((pnl): pnl is number => pnl !== null && pnl < 0);
+	if (losingTrades.length === 0) {
+		return 0;
+	}
+	const totalLoss = losingTrades.reduce((sum, pnl) => sum + pnl, 0);
+	return totalLoss / losingTrades.length;
+};
+
+export const calcProfitFactor = (trades: Trade[]): number => {
+	const totalProfit = trades
+		.map((trade) => calcAbsolutePnl(trade))
+		.filter((pnl): pnl is number => pnl !== null && pnl > 0)
+		.reduce((sum, pnl) => sum + pnl, 0);
+
+	const totalLoss = Math.abs(
+		trades
+			.map((trade) => calcAbsolutePnl(trade))
+			.filter((pnl): pnl is number => pnl !== null && pnl < 0)
+			.reduce((sum, pnl) => sum + pnl, 0)
+	);
+
+	if (totalLoss === 0) {
+		return totalProfit > 0 ? Infinity : 0;
+	}
+
+	return totalProfit / totalLoss;
+};
 
 export function calcPnlPercentage(trade: Trade): number | null {
 	const absolutePnl = calcAbsolutePnl(trade);

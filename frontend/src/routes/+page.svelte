@@ -7,6 +7,7 @@
 	import { tradesStore } from '$lib/stores/trades';
 	import ImportDialog from './import-dialog.svelte';
 	import TopBar from './top-bar.svelte';
+	import DashboardPreview from './dashboard-preview.svelte';
 
 	let { data } = $props<{ data: PageData }>();
 	let isTradeFormOpen = $state(false);
@@ -45,6 +46,8 @@
 </script>
 
 <div class="container mx-auto p-4">
+	<DashboardPreview />
+
 	<TopBar {handleOpenTradeForm} {handleOpenImportDialog} />
 
 	{#if isImportDialogOpen}
