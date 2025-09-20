@@ -1,3 +1,4 @@
+import { calcAbsolutePnl } from './calcFunctions';
 import type { BarChartData, LineChartData, PieChartData, Trade } from './types';
 
 /**
@@ -345,9 +346,10 @@ export function createEquityCurveData(
 	// Get all closed trades sorted by close date
 	const closedTrades = trades
 		.filter((trade) => trade.closePrice && trade.closedAt)
+		.toSorted((a, b) => a.closedAt!.localeCompare(b.closedAt!))
 		.map((trade) => ({
 			...trade,
-			pnl: (trade.closePrice! - trade.openPrice) * trade.quantity,
+			pnl: calcAbsolutePnl(trade) ?? 0,
 			closeDate: new Date(trade.closedAt!),
 		}));
 
@@ -396,7 +398,7 @@ export function createEquityCurveData(
 		labels,
 		datasets: [
 			{
-				label: 'Portfolio Value',
+				label: 'Equity Curve',
 				data: equityData,
 				borderColor: financialColors.primary,
 				backgroundColor: `${financialColors.primary}20`,
@@ -431,13 +433,13 @@ function calculateDrawdown(equityData: number[]): number[] {
 	if (equityData.length === 0) return [];
 
 	const drawdown: number[] = [];
-	let peak = equityData[0];
+	let peak = 0;
 
 	equityData.forEach((equity) => {
 		if (equity > peak) {
 			peak = equity;
 		}
-		const currentDrawdown = ((equity - peak) / peak) * 100;
+		const currentDrawdown = equity - peak;
 		drawdown.push(currentDrawdown);
 	});
 

@@ -22,7 +22,7 @@ export function calcAbsolutePnl(trade: Trade): number | null {
 	return (
 		(closePrice - openPrice) *
 		quantity *
-		leverage *
+		(leverage ?? 1) *
 		(tradeType === 'buy' ? 1 : -1)
 	);
 }

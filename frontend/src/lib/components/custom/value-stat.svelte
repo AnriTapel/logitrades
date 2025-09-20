@@ -32,7 +32,7 @@
 	});
 </script>
 
-<div class="p-4 border rounded-lg shadow-sm min-w-[200px] w-min">
+<div class="p-4 border rounded-lg shadow-sm min-w-[200px]">
 	<p class="text-l font-bold mb-4">{label}</p>
 	<div
 		class="bg-gray-100 p-4 rounded flex justify-center items-center width-fit h-[80px]"

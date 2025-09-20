@@ -18,7 +18,6 @@
 	let {
 		data,
 		title = '',
-		height = 400,
 		showLegend = true,
 		financialMode = true,
 		chartType = 'bar',
@@ -148,6 +147,6 @@
 	});
 </script>
 
-<div class="w-full" style="height: {height}px;">
+<div class="w-full h-full">
 	<canvas bind:this={canvas}></canvas>
 </div>

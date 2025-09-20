@@ -14,7 +14,7 @@
 	let {
 		data,
 		title = '',
-		height = 400,
+		height = 300,
 		showLegend = true,
 		financialMode = true,
 	}: Props = $props();
