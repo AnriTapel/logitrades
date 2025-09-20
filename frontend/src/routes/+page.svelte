@@ -3,11 +3,11 @@
 	import { deleteTrade } from '$lib';
 	import type { PageData } from './$types';
 	import TradeForm from './trade-form.svelte';
-	import TradesTable from './trades-table.svelte';
 	import { tradesStore } from '$lib/stores/trades';
 	import ImportDialog from './import-dialog.svelte';
-	import TopBar from './top-bar.svelte';
 	import DashboardPreview from './dashboard-preview.svelte';
+	import OpenedTrades from './opened-trades.svelte';
+	import ClosedTrades from './closed-trades.svelte';
 
 	let { data } = $props<{ data: PageData }>();
 	let isTradeFormOpen = $state(false);
@@ -46,10 +46,18 @@
 </script>
 
 <div class="container mx-auto p-4">
-	<DashboardPreview />
+	{#if $tradesStore.length}
+		<OpenedTrades
+			{handleTradeDelete}
+			{handleTradeEdit}
+			{handleOpenTradeForm}
+			{handleOpenImportDialog}
+		/>
 
-	<TopBar {handleOpenTradeForm} {handleOpenImportDialog} />
+		<ClosedTrades {handleTradeDelete} {handleTradeEdit} />
 
+		<DashboardPreview />
+	{/if}
 	{#if isImportDialogOpen}
 		<ImportDialog onCancel={handleCloseImportDialog} />
 	{/if}
@@ -61,6 +69,4 @@
 			isEdit={Boolean(location.search.includes('edit'))}
 		/>
 	{/if}
-
-	<TradesTable onDelete={handleTradeDelete} onEdit={handleTradeEdit} />
 </div>

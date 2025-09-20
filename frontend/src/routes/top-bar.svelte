@@ -26,7 +26,10 @@
 		const sevenDaysAgo = new Date(today.setDate(today.getDate() - 7));
 
 		const last7DaysTrades = trades.filter(
-			(trade) => new Date(trade.openedAt) >= sevenDaysAgo
+			(trade) =>
+				trade.closePrice &&
+				trade.closedAt &&
+				new Date(trade.closedAt) >= sevenDaysAgo
 		);
 
 		pnlLast7Days = pnlForPeriod(last7DaysTrades);
@@ -42,7 +45,7 @@
 </script>
 
 <div class="flex justify-between items-center mb-4">
-	<h1 class="text-2xl font-bold">Your trades</h1>
+	<h1 class="text-2xl font-bold">Opened trades</h1>
 
 	{#if $tradesStore.length > 0}
 		<div class="flex gap-8 mt-4">

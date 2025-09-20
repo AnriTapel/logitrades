@@ -17,7 +17,7 @@
 </script>
 
 <section class="mb-12">
-	<h3 class="text-2xl font-bold mb-4">Overview</h3>
+	<h1 class="text-2xl font-bold mb-4">Stats overview</h1>
 
 	<div class="flex w-full h-[334px]">
 		{#if $tradesStore.length}
@@ -47,7 +47,7 @@
 				/>
 			</div>
 
-			<div class="flex gap-8 grow pl-4">
+			<div class="flex gap-4 grow pl-4">
 				<div class="p-4 border rounded-lg shadow-sm min-w-[200px] w-full">
 					<p class="text-l font-bold mb-4">Equity Curve & Drawdown</p>
 					<LineChart data={createEquityCurveData($tradesStore)} height={260} />

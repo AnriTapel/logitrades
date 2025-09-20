@@ -15,16 +15,19 @@
 		Subscribe,
 		createRender,
 	} from 'svelte-headless-table';
-	import { tradesStore } from '$lib/stores/trades';
+	import type { Trade } from '$lib/types';
+	import type { Writable } from 'svelte/store';
 	const {
+		trades,
 		onDelete,
 		onEdit,
 	}: {
+		trades: Writable<Trade[]>;
 		onDelete: (tradeId: number) => void;
 		onEdit: (tradeId: number) => void;
 	} = $props();
 
-	const table = createTable(tradesStore);
+	const table = createTable(trades);
 
 	const columns = table.createColumns([
 		table.column({
