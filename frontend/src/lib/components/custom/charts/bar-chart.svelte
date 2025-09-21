@@ -18,9 +18,9 @@
 	let {
 		data,
 		title = '',
+		height = 300,
 		showLegend = true,
 		financialMode = true,
-		chartType = 'bar',
 	}: Props = $props();
 
 	let canvas: HTMLCanvasElement;
@@ -30,6 +30,7 @@
 	const getFinancialOptions = () => ({
 		responsive: true,
 		maintainAspectRatio: false,
+		indexAsix: 'x',
 		plugins: {
 			title: {
 				display: !!title,
@@ -90,11 +91,10 @@
 	onMount(() => {
 		if (canvas && data) {
 			chart = new Chart(canvas, {
-				type: chartType === 'horizontalBar' ? 'bar' : 'bar',
+				type: 'bar',
 				data,
 				options: {
 					...getFinancialOptions(),
-					indexAxis: chartType === 'horizontalBar' ? 'y' : 'x',
 				},
 			});
 		}
@@ -112,29 +112,6 @@
 	$effect(() => {
 		if (chart) {
 			const options = getFinancialOptions();
-			if (chartType === 'horizontalBar') {
-				(options as any).scales = {
-					...options.scales,
-					x: {
-						...options.scales.y,
-						ticks: {
-							...options.scales.y.ticks,
-							callback: (value: any) => {
-								return financialMode ? `$${value}` : value;
-							},
-						},
-					},
-					y: {
-						...options.scales.x,
-						ticks: {
-							...options.scales.x.ticks,
-						},
-					},
-				};
-				(options as any).indexAxis = 'y';
-			} else {
-				(options as any).indexAxis = 'x';
-			}
 			chart.options = options;
 			chart.update('none');
 		}
@@ -147,6 +124,6 @@
 	});
 </script>
 
-<div class="w-full h-full">
+<div class="w-full h-full" style="height: {height}px;">
 	<canvas bind:this={canvas}></canvas>
 </div>

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ValueStat } from '$lib/components/custom';
+	import { BarChart, ValueStat } from '$lib/components/custom';
 
 	import { tradesStore } from '$lib/stores/trades';
 	import {
@@ -12,16 +12,19 @@
 	import PieChart from '$lib/components/custom/charts/pie-chart.svelte';
 	import {
 		createEquityCurveData,
+		createMonthlyPnLData,
+		createRiskRewardDistribution,
 		createSymbolDistributionData,
+		createTradeTypeDistributionData,
 	} from '$lib/chartsHelpers';
 </script>
 
 <section class="mb-12">
 	<h1 class="text-2xl font-bold mb-4">Stats overview</h1>
 
-	<div class="flex w-full h-[334px]">
-		{#if $tradesStore.length}
-			<div class="grid grid-cols-[min-content_min-content] gap-4">
+	{#if $tradesStore.length}
+		<div class="grid grid-cols-3 gap-4 grid-rows-2 mb-4">
+			<div class="grid grid-cols-2 gap-4">
 				<ValueStat
 					label="Winrate"
 					value={calcWinrate($tradesStore)}
@@ -47,20 +50,33 @@
 				/>
 			</div>
 
-			<div class="flex gap-4 grow pl-4">
-				<div class="p-4 border rounded-lg shadow-sm min-w-[200px] w-full">
-					<p class="text-l font-bold mb-4">Equity Curve & Drawdown</p>
-					<LineChart data={createEquityCurveData($tradesStore)} height={260} />
-				</div>
-
-				<div class="p-4 border rounded-lg shadow-sm min-w-[200px] w-full">
-					<p class="text-l font-bold mb-4">Trade Pair Distribution</p>
-					<PieChart
-						data={createSymbolDistributionData($tradesStore)}
-						height={260}
-					/>
-				</div>
+			<div class="p-4 border rounded-lg shadow-sm w-full">
+				<p class="text-l font-bold mb-4">Equity Curve & Drawdown</p>
+				<LineChart data={createEquityCurveData($tradesStore)} />
 			</div>
-		{/if}
-	</div>
+
+			<div class="p-4 border rounded-lg shadow-sm w-full">
+				<p class="text-l font-bold mb-4">Trade Pair Distribution</p>
+				<PieChart
+					data={createSymbolDistributionData($tradesStore)}
+					height={260}
+				/>
+			</div>
+
+			<div class="p-4 border grow rounded-lg shadow-sm w-full">
+				<p class="text-l font-bold mb-4">Trade Type Distribution</p>
+				<PieChart data={createTradeTypeDistributionData($tradesStore)} />
+			</div>
+
+			<div class="p-4 border grow rounded-lg shadow-sm w-full">
+				<p class="text-l font-bold mb-4">Risk Reward Distribution</p>
+				<BarChart data={createRiskRewardDistribution($tradesStore)} />
+			</div>
+
+			<div class="p-4 border grow rounded-lg shadow-sm w-full">
+				<p class="text-l font-bold mb-4">Monthly PnL</p>
+				<BarChart data={createMonthlyPnLData($tradesStore)} />
+			</div>
+		</div>
+	{/if}
 </section>

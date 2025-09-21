@@ -48,84 +48,22 @@ export const getColorPalette = (count: number): string[] => {
  *
  */
 
-export function createVolumeData(trades: Trade[]): BarChartData {
-	const volumeBySymbol = new Map<string, number>();
-
-	trades.forEach((trade) => {
-		const volume = trade.quantity * trade.openPrice;
-		volumeBySymbol.set(
-			trade.symbol,
-			(volumeBySymbol.get(trade.symbol) || 0) + volume
-		);
-	});
-
-	const sortedEntries = Array.from(volumeBySymbol.entries())
-		.sort(([, a], [, b]) => b - a)
-		.slice(0, 10); // Top 10 symbols
-
-	return {
-		labels: sortedEntries.map(([symbol]) => symbol),
-		datasets: [
-			{
-				label: 'Trading Volume ($)',
-				data: sortedEntries.map(([, volume]) => volume),
-				backgroundColor: sortedEntries.map((_, index) => {
-					const colors = [
-						financialColors.primary,
-						financialColors.secondary,
-						financialColors.success,
-						financialColors.warning,
-						financialColors.neutral,
-					];
-					return colors[index % colors.length];
-				}),
-				borderColor: '#374151',
-				borderWidth: 1,
-			},
-		],
-	};
-}
-
-// Helper function to create trade count data by symbol
-export function createTradeCountData(trades: Trade[]): BarChartData {
-	const countBySymbol = new Map<string, number>();
-
-	trades.forEach((trade) => {
-		countBySymbol.set(trade.symbol, (countBySymbol.get(trade.symbol) || 0) + 1);
-	});
-
-	const sortedEntries = Array.from(countBySymbol.entries())
-		.sort(([, a], [, b]) => b - a)
-		.slice(0, 10); // Top 10 symbols
-
-	return {
-		labels: sortedEntries.map(([symbol]) => symbol),
-		datasets: [
-			{
-				label: 'Number of Trades',
-				data: sortedEntries.map(([, count]) => count),
-				backgroundColor: financialColors.primary,
-				borderColor: '#374151',
-				borderWidth: 1,
-			},
-		],
-	};
-}
-
 // Helper function to create monthly P&L data
 export function createMonthlyPnLData(trades: Trade[]): BarChartData {
 	const pnlByMonth = new Map<string, number>();
 
-	trades
-		.filter((trade) => trade.closePrice && trade.closedAt)
-		.forEach((trade) => {
-			const pnl = (trade.closePrice! - trade.openPrice) * trade.quantity;
-			const date = new Date(trade.closedAt!);
-			const monthKey = `${date.getFullYear()}-${String(
-				date.getMonth() + 1
-			).padStart(2, '0')}`;
-			pnlByMonth.set(monthKey, (pnlByMonth.get(monthKey) || 0) + pnl);
-		});
+	trades.forEach((trade) => {
+		const pnl = calcAbsolutePnl(trade);
+		if (pnl == null || !trade.closedAt) {
+			return;
+		}
+
+		const date = new Date(trade.closedAt);
+		const monthKey = `${date.getFullYear()}-${String(
+			date.getMonth() + 1
+		).padStart(2, '0')}`;
+		pnlByMonth.set(monthKey, (pnlByMonth.get(monthKey) || 0) + pnl);
+	});
 
 	const sortedEntries = Array.from(pnlByMonth.entries()).sort(([a], [b]) =>
 		a.localeCompare(b)
@@ -142,63 +80,6 @@ export function createMonthlyPnLData(trades: Trade[]): BarChartData {
 				),
 				borderColor: '#374151',
 				borderWidth: 1,
-			},
-		],
-	};
-}
-
-export function createPnLData(
-	trades: Trade[],
-	timeframe: 'daily' | 'weekly' | 'monthly' = 'daily'
-): LineChartData {
-	// Group trades by timeframe and calculate cumulative P&L
-	const groupedTrades = new Map<string, number>();
-
-	trades
-		.filter((trade) => trade.closePrice && trade.closedAt)
-		.forEach((trade) => {
-			const pnl = (trade.closePrice! - trade.openPrice) * trade.quantity;
-			const date = new Date(trade.closedAt!);
-
-			let key: string;
-			switch (timeframe) {
-				case 'daily':
-					key = date.toISOString().split('T')[0];
-					break;
-				case 'weekly':
-					const weekStart = new Date(date);
-					weekStart.setDate(date.getDate() - date.getDay());
-					key = weekStart.toISOString().split('T')[0];
-					break;
-				case 'monthly':
-					key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
-						2,
-						'0'
-					)}`;
-					break;
-			}
-
-			groupedTrades.set(key, (groupedTrades.get(key) || 0) + pnl);
-		});
-
-	const sortedEntries = Array.from(groupedTrades.entries()).sort(([a], [b]) =>
-		a.localeCompare(b)
-	);
-	let cumulativePnL = 0;
-
-	return {
-		labels: sortedEntries.map(([date]) => date),
-		datasets: [
-			{
-				label: 'Cumulative P&L',
-				data: sortedEntries.map(([, pnl]) => {
-					cumulativePnL += pnl;
-					return cumulativePnL;
-				}),
-				borderColor: financialColors.primary,
-				backgroundColor: `${financialColors.primary}20`,
-				tension: 0.4,
-				fill: true,
 			},
 		],
 	};
@@ -274,69 +155,6 @@ export function createTradeTypeDistributionData(trades: Trade[]): PieChartData {
 	};
 }
 
-// Helper function to create win/loss distribution
-export function createWinLossDistributionData(trades: Trade[]): PieChartData {
-	const closedTrades = trades.filter(
-		(trade) => trade.closePrice && trade.closedAt
-	);
-
-	let winCount = 0;
-	let lossCount = 0;
-
-	closedTrades.forEach((trade) => {
-		const pnl = (trade.closePrice! - trade.openPrice) * trade.quantity;
-		if (pnl > 0) {
-			winCount++;
-		} else {
-			lossCount++;
-		}
-	});
-
-	return {
-		labels: ['Winning Trades', 'Losing Trades'],
-		datasets: [
-			{
-				label: 'Trade Outcomes',
-				data: [winCount, lossCount],
-				backgroundColor: [financialColors.profit, financialColors.loss],
-			},
-		],
-	};
-}
-
-// Helper function to create leverage distribution
-export function createLeverageDistributionData(trades: Trade[]): PieChartData {
-	const leverageGroups = new Map<string, number>();
-
-	trades
-		.filter((trade) => trade.leverage)
-		.forEach((trade) => {
-			const leverage = trade.leverage!;
-			let group: string;
-
-			if (leverage <= 2) group = '1x-2x';
-			else if (leverage <= 5) group = '3x-5x';
-			else if (leverage <= 10) group = '6x-10x';
-			else group = '10x+';
-
-			leverageGroups.set(group, (leverageGroups.get(group) || 0) + 1);
-		});
-
-	const sortedEntries = Array.from(leverageGroups.entries()).sort(([a], [b]) =>
-		a.localeCompare(b)
-	);
-
-	return {
-		labels: sortedEntries.map(([group]) => group),
-		datasets: [
-			{
-				label: 'Leverage Distribution',
-				data: sortedEntries.map(([, count]) => count),
-			},
-		],
-	};
-}
-
 // Helper function to create equity curve data
 export function createEquityCurveData(
 	trades: Trade[],
@@ -346,7 +164,7 @@ export function createEquityCurveData(
 	// Get all closed trades sorted by close date
 	const closedTrades = trades
 		.filter((trade) => trade.closePrice && trade.closedAt)
-		.toSorted((a, b) => a.closedAt!.localeCompare(b.closedAt!))
+		.reverse() // Assuming trades are sorted by closedAt descending
 		.map((trade) => ({
 			...trade,
 			pnl: calcAbsolutePnl(trade) ?? 0,
@@ -428,6 +246,64 @@ export function createEquityCurveData(
 	};
 }
 
+// Helper function to create Risk/Reward ratio distribution
+export function createRiskRewardDistribution(trades: Trade[]): BarChartData {
+	const ranges = [
+		{ min: -Infinity, max: -4, label: '<-4' },
+		{ min: -4, max: -2, label: '[-4, -2)' },
+		{ min: -2, max: -1.2, label: '[-2, -1.2)' },
+		{ min: -1.2, max: -0.8, label: '[-1.2, -0.8)' },
+		{ min: -0.8, max: 0.8, label: '[-0.8, 0.8)' },
+		{ min: 0.8, max: 1.2, label: '[0.8, 1.2)' },
+		{ min: 1.2, max: 2, label: '[1.2, 2)' },
+		{ min: 2, max: 4, label: '[2, 4]' },
+		{ min: 4, max: Infinity, label: '>4' },
+	];
+
+	const rangeCounts = new Array(ranges.length).fill(0);
+
+	// Filter and process trades
+	trades.forEach((trade) => {
+		const pnl = calcAbsolutePnl(trade);
+		if (!trade.stopLoss || !pnl) {
+			return;
+		}
+
+		const risk =
+			Math.abs(trade.stopLoss - trade.openPrice) *
+			trade.quantity *
+			(trade.leverage ?? 1);
+		const ratio = pnl / risk;
+
+		// Find the appropriate range and increment its counter
+		const rangeIndex = ranges.findIndex(
+			(range) => ratio >= range.min && ratio < range.max
+		);
+		if (rangeIndex !== -1) {
+			rangeCounts[rangeIndex]++;
+		}
+	});
+
+	return {
+		labels: ranges.map((range) => range.label),
+		datasets: [
+			{
+				label: 'Risk/Reward Ratio Distribution',
+				data: rangeCounts,
+				backgroundColor: rangeCounts.map((_, index) => {
+					if (index < 4) return financialColors.loss;
+					if (index === 4) return financialColors.neutral;
+					return financialColors.profit;
+				}),
+				borderColor: '#374151',
+				borderWidth: 1,
+				barPercentage: 0.8, // Controls bar width
+				categoryPercentage: 0.9, // Controls spacing between bars
+			},
+		],
+	};
+}
+
 // Helper function to calculate drawdown from equity curve
 function calculateDrawdown(equityData: number[]): number[] {
 	if (equityData.length === 0) return [];
@@ -444,60 +320,4 @@ function calculateDrawdown(equityData: number[]): number[] {
 	});
 
 	return drawdown;
-}
-
-// Helper function to create multiple equity curves for comparison
-export function createMultipleEquityCurves(
-	tradeSets: { trades: Trade[]; label: string; color: string }[],
-	initialBalance: number = 10000,
-	timeframe: 'daily' | 'weekly' | 'monthly' = 'daily'
-): LineChartData {
-	const allDates = new Set<string>();
-
-	// Get all unique dates from all trade sets
-	tradeSets.forEach(({ trades }) => {
-		const curveData = createEquityCurveData(trades, initialBalance, timeframe);
-		curveData.labels.forEach((date) => allDates.add(date));
-	});
-
-	// Sort dates
-	const sortedDates = Array.from(allDates).sort();
-
-	// Create datasets for each trade set
-	const datasets = tradeSets.map(({ trades, label, color }) => {
-		const curveData = createEquityCurveData(trades, initialBalance, timeframe);
-
-		// Map data to match all dates
-		const mappedData = sortedDates.map((date) => {
-			const index = curveData.labels.indexOf(date);
-			return index !== -1 ? curveData.datasets[0].data[index] : null;
-		});
-
-		// Forward fill missing data
-		let lastValue = initialBalance;
-		const filledData = mappedData.map((value) => {
-			if (value !== null) {
-				lastValue = value;
-				return value;
-			}
-			return lastValue;
-		});
-
-		return {
-			label,
-			data: filledData,
-			borderColor: color,
-			backgroundColor: `${color}20`,
-			tension: 0.4,
-			fill: false,
-			borderWidth: 2,
-			pointRadius: 0,
-			pointHoverRadius: 4,
-		};
-	});
-
-	return {
-		labels: sortedDates,
-		datasets,
-	};
 }

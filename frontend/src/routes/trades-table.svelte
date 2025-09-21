@@ -1,5 +1,5 @@
 <script lang="ts">
-	import * as Table from '$lib/components/ui/table';
+    import * as Table from '$lib/components/ui/table';
 	import DataTableActions from './trades-table-actions.svelte';
 	import {
 		TradeTypeCell,
@@ -87,7 +87,7 @@
 			accessor: (trade) => ({
 				trade,
 			}),
-			header: 'P&L',
+			header: 'PnL',
 			cell: ({ value }) => createRender(PnLDisplay, { trade: value.trade }),
 		}),
 		table.column({
