@@ -20,21 +20,6 @@ export const convertApiTradeToUiTrade = (trade: any): Trade => {
 	};
 };
 
-export const convertUiTradeFormToApiTrade = (trade: TradeFormInput): any => {
-	return {
-		symbol: trade.symbol,
-		type: trade.tradeType,
-		open_price: trade.openPrice, // updated to match backend field name
-		quantity: trade.quantity,
-		opened_at: trade.openedAt,
-		stop_loss: trade.stopLoss || null,
-		take_profit: trade.takeProfit || null,
-		leverage: trade.useLeverage ? trade.leverage : null,
-		close_price: trade.closePrice || null,
-		closed_at: trade.closedAt || null,
-	};
-};
-
 export const convertUiTradeToTradeFormInput = (
 	trade: Trade
 ): TradeFormInput => {

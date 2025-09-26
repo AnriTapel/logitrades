@@ -9,12 +9,18 @@
 	import OpenedTrades from './opened-trades.svelte';
 	import ClosedTrades from './closed-trades.svelte';
 
-	let { data } = $props<{ data: PageData }>();
+	let { data }: { data: PageData } = $props();
 	let isTradeFormOpen = $state(false);
 	let isImportDialogOpen = $state(false);
 
 	$effect(() => {
 		tradesStore.set(data.trades);
+	});
+
+	$effect(() => {
+		if (!data.isEditMode) {
+			isTradeFormOpen = false;
+		}
 	});
 
 	async function handleTradeDelete(tradeId: number) {
@@ -66,7 +72,7 @@
 		<TradeForm
 			data={data.form}
 			onCancel={handleCloseTradeForm}
-			isEdit={Boolean(location.search.includes('edit'))}
+			isEdit={data.isEditMode}
 		/>
 	{/if}
 </div>

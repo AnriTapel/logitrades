@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 export const formSchema = z.object({
 	id: z.number().optional(),
+	createdAt: z.string().datetime().optional().nullable(),
 	symbol: z
 		.string()
 		.max(24, { message: 'Symbol must be less than 24 characters' })

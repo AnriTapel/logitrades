@@ -15,6 +15,7 @@
 	import { DatePicker } from '$lib';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import ToggleGroup from '$lib/components/custom/toggle-group.svelte';
+	import { showServerErrors } from '$lib/stores/error';
 
 	export const {
 		data,
@@ -30,9 +31,10 @@
 		validators: zodClient(formSchema),
 		id: 'trade-form',
 		onResult: ({ result }) => {
-			// Check if operation was successful (no validation errors or server errors)
 			if (result.type === 'success') {
 				onCancel();
+			} else if (result.type == 'failure') {
+				showServerErrors(result.data?.error);
 			}
 		},
 	});
@@ -44,14 +46,7 @@
 		: 'Create Trade Note';
 
 	const handleSubmit = async (): Promise<void> => {
-		const result = await form.validateForm();
-
-		if (!result.valid) {
-			return form.errors.set(result.errors);
-		}
-
 		form.submit();
-		onCancel();
 	};
 
 	const handleCancel = (): void => {
@@ -71,8 +66,13 @@
 	onCancel={handleCancel}
 >
 	<form method="POST" use:enhance action={isEdit ? '?/update' : '?/create'}>
+		<!-- TODO: remove this inputs -->
 		{#if isEdit && $formData.id}
 			<input type="hidden" name="id" value={$formData.id} />
+		{/if}
+
+		{#if isEdit && $formData.id}
+			<input type="hidden" name="createdAt" value={$formData.createdAt} />
 		{/if}
 
 		<Field {form} name="tradeType" class="col-span-2">

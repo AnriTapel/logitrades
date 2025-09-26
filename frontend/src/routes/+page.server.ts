@@ -1,14 +1,14 @@
 import type { Actions } from './$types';
 import { superValidate } from 'sveltekit-superforms';
-import { formSchema } from './schema';
-import { fail } from '@sveltejs/kit';
+import { formSchema, type TradeFormInput } from './schema';
+import { fail, redirect } from '@sveltejs/kit';
 import { zod } from 'sveltekit-superforms/adapters';
 import type { Trade } from '$lib/types';
 import {
 	convertUiTradeToTradeFormInput,
 	convertApiTradeToUiTrade,
-	convertUiTradeFormToApiTrade,
 } from '$lib/tradeConverters';
+import { httpClient } from '$lib/services/http-client/http-client';
 
 const sortTradesByClosedAt = (
 	{ closedAt: closedAtA, openedAt: openedAtA }: Trade,
@@ -57,12 +57,12 @@ export const load = async ({ url }) => {
 		form = await superValidate(zod(formSchema));
 	}
 
-	return { trades, form };
+	return { trades, form, isEditMode: tradeId !== null };
 };
 
 export const actions = {
 	create: async (event) => {
-		const form = await superValidate(event, zod(formSchema));
+		const form = await superValidate<TradeFormInput>(event, zod(formSchema));
 		if (!form.valid) {
 			return fail(400, {
 				form,
@@ -70,17 +70,18 @@ export const actions = {
 			});
 		}
 
-		const response = await fetch('http://localhost:8000/api/v1/trades/', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify(convertUiTradeFormToApiTrade(form.data)),
-		});
+		try {
+			await httpClient.post<TradeFormInput, unknown>(
+				'http://localhost:8000/api/v1/trades/',
+				{
+					payload: form.data,
+				}
+			);
 
-		if (!response.ok) {
-			return fail(500, { form, error: 'Failed to save trade.' });
+			return { success: true, form };
+		} catch (error) {
+			return fail(500, { form, error });
 		}
-
-		return { form };
 	},
 
 	update: async (event) => {
@@ -92,19 +93,17 @@ export const actions = {
 			});
 		}
 
-		const response = await fetch(
-			`http://localhost:8000/api/v1/trades/${form.data.id}`,
-			{
-				method: 'PUT',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(convertUiTradeFormToApiTrade(form.data)),
-			}
-		);
-
-		if (!response.ok) {
-			return fail(500, { form, error: 'Failed to update trade.' });
+		try {
+			await httpClient.put<TradeFormInput>(
+				`http://localhost:8000/api/v1/trades/${form.data.id}`,
+				{
+					payload: form.data,
+				}
+			);
+		} catch (error) {
+			return fail(500, { form, error });
 		}
 
-		return { form };
+		throw redirect(303, '?');
 	},
 } satisfies Actions;
