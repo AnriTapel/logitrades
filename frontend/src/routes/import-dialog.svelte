@@ -3,6 +3,8 @@
 	import { Input } from '$lib/components/ui/input';
 	import { importTrades } from '$lib/services/api';
 	import { invalidateAll } from '$app/navigation';
+    import {showServerErrors} from "$lib/stores/error";
+    import type {HttpError} from "$lib/services/http-client/types";
 
 	let { onCancel = () => {} } = $props<{ onCancel: () => void }>();
 
@@ -24,10 +26,9 @@
 			await importTrades(selectedFile);
 			await invalidateAll();
 			onCancel();
-		} catch (error) {
-			console.error(error);
-			// TODO: Show an error message to the user
-		}
+		} catch (e) {
+            showServerErrors(e as HttpError);
+        }
 	}
 
 	function downloadCSVTemplate() {

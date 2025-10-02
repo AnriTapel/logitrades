@@ -16,6 +16,7 @@
 	import Button from '$lib/components/ui/button/button.svelte';
 	import ToggleGroup from '$lib/components/custom/toggle-group.svelte';
 	import { showServerErrors } from '$lib/stores/error';
+    import type {HttpError} from "$lib/services/http-client/types";
 
 	export const {
 		data,
@@ -34,7 +35,7 @@
 			if (result.type === 'success') {
 				onCancel();
 			} else if (result.type == 'failure') {
-				showServerErrors(result.data?.error);
+				showServerErrors(result.data?.error as HttpError);
 			}
 		},
 	});

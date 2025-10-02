@@ -1,7 +1,5 @@
-export type HttpClientError<T = unknown> = {
-	detail: Array<{
-		type: string;
-		msg: string;
-		input?: T;
-	}>;
+export type HttpError = {
+    code: number;
+    reason: string;
+    details: string | string[];
 };

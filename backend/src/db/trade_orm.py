@@ -2,14 +2,14 @@ from sqlalchemy import Column, Integer, Float, String
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime, timezone
 
-from .domain import Trade as TradeDomain
+from backend.src.domain import TradeDomain
 
 Base = declarative_base()
 
 def get_current_time():
     return datetime.now(timezone.utc).isoformat()
 
-class Trades(Base):
+class TradeORM(Base):
     __tablename__ = "trades"
     id = Column(Integer, primary_key=True, index=True)
     symbol = Column(String, index=True)

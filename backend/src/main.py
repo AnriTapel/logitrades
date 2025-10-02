@@ -2,15 +2,18 @@ from fastapi import FastAPI, APIRouter, Depends, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
-from .forms.trade_form import TradeForm
-from .domain import Trade
+from backend.src.errors.exception_handles import register_exception_handlers
+from backend.src.models import TradeFormModel, TradeImportModel
 
-from . import database, models
+from backend.src.db import TradeORM
+from backend.src import database
+
 from pydantic import ValidationError
-from datetime import datetime
-from typing import List
 import csv
 import io
+
+from backend.src.models.trade_response import TradeResponse
+from backend.src.utils.normalize_csv_row import normalize_csv_row
 
 app = FastAPI()
 app.add_middleware(
@@ -30,39 +33,26 @@ def get_db_connection():
 
 @router.post("/trades/import")
 def import_trades_from_csv(file: UploadFile = File(...), db: Session = Depends(database.get_db)):
-    try:
-        content = file.file.read().decode('utf-8')
-        csv_reader = csv.DictReader(io.StringIO(content))
-        for row in csv_reader:
-            try:
-                trade_data = Trade(
-                    symbol=row["symbol"],
-                    open_price=float(row["open_price"]),
-                    type=row["trade_type"],
-                    opened_at=datetime.fromisoformat(row["opened_at"]),
-                    quantity=float(row["quantity"]),
-                    leverage=float(row["leverage"]) if row.get("leverage") and row["leverage"] != '' else None,
-                    stop_loss=float(row["stop_loss"]) if row.get("stop_loss") and row["stop_loss"] != '' else None,
-                    take_profit=float(row["take_profit"]) if row.get("take_profit") and row["take_profit"] != '' else None,
-                    close_price=float(row["close_price"]) if row.get("close_price") and row["close_price"] != '' else None,
-                    closed_at=datetime.fromisoformat(row["closed_at"]) if row.get("closed_at") and row["closed_at"] != '' else None,
-                )
-                db_trade = models.Trades(**trade_data.dict())
-                db.add(db_trade)
-            except (ValidationError, KeyError, ValueError) as e:
-                # Rollback the transaction on any error
-                db.rollback()
-                raise HTTPException(status_code=400, detail=f"Invalid data in CSV file: {e} on row: {row}")
-        db.commit()
-        return {"message": "Trades imported successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Failed to import trades: {e}")
+    content = file.file.read().decode('utf-8')
+    csv_reader = csv.DictReader(io.StringIO(content))
+    for index, row in enumerate(csv_reader, start=1):
+        try:
+            trade_import = TradeImportModel(**normalize_csv_row(row))
+            trade = trade_import.to_trade()
+            db_trade = TradeORM(**trade.to_dict())
+            db.add(db_trade)
+        except (ValidationError, KeyError, ValueError) as e:
+            # Rollback the transaction on any error
+            db.rollback()
+            raise HTTPException(status_code=400, detail=f"Invalid data in CSV file for row {index}: {e}")
+    db.commit()
+    return {"message": "Trades imported successfully"}
 
-@router.post("/trades/", response_model=Trade)
-def create_trade(trade_form: TradeForm, db: Session = Depends(database.get_db)):
+@router.post("/trades/", response_model=TradeResponse)
+def create_trade(trade_form: TradeFormModel, db: Session = Depends(database.get_db)):
     try:
         trade = trade_form.to_trade()
-        db_trade = models.Trades(**trade.dict())
+        db_trade = TradeORM(**trade.to_dict())
         db.add(db_trade)
         db.commit()
         db.refresh(db_trade)
@@ -72,15 +62,17 @@ def create_trade(trade_form: TradeForm, db: Session = Depends(database.get_db)):
             status_code=422,
             detail={e.errors()}
         )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=e.message_template)
     except Exception as e:
         raise HTTPException(
             status_code=500,
             detail={"msg": "Failed to save trade"}
         )
 
-@router.put("/trades/{trade_id}", response_model=Trade)
-def update_trade(trade_id: int, trade_form: TradeForm, db: Session = Depends(database.get_db)):
-    db_trade = db.query(models.Trades).filter(models.Trades.id == trade_id).first()
+@router.put("/trades/{trade_id}", response_model=TradeResponse)
+def update_trade(trade_id: int, trade_form: TradeFormModel, db: Session = Depends(database.get_db)):
+    db_trade = db.query(TradeORM).filter(TradeORM.id == trade_id).first()
     if db_trade is None:
         raise HTTPException(status_code=404, detail="Trade not found")
     try:
@@ -97,20 +89,22 @@ def update_trade(trade_id: int, trade_form: TradeForm, db: Session = Depends(dat
             status_code=422,
             detail={e.errors()}
         )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=e.message_template)
     except Exception as e:
         raise HTTPException(
             status_code=500,
-            detail={"message": "Failed to save trade"}
+            detail={"msg": "Failed to save trade"}
         )
 
-@router.get("/trades/", response_model=List[Trade])
+@router.get("/trades/", response_model=list[TradeResponse])
 def read_trades(db: Session = Depends(database.get_db)):
-    trades = db.query(models.Trades).all()
-    return [trade.to_domain() for trade in trades]
+    trades = db.query(TradeORM).all()
+    return [t.to_domain().__dict__ for t in trades]
 
 @router.delete("/trades/{trade_id}")
 def delete_trade(trade_id: int, db: Session = Depends(database.get_db)):
-    trade = db.query(models.Trades).filter(models.Trades.id == trade_id).first()
+    trade = db.query(TradeORM).filter(TradeORM.id == trade_id).first()
     if trade is None:
         raise HTTPException(status_code=404, detail="Trade not found")
     db.delete(trade)
@@ -118,3 +112,4 @@ def delete_trade(trade_id: int, db: Session = Depends(database.get_db)):
     return {"message": "Trade deleted successfully"}
 
 app.include_router(router)
+register_exception_handlers(app)

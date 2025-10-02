@@ -1,4 +1,2 @@
-from .trade.enums import TradeType
-from .trade.trade import Trade
-
-__all__ = ["TradeType", "Trade"]
+from backend.src.domain.trade.enums import TradeType
+from backend.src.domain.trade.trade_domain import TradeDomain
