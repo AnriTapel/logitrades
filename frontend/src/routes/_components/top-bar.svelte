@@ -5,7 +5,7 @@
 		totalTradedVolumeForPeriod,
 		totalEquityInOpenedTrades,
 	} from '$lib/calcFunctions';
-	import { formatIntToCurrency, formatNumber } from '$lib/formatters';
+	import { formatIntToCurrency } from '$lib/formatters';
 	import { tradesStore } from '$lib/stores/trades';
 	import { onDestroy } from 'svelte';
 
@@ -26,10 +26,7 @@
 		const sevenDaysAgo = new Date(today.setDate(today.getDate() - 7));
 
 		const last7DaysTrades = trades.filter(
-			(trade) =>
-				trade.closePrice &&
-				trade.closedAt &&
-				new Date(trade.closedAt) >= sevenDaysAgo
+			(trade) => new Date(trade.openedAt) >= sevenDaysAgo
 		);
 
 		pnlLast7Days = pnlForPeriod(last7DaysTrades);
@@ -47,7 +44,7 @@
 <div class="flex justify-between items-center mb-4">
 	<h1 class="text-2xl font-bold">Opened trades</h1>
 
-	<div class="flex gap-8 mt-4">
+	<div class="flex gap-12 mt-4">
 		<div>
 			<div class="text-sm text-gray-500">7-Day PnL</div>
 			<div
@@ -61,7 +58,7 @@
 		<div>
 			<div class="text-sm text-gray-500">7-Day Volume</div>
 			<div class="text-lg font-semibold">
-				{formatNumber(volumeLast7Days)}
+				{formatIntToCurrency(volumeLast7Days)}
 			</div>
 		</div>
 		<div>

@@ -117,13 +117,21 @@ export function calculatePnl(trade: Trade): number {
 }
 
 export function pnlForPeriod(trades: Trade[]): number {
-	return trades.reduce((total, trade) => total + calculatePnl(trade), 0);
+	return trades.reduce((total, trade) => {
+		if (!trade.closePrice || !trade.closedAt) {
+			return total;
+		}
+		return total + calculatePnl(trade);
+	}, 0);
 }
 
 export function totalTradedVolumeForPeriod(trades: Trade[]): number {
 	return trades.reduce((total, trade) => {
 		const closePrice = trade.closePrice || 0;
-		return total + (trade.openPrice + closePrice) * trade.quantity;
+		return (
+			total +
+			(trade.openPrice + closePrice) * trade.quantity * (trade.leverage ?? 1)
+		);
 	}, 0);
 }
 
