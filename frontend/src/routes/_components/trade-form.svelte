@@ -50,6 +50,14 @@
 		form.submit();
 	};
 
+	const handleSymbolChange = (event: Event): void => {
+		const target = event.target as HTMLInputElement;
+		formData.update((data) => ({
+			...data,
+			symbol: target.value.toUpperCase(),
+		}));
+	};
+
 	const handleCancel = (): void => {
 		form.reset();
 		onCancel();
@@ -104,7 +112,12 @@
 			<Control>
 				{#snippet children({ props })}
 					<FormLabel>Symbol *</FormLabel>
-					<Input {...props} bind:value={$formData.symbol} required />
+					<Input
+						{...props}
+						value={$formData.symbol}
+						required
+						oninput={handleSymbolChange}
+					/>
 				{/snippet}
 			</Control>
 			<FieldErrors />
@@ -118,7 +131,7 @@
 						{...props}
 						type="number"
 						min="0"
-						step="0.001"
+						step="0.000001"
 						bind:value={$formData.openPrice}
 						required
 					/>
@@ -134,8 +147,8 @@
 					<Input
 						{...props}
 						type="number"
-						min="0.1"
-						step="0.1"
+						min="0"
+						step="0.000001"
 						bind:value={$formData.quantity}
 						required
 					/>
@@ -152,7 +165,7 @@
 						{...props}
 						type="number"
 						min="0"
-						step="0.001"
+						step="0.000001"
 						bind:value={$formData.takeProfit}
 					/>
 				{/snippet}
@@ -168,7 +181,7 @@
 						{...props}
 						type="number"
 						min="0"
-						step="any"
+						step="0.000001"
 						bind:value={$formData.stopLoss}
 					/>
 				{/snippet}
@@ -236,7 +249,7 @@
 						{...props}
 						type="number"
 						min="0"
-						step="0.001"
+						step="0.000001"
 						bind:value={$formData.closePrice}
 					/>
 				{/snippet}
