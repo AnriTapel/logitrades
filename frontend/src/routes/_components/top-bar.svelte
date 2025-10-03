@@ -47,32 +47,30 @@
 <div class="flex justify-between items-center mb-4">
 	<h1 class="text-2xl font-bold">Opened trades</h1>
 
-	{#if $tradesStore.length > 0}
-		<div class="flex gap-8 mt-4">
-			<div>
-				<div class="text-sm text-gray-500">7-Day PnL</div>
-				<div
-					class="text-lg font-semibold"
-					class:text-green-600={pnlLast7Days > 0}
-					class:text-red-600={pnlLast7Days < 0}
-				>
-					{formatIntToCurrency(pnlLast7Days)}
-				</div>
-			</div>
-			<div>
-				<div class="text-sm text-gray-500">7-Day Volume</div>
-				<div class="text-lg font-semibold">
-					{formatNumber(volumeLast7Days)}
-				</div>
-			</div>
-			<div>
-				<div class="text-sm text-gray-500">Open Equity</div>
-				<div class="text-lg font-semibold">
-					{formatIntToCurrency(equityInOpenTrades)}
-				</div>
+	<div class="flex gap-8 mt-4">
+		<div>
+			<div class="text-sm text-gray-500">7-Day PnL</div>
+			<div
+				class="text-lg font-semibold"
+				class:text-green-600={pnlLast7Days > 0}
+				class:text-red-600={pnlLast7Days < 0}
+			>
+				{formatIntToCurrency(pnlLast7Days)}
 			</div>
 		</div>
-	{/if}
+		<div>
+			<div class="text-sm text-gray-500">7-Day Volume</div>
+			<div class="text-lg font-semibold">
+				{formatNumber(volumeLast7Days)}
+			</div>
+		</div>
+		<div>
+			<div class="text-sm text-gray-500">Open Equity</div>
+			<div class="text-lg font-semibold">
+				{formatIntToCurrency(equityInOpenTrades)}
+			</div>
+		</div>
+	</div>
 
 	<div class="flex gap-2">
 		<Button onclick={handleOpenTradeForm}>Add Trade</Button>

@@ -1,4 +1,4 @@
-import type { TradeFormInput } from '../routes/schema';
+import type { TradeFormInput } from './schemas/tradeSchemas';
 import { formatDateTimeISO } from './formatters';
 import type { Trade } from './types';
 

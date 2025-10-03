@@ -2,10 +2,9 @@
 	import { invalidateAll, goto } from '$app/navigation';
 	import { deleteTrade } from '$lib';
 	import type { PageData } from './$types';
-	import TradeForm from './trade-form.svelte';
+	import TradeForm from './_components/trade-form.svelte';
 	import { tradesStore } from '$lib/stores/trades';
-	import ImportDialog from './import-dialog.svelte';
-	import DashboardPreview from './dashboard-preview.svelte';
+	import ImportDialog from './_components/import-dialog.svelte';
 	import OpenedTrades from './opened-trades.svelte';
 	import ClosedTrades from './closed-trades.svelte';
 
@@ -51,28 +50,23 @@
 	}
 </script>
 
-<div class="container mx-auto p-4">
-	{#if $tradesStore.length}
-		<OpenedTrades
-			{handleTradeDelete}
-			{handleTradeEdit}
-			{handleOpenTradeForm}
-			{handleOpenImportDialog}
-		/>
+<OpenedTrades
+	{handleTradeDelete}
+	{handleTradeEdit}
+	{handleOpenTradeForm}
+	{handleOpenImportDialog}
+/>
 
-		<ClosedTrades {handleTradeDelete} {handleTradeEdit} />
+<ClosedTrades {handleTradeDelete} {handleTradeEdit} />
 
-		<DashboardPreview />
-	{/if}
-	{#if isImportDialogOpen}
-		<ImportDialog onCancel={handleCloseImportDialog} />
-	{/if}
+{#if isImportDialogOpen}
+	<ImportDialog onCancel={handleCloseImportDialog} />
+{/if}
 
-	{#if isTradeFormOpen}
-		<TradeForm
-			data={data.form}
-			onCancel={handleCloseTradeForm}
-			isEdit={data.isEditMode}
-		/>
-	{/if}
-</div>
+{#if isTradeFormOpen}
+	<TradeForm
+		data={data.form}
+		onCancel={handleCloseTradeForm}
+		isEdit={data.isEditMode}
+	/>
+{/if}

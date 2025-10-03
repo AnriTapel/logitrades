@@ -1,5 +1,5 @@
 <script lang="ts">
-	import TradesTable from './trades-table.svelte';
+	import TradesTable from './_components/trades-table.svelte';
 	import { tradesStore } from '$lib/stores/trades';
 	import type { Trade } from '$lib/types';
 	import { onDestroy } from 'svelte';
@@ -28,6 +28,8 @@
 <section class="mb-8">
 	<h1 class="text-2xl font-bold mb-2">Closed trades</h1>
 	<TradesTable
+		styling={{ maxBodyHeight: '40vh' }}
+		noTradesMessage="No closed trades found"
 		trades={closedTrades}
 		onDelete={handleTradeDelete}
 		onEdit={handleTradeEdit}

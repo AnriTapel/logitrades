@@ -20,7 +20,7 @@
 </script>
 
 <section class="mb-12">
-	<h1 class="text-2xl font-bold mb-4">Stats overview</h1>
+	<h1 class="text-2xl font-bold mb-4">Stats dashboard</h1>
 
 	{#if $tradesStore.length}
 		<div class="grid grid-cols-3 gap-4 grid-rows-2 mb-4">
@@ -77,6 +77,14 @@
 				<p class="text-l font-bold mb-4">Monthly PnL</p>
 				<BarChart data={createMonthlyPnLData($tradesStore)} />
 			</div>
+		</div>
+	{:else}
+		<div
+			class="p-4 border rounded-lg shadow-sm h-[30vh] w-full flex items-center justify-center bg-gray-100"
+		>
+			<p class="text-l font-bold mb-4">
+				Create or import your first trade to see stats
+			</p>
 		</div>
 	{/if}
 </section>

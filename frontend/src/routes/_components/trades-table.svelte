@@ -1,5 +1,5 @@
 <script lang="ts">
-    import * as Table from '$lib/components/ui/table';
+	import * as Table from '$lib/components/ui/table';
 	import DataTableActions from './trades-table-actions.svelte';
 	import {
 		TradeTypeCell,
@@ -19,10 +19,16 @@
 	import type { Writable } from 'svelte/store';
 	const {
 		trades,
+		styling,
+		noTradesMessage = 'No trades found',
 		onDelete,
 		onEdit,
 	}: {
 		trades: Writable<Trade[]>;
+		styling?: {
+			maxBodyHeight?: string;
+		};
+		noTradesMessage?: string;
 		onDelete: (tradeId: number) => void;
 		onEdit: (tradeId: number) => void;
 	} = $props();
@@ -131,23 +137,32 @@
 		{/each}
 	</Table.Header>
 
-	<Table.Body {...$tableBodyAttrs}>
-		{#each $pageRows as row (row.id)}
-			<Subscribe rowAttrs={row.attrs()} let:rowAttrs>
-				<Table.Row {...rowAttrs}>
-					{#each row.cells as cell (cell.id)}
-						<Subscribe attrs={cell.attrs()} let:attrs>
-							<Table.Cell {...attrs}>
-								<div class={`col-${cell.id}`}>
-									<Render of={cell.render()} />
-								</div>
-							</Table.Cell>
-						</Subscribe>
-					{/each}
-				</Table.Row>
-			</Subscribe>
-		{/each}
-	</Table.Body>
+	{#if $pageRows.length === 0}
+		<caption class="p-8 mb-4 text-sm text-muted-foreground"
+			>{noTradesMessage}</caption
+		>
+	{:else}
+		<Table.Body
+			{...$tableBodyAttrs}
+			class={`${styling?.maxBodyHeight ? `max-h-[${styling.maxBodyHeight}]` : ''}`}
+		>
+			{#each $pageRows as row (row.id)}
+				<Subscribe rowAttrs={row.attrs()} let:rowAttrs>
+					<Table.Row {...rowAttrs}>
+						{#each row.cells as cell (cell.id)}
+							<Subscribe attrs={cell.attrs()} let:attrs>
+								<Table.Cell {...attrs}>
+									<div class={`col-${cell.id}`}>
+										<Render of={cell.render()} />
+									</div>
+								</Table.Cell>
+							</Subscribe>
+						{/each}
+					</Table.Row>
+				</Subscribe>
+			{/each}
+		</Table.Body>
+	{/if}
 </Table.Root>
 
 <style>

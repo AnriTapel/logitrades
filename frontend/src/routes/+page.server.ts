@@ -1,6 +1,6 @@
 import type { Actions } from './$types';
 import { superValidate } from 'sveltekit-superforms';
-import { formSchema, type TradeFormInput } from './schema';
+import { formSchema, type TradeFormInput } from '../lib/schemas/tradeSchemas';
 import { fail, redirect } from '@sveltejs/kit';
 import { zod } from 'sveltekit-superforms/adapters';
 import type { Trade } from '$lib/types';
