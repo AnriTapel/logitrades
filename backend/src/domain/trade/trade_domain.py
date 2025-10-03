@@ -4,7 +4,7 @@ from backend.src.domain.trade.enums import TradeType
 from backend.src.errors.trade_validators import (
     validate_stop_loss,
     validate_take_profit,
-    validate_closed_at,
+    validate_closed_at, validate_close_trade,
 )
 
 class TradeDomain:
@@ -40,6 +40,7 @@ class TradeDomain:
         validate_stop_loss(self)
         validate_take_profit(self)
         validate_closed_at(self)
+        validate_close_trade(self)
 
     def to_dict(self) -> dict:
         return {
