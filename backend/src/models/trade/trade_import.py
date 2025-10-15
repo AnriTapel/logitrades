@@ -3,8 +3,8 @@ from typing import Optional
 
 from pydantic import BaseModel, Field
 
-from backend.src.domain.trade.enums import TradeType
-from backend.src.domain.trade.trade_domain import TradeDomain
+from ...domain.trade.enums import TradeType
+from ...domain.trade.trade_domain import TradeDomain
 
 
 class TradeImport(BaseModel):

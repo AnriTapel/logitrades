@@ -1,7 +1,7 @@
 from datetime import datetime
 
-from backend.src.domain.trade.enums import TradeType
-from backend.src.errors.trade_validators import (
+from .enums import TradeType
+from ...errors.trade_validators import (
     validate_stop_loss,
     validate_take_profit,
     validate_closed_at, validate_close_trade,

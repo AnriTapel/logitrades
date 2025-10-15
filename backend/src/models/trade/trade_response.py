@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
-from backend.src.domain.trade.enums import TradeType
+from ...domain.trade.enums import TradeType
 
 class TradeResponse(BaseModel):
     id: Optional[int]

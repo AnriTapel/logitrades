@@ -1,11 +1,11 @@
 from typing import TYPE_CHECKING
-from backend.src.domain.trade.enums import TradeType
-from backend.src.errors.closed_at_errors import closed_at_before_opened_at_error, close_trade_data_error
-from backend.src.errors.stop_loss_errors import stop_loss_too_low_error, stop_loss_too_high_error
-from backend.src.errors.take_profit_errors import take_profit_too_low_error, take_profit_too_high_error
+from ..domain.trade.enums import TradeType
+from .closed_at_errors import closed_at_before_opened_at_error, close_trade_data_error
+from .stop_loss_errors import stop_loss_too_low_error, stop_loss_too_high_error
+from .take_profit_errors import take_profit_too_low_error, take_profit_too_high_error
 
 if TYPE_CHECKING:
-    from backend.src.domain.trade.trade_domain import TradeDomain
+    from ..domain.trade.trade_domain import TradeDomain
 
 def validate_stop_loss(trade: "TradeDomain") -> None:
     trade_type = trade.type

@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime
 
-from backend.src.domain import TradeType, TradeDomain
+from ...domain import TradeType, TradeDomain
 
 class TradeForm(BaseModel):
     symbol: str = Field(..., min_length=1, max_length=16, json_schema_extra={"example": "AAPL"})

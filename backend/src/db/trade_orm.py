@@ -1,13 +1,11 @@
 from sqlalchemy import Column, Integer, Float, String
 from sqlalchemy.ext.declarative import declarative_base
-from datetime import datetime, timezone
+from datetime import datetime
 
-from backend.src.domain import TradeDomain
+from ..domain import TradeDomain
+from ..utils import get_current_time
 
 Base = declarative_base()
-
-def get_current_time():
-    return datetime.now(timezone.utc).isoformat()
 
 class TradeORM(Base):
     __tablename__ = "trades"

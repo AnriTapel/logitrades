@@ -4,7 +4,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi import HTTPException
 from pydantic_core import PydanticCustomError
 
-from backend.src.errors.error_response import ErrorResponse
+from .error_response import ErrorResponse
 
 
 def make_error(

@@ -1,2 +1,3 @@
-from backend.src.domain.trade.enums import TradeType
-from backend.src.domain.trade.trade_domain import TradeDomain
+from .trade.enums import TradeType
+from .trade.trade_domain import TradeDomain
+from .user.user_domain import UserDomain
