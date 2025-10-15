@@ -17,6 +17,8 @@
 		createSymbolDistributionData,
 		createTradeTypeDistributionData,
 	} from '$lib/chartsHelpers';
+
+	let hasClosedTrades = $tradesStore.some((it) => it.closePrice && it.closedAt);
 </script>
 
 <section class="mb-12">
@@ -50,12 +52,22 @@
 				/>
 			</div>
 
-			<div class="p-4 border rounded-lg shadow-sm w-full">
+			<div
+				class="p-4 border grow rounded-lg shadow-sm w-full flex flex-col gap-4"
+			>
 				<p class="text-l font-bold mb-4">Equity Curve & Drawdown</p>
-				<LineChart data={createEquityCurveData($tradesStore)} />
+				{#if hasClosedTrades}
+					<LineChart data={createEquityCurveData($tradesStore)} />
+				{:else}
+					<div class="w-full grow flex justify-center items-center">
+						<span class="text-s">Nothing to show yet</span>
+					</div>
+				{/if}
 			</div>
 
-			<div class="p-4 border rounded-lg shadow-sm w-full">
+			<div
+				class="p-4 border grow rounded-lg shadow-sm w-full flex flex-col gap-4"
+			>
 				<p class="text-l font-bold mb-4">Trade Pair Distribution</p>
 				<PieChart
 					data={createSymbolDistributionData($tradesStore)}
@@ -63,19 +75,37 @@
 				/>
 			</div>
 
-			<div class="p-4 border grow rounded-lg shadow-sm w-full">
+			<div
+				class="p-4 border grow rounded-lg shadow-sm w-full flex flex-col gap-4"
+			>
 				<p class="text-l font-bold mb-4">Trade Type Distribution</p>
 				<PieChart data={createTradeTypeDistributionData($tradesStore)} />
 			</div>
 
-			<div class="p-4 border grow rounded-lg shadow-sm w-full">
-				<p class="text-l font-bold mb-4">Risk Reward Distribution</p>
-				<BarChart data={createRiskRewardDistribution($tradesStore)} />
+			<div
+				class="p-4 border grow rounded-lg shadow-sm w-full flex flex-col gap-4"
+			>
+				<p class="text-l font-bold">Risk Reward Distribution</p>
+				{#if hasClosedTrades}
+					<BarChart data={createRiskRewardDistribution($tradesStore)} />
+				{:else}
+					<div class="w-full grow flex justify-center items-center">
+						<span class="text-s">Nothing to show yet</span>
+					</div>
+				{/if}
 			</div>
 
-			<div class="p-4 border grow rounded-lg shadow-sm w-full">
+			<div
+				class="p-4 border grow rounded-lg shadow-sm w-full flex flex-col gap-4"
+			>
 				<p class="text-l font-bold mb-4">Monthly PnL</p>
-				<BarChart data={createMonthlyPnLData($tradesStore)} />
+				{#if hasClosedTrades}
+					<BarChart data={createMonthlyPnLData($tradesStore)} />
+				{:else}
+					<div class="w-full grow flex justify-center items-center">
+						<span class="text-s">Nothing to show yet</span>
+					</div>
+				{/if}
 			</div>
 		</div>
 	{:else}
