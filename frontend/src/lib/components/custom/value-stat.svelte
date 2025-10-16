@@ -10,15 +10,19 @@
 	} = $props();
 
 	const data = $derived(() => {
+		const numValue = Number(value);
+
 		if (type === 'money') {
 			return new Intl.NumberFormat('en-US', {
 				style: 'currency',
 				currency: 'USD',
-			}).format(Number(value));
+			}).format(numValue);
 		} else if (type === 'percentage') {
-			return `${Number(value).toFixed(2)}%`;
+			return `${numValue.toFixed(2)}%`;
 		} else if (type === 'integer') {
-			return Math.round(Number(value)).toString();
+			return new Intl.NumberFormat('en-US', {
+				notation: 'standard',
+			}).format(Math.round(numValue));
 		} else if (type === 'date') {
 			const date = new Date(value);
 			return date.toLocaleDateString('en-US', {

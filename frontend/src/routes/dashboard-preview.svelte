@@ -48,7 +48,7 @@
 				<ValueStat
 					label="Profit Factor"
 					value={calcProfitFactor($tradesStore)}
-					type={'percentage'}
+					type={'integer'}
 				/>
 			</div>
 
