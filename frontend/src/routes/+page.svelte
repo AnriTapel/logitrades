@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { invalidateAll, goto } from '$app/navigation';
-	import { deleteTrade } from '$lib';
 	import type { PageData } from './$types';
 	import TradeForm from './_components/trade-form.svelte';
 	import { tradesStore } from '$lib/stores/trades';
@@ -23,7 +22,14 @@
 	});
 
 	async function handleTradeDelete(tradeId: number) {
-		await deleteTrade(tradeId);
+		const formData = new FormData();
+		formData.append('tradeId', tradeId.toString());
+
+		await fetch('?/delete', {
+			method: 'POST',
+			body: formData,
+		});
+
 		await invalidateAll();
 	}
 

@@ -1,10 +1,9 @@
 <script lang="ts">
 	import CommonDialog from '$lib/components/ui/dialog/common-dialog.svelte';
 	import { Input } from '$lib/components/ui/input';
-	import { importTrades } from '$lib/services/api';
 	import { invalidateAll } from '$app/navigation';
-    import {showServerErrors} from "$lib/stores/error";
-    import type {HttpError} from "$lib/services/http-client/types";
+	import { showServerErrors } from '$lib/stores/error';
+	import type { HttpError } from '$lib/server/http-client/types';
 
 	let { onCancel = () => {} } = $props<{ onCancel: () => void }>();
 
@@ -22,13 +21,30 @@
 			return;
 		}
 
+		const formData = new FormData();
+		formData.append('file', selectedFile);
+
 		try {
-			await importTrades(selectedFile);
-			await invalidateAll();
-			onCancel();
-		} catch (e) {
-            showServerErrors(e as HttpError);
-        }
+			const response = await fetch('?/import', {
+				method: 'POST',
+				body: formData,
+			});
+
+			const result = await response.json();
+
+			if (result.type === 'success') {
+				await invalidateAll();
+				onCancel();
+			} else if (result.type === 'failure') {
+				showServerErrors(result.data?.error as HttpError);
+			}
+		} catch (error) {
+			showServerErrors({
+				code: 500,
+				reason: 'Failed to import',
+				details: 'Unknown error',
+			});
+		}
 	}
 
 	function downloadCSVTemplate() {

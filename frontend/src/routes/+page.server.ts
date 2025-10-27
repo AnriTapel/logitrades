@@ -8,7 +8,7 @@ import {
 	convertUiTradeToTradeFormInput,
 	convertApiTradeToUiTrade,
 } from '$lib/tradeConverters';
-import { httpClient } from '$lib/services/http-client/http-client';
+import { httpClient } from '$lib/server/http-client/http-client';
 
 const sortTradesByClosedAt = (
 	{ closedAt: closedAtA, openedAt: openedAtA }: Trade,
@@ -30,12 +30,7 @@ const sortTradesByClosedAt = (
 };
 
 const loadTrades = async (): Promise<Trade[]> => {
-	const BASE_URL = 'http://localhost:8000/api/v1/trades/';
-	const response = await fetch(BASE_URL);
-	if (!response.ok) {
-		throw new Error('Failed to fetch trades');
-	}
-	const trades = await response.json();
+	const trades = await httpClient.get<any>('/trades');
 	return trades.map(convertApiTradeToUiTrade).sort(sortTradesByClosedAt);
 };
 
@@ -71,12 +66,9 @@ export const actions = {
 		}
 
 		try {
-			await httpClient.post<TradeFormInput, unknown>(
-				'http://localhost:8000/api/v1/trades/',
-				{
-					payload: form.data,
-				}
-			);
+			await httpClient.post<TradeFormInput, unknown>('/trades', {
+				payload: form.data,
+			});
 
 			return { success: true, form };
 		} catch (error) {
@@ -94,16 +86,45 @@ export const actions = {
 		}
 
 		try {
-			await httpClient.put<TradeFormInput>(
-				`http://localhost:8000/api/v1/trades/${form.data.id}`,
-				{
-					payload: form.data,
-				}
-			);
+			await httpClient.put<TradeFormInput>(`/trades/${form.data.id}`, {
+				payload: form.data,
+			});
 		} catch (error) {
 			return fail(500, { form, error });
 		}
 
 		throw redirect(303, '?');
+	},
+
+	delete: async (event) => {
+		const formData = await event.request.formData();
+		const tradeId = formData.get('tradeId');
+
+		if (!tradeId || isNaN(Number(tradeId))) {
+			return fail(400, { error: 'Invalid trade ID' });
+		}
+
+		try {
+			await httpClient.delete(`/trades/${tradeId}`);
+			return { success: true };
+		} catch (error) {
+			return fail(500, { error });
+		}
+	},
+
+	import: async (event) => {
+		const formData = await event.request.formData();
+		const file = formData.get('file') as File;
+
+		if (!file) {
+			return fail(400, { error: 'No file provided' });
+		}
+
+		try {
+			await httpClient.sendFile('/trades/import', file);
+			return { success: true };
+		} catch (error) {
+			return fail(500, { error });
+		}
 	},
 } satisfies Actions;

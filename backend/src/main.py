@@ -24,7 +24,7 @@ import io
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["http://localhost:5173", "http://localhost:3000", "http://0.0.0.0:3000"],
     allow_credentials=True,
     allow_methods=["POST", "GET", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
@@ -51,7 +51,7 @@ def import_trades_from_csv(file: UploadFile, db: db_dependency):
     db.commit()
     return {"message": "Trades imported successfully"}
 
-@router.post("/trades/", response_model=TradeResponse)
+@router.post("/trades", response_model=TradeResponse)
 def create_trade(trade_form: TradeForm, db: db_dependency):
     try:
         trade = trade_form.to_trade()
@@ -80,7 +80,7 @@ def update_trade(trade_id: int, trade_form: TradeForm, db: db_dependency):
         raise HTTPException(status_code=404, detail="Trade not found")
     try:
         trade = trade_form.to_trade()
-        for key, value in trade.dict().items():
+        for key, value in trade.to_dict().items():
             if key == 'created_at' or key == 'id':
                 continue
             setattr(db_trade, key, value)
@@ -100,7 +100,7 @@ def update_trade(trade_id: int, trade_form: TradeForm, db: db_dependency):
             detail={"msg": "Failed to save trade"}
         )
 
-@router.get("/trades/", response_model=list[TradeResponse])
+@router.get("/trades", response_model=list[TradeResponse])
 def read_trades(db: db_dependency):
     trades = db.query(TradeORM).all()
     return [t.to_domain().__dict__ for t in trades]

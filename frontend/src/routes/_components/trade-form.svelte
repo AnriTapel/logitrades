@@ -16,7 +16,7 @@
 	import Button from '$lib/components/ui/button/button.svelte';
 	import ToggleGroup from '$lib/components/custom/toggle-group.svelte';
 	import { showServerErrors } from '$lib/stores/error';
-	import type { HttpError } from '$lib/services/http-client/types';
+	import type { HttpError } from '$lib/server/http-client/types';
 
 	export const {
 		data,
