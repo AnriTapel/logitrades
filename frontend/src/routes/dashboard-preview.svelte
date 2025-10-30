@@ -18,7 +18,9 @@
 		createTradeTypeDistributionData,
 	} from '$lib/chartsHelpers';
 
-	let hasClosedTrades = $tradesStore.some((it) => it.closePrice && it.closedAt);
+	let closedTrades = $derived(
+		$tradesStore.filter((it) => it.closePrice && it.closedAt)
+	);
 </script>
 
 <section class="mb-12">
@@ -29,7 +31,7 @@
 			<div class="grid grid-cols-2 gap-4">
 				<ValueStat
 					label="Winrate"
-					value={calcWinrate($tradesStore)}
+					value={calcWinrate(closedTrades)}
 					type={'percentage'}
 				/>
 
@@ -56,7 +58,7 @@
 				class="p-4 border grow rounded-lg shadow-sm w-full flex flex-col gap-4"
 			>
 				<p class="text-l font-bold mb-4">Equity Curve & Drawdown</p>
-				{#if hasClosedTrades}
+				{#if closedTrades.length}
 					<LineChart data={createEquityCurveData($tradesStore)} />
 				{:else}
 					<div class="w-full grow flex justify-center items-center">
@@ -86,7 +88,7 @@
 				class="p-4 border grow rounded-lg shadow-sm w-full flex flex-col gap-4"
 			>
 				<p class="text-l font-bold">Risk Reward Distribution</p>
-				{#if hasClosedTrades}
+				{#if closedTrades.length}
 					<BarChart data={createRiskRewardDistribution($tradesStore)} />
 				{:else}
 					<div class="w-full grow flex justify-center items-center">
@@ -99,7 +101,7 @@
 				class="p-4 border grow rounded-lg shadow-sm w-full flex flex-col gap-4"
 			>
 				<p class="text-l font-bold mb-4">Monthly PnL</p>
-				{#if hasClosedTrades}
+				{#if closedTrades.length}
 					<BarChart data={createMonthlyPnLData($tradesStore)} />
 				{:else}
 					<div class="w-full grow flex justify-center items-center">
