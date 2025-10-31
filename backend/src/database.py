@@ -4,7 +4,10 @@ from .db import TradeORM, UserORM
 
 from .utils import _get_env_var
 
-engine = create_engine(_get_env_var("DATABASE_URL"), connect_args={"check_same_thread": False})
+database_url = _get_env_var("DATABASE_URL")
+connect_args = {"check_same_thread": False} if database_url.startswith("sqlite") else {}
+
+engine = create_engine(database_url, connect_args=connect_args)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 TradeORM.metadata.create_all(bind=engine)
