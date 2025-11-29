@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from .db import TradeORM, UserORM
+
+from .db import TradeORM, UserORM, RefreshTokenORM
 
 from .utils import _get_env_var
 
@@ -12,6 +13,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 TradeORM.metadata.create_all(bind=engine)
 UserORM.metadata.create_all(bind=engine)
+RefreshTokenORM.metadata.create_all(bind=engine)
 
 def get_db():
     db = SessionLocal()

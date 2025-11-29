@@ -1,19 +1,9 @@
 from pydantic import BaseModel, EmailStr
 
-from ...auth import get_password_hash
-from ...domain import UserDomain
-
 class UserCreate(BaseModel):
     password: str
     username: str
     email: EmailStr
-
-    def to_user_domain(self) -> "UserDomain":
-        return UserDomain(
-            username=self.username,
-            email=self.email,
-            hashed_password=get_password_hash(self.password)
-        )
 
 class UserLogin(BaseModel):
     username: str

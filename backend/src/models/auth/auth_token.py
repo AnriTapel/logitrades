@@ -1,6 +1,9 @@
+from datetime import datetime
+from typing import Literal
 from pydantic import BaseModel
 
 
 class AuthToken(BaseModel):
-    access_token: str
-    token_type: str
+    username: str
+    expires_at: datetime
+    type: Literal['access', 'refresh'] 

@@ -18,6 +18,9 @@ class UserORM(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(String, default=get_current_time)
 
+    provider = Column(String, nullable=False, default="local")
+    provider_id = Column(String, nullable=True)
+
     def to_domain(self) -> "UserDomain":
 
         return UserDomain(

@@ -3,19 +3,20 @@ import os
 
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "..", ".env"))
 
-from fastapi import FastAPI, APIRouter, Depends, HTTPException, UploadFile
+from fastapi import FastAPI, APIRouter, Depends, HTTPException, UploadFile, Response
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from typing import Annotated
 
-from .auth import create_access_token, verify_password
+from .domain import UserDomain
+from .auth import get_jwt_tokens_for_user, verify_password, REFRESH_TOKEN_EXPIRE_SEC, ACCESS_TOKEN_EXPIRE_SEC, get_current_user, get_password_hash
 from .errors.exception_handles import register_exception_handlers
-from .models import TradeForm, TradeImportModel, AuthToken, UserLogin
+from .models import TradeForm, TradeImportModel, UserLogin
 from .models.trade.trade_response import TradeResponse
 from .utils.normalize_csv_row import normalize_csv_row
 from .models import UserCreate
 
-from .db import TradeORM, UserORM
+from .db import TradeORM, UserORM, RefreshTokenORM
 from . import database
 
 from pydantic import ValidationError
@@ -115,29 +116,50 @@ def delete_trade(trade_id: int, db: db_dependency):
     return {"message": "Trade deleted successfully"}
 
 
-@router.post("/auth/signup", response_model=AuthToken)
-async def signup(user: UserCreate, db: db_dependency):
+@router.post("/auth/signup")
+def signup(user: UserCreate, response: Response, db: db_dependency):
     existing = db.query(UserORM).filter(UserORM.username == user.username).first()
     if existing:
         raise HTTPException(status_code=400, detail="Username already taken")
 
-    new_user = user.to_user_domain()
+    new_user = UserDomain(username=user.username, email=user.email, hashed_password=get_password_hash(user.password))
     db_user = UserORM(**new_user.to_dict())
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
 
-    access_token = create_access_token(data={"sub": new_user.username})
-    return AuthToken(access_token=access_token, token_type="bearer")
+    access_token, refresh_token = get_jwt_tokens_for_user(db_user)
+    
+    db_refresh_token = RefreshTokenORM(id=None, token=refresh_token, user_id=db_user.id)
+    db.add(db_refresh_token)
+    db.commit()
 
-@router.post("/auth/token", response_model=AuthToken)
-def login(user: UserLogin, db: db_dependency):
+    response.set_cookie(key="access_token", value=access_token, httponly=True, secure=True, max_age=ACCESS_TOKEN_EXPIRE_SEC)
+    response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, secure=True, max_age=REFRESH_TOKEN_EXPIRE_SEC)
+
+    return {"success": True, "username": db_user.username}
+
+@router.post("/auth/login")
+def login(user: UserLogin, response: Response, db: db_dependency) -> dict:
     db_user = db.query(UserORM).filter(UserORM.username == user.username).first()
     if not db_user or not verify_password(user.password, db_user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    access_token = create_access_token(data={"sub": db_user.username})
-    return AuthToken(access_token=access_token, token_type="bearer")
+    access_token, refresh_token = get_jwt_tokens_for_user(db_user)
+    response.set_cookie(key="access_token", value=access_token, httponly=True, secure=True, max_age=ACCESS_TOKEN_EXPIRE_SEC)
+    response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, secure=True, max_age=REFRESH_TOKEN_EXPIRE_SEC)
+
+    return {"success": True, "username": db_user.username}
+
+@router.post("/auth/logout")
+async def logout(response: Response):
+    response.delete_cookie(key="access_token")
+    response.delete_cookie(key="refresh_token")
+    return {"message": "Logged out successfully"}
+
+@router.get("/items")
+async def read_items(current_user: str = Depends(get_current_user)):
+    return {"message": f"Hello, {current_user}! Here are your items."}
 
 app.include_router(router)
 register_exception_handlers(app)
