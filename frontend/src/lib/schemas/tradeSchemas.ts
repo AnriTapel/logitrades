@@ -38,6 +38,4 @@ export const formSchema = z.object({
 	closedAt: z.string().datetime().optional().nullable(),
 });
 
-export type TradeFormSchema = typeof formSchema;
-
-export type TradeFormInput = z.infer<TradeFormSchema>;
+export type TradeFormInput = z.infer<typeof formSchema>;

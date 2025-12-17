@@ -45,7 +45,7 @@
 </script>
 
 <Dialog.Root {open} onOpenChange={handleOpenChange}>
-	<Dialog.Content class="max-w-max">
+	<Dialog.Content class="max-w-max min-w-[300px]">
 		{#if title}
 			<h2 class="text-lg font-semibold mb-1">{title}</h2>
 		{/if}

@@ -6,6 +6,7 @@
 	import ImportDialog from './_components/import-dialog.svelte';
 	import OpenedTrades from './opened-trades.svelte';
 	import ClosedTrades from './closed-trades.svelte';
+	import DashboardPreview from './dashboard-preview.svelte';
 
 	let { data }: { data: PageData } = $props();
 	let isTradeFormOpen = $state(false);
@@ -64,6 +65,8 @@
 />
 
 <ClosedTrades {handleTradeDelete} {handleTradeEdit} />
+
+<DashboardPreview />
 
 {#if isImportDialogOpen}
 	<ImportDialog onCancel={handleCloseImportDialog} />

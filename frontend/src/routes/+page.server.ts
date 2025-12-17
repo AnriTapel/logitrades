@@ -29,13 +29,16 @@ const sortTradesByClosedAt = (
 	return openedAtB.localeCompare(openedAtA);
 };
 
-const loadTrades = async (): Promise<Trade[]> => {
-	const trades = await httpClient.get<any>('/trades');
-	return trades.map(convertApiTradeToUiTrade).sort(sortTradesByClosedAt);
-};
+export const load = async ({ url, fetch, locals }) => {
+	// Redirect to login if not authenticated
+	// User is set in handle hook (hooks.server.ts) before this runs
+	if (!locals.user) {
+		throw redirect(303, '/login');
+	}
 
-export const load = async ({ url }) => {
-	const trades = await loadTrades();
+	const response = await httpClient.get<Trade[]>('/trades', { fetch });
+	const trades =
+		response?.map(convertApiTradeToUiTrade).sort(sortTradesByClosedAt) ?? [];
 	// TODO :better way/place to handle edit mode
 	const tradeId = url.searchParams.get('edit');
 	let form;
@@ -56,8 +59,8 @@ export const load = async ({ url }) => {
 };
 
 export const actions = {
-	create: async (event) => {
-		const form = await superValidate<TradeFormInput>(event, zod(formSchema));
+	create: async ({ request, fetch }) => {
+		const form = await superValidate<TradeFormInput>(request, zod(formSchema));
 		if (!form.valid) {
 			return fail(400, {
 				form,
@@ -68,6 +71,7 @@ export const actions = {
 		try {
 			await httpClient.post<TradeFormInput, unknown>('/trades', {
 				payload: form.data,
+				fetch,
 			});
 
 			return { success: true, form };
@@ -76,8 +80,8 @@ export const actions = {
 		}
 	},
 
-	update: async (event) => {
-		const form = await superValidate(event, zod(formSchema));
+	update: async ({ request, fetch }) => {
+		const form = await superValidate(request, zod(formSchema));
 		if (!form.valid) {
 			return fail(400, {
 				form,
@@ -88,6 +92,7 @@ export const actions = {
 		try {
 			await httpClient.put<TradeFormInput>(`/trades/${form.data.id}`, {
 				payload: form.data,
+				fetch,
 			});
 		} catch (error) {
 			return fail(500, { form, error });
@@ -96,8 +101,8 @@ export const actions = {
 		throw redirect(303, '?');
 	},
 
-	delete: async (event) => {
-		const formData = await event.request.formData();
+	delete: async ({ request, fetch }) => {
+		const formData = await request.formData();
 		const tradeId = formData.get('tradeId');
 
 		if (!tradeId || isNaN(Number(tradeId))) {
@@ -105,15 +110,15 @@ export const actions = {
 		}
 
 		try {
-			await httpClient.delete(`/trades/${tradeId}`);
+			await httpClient.delete(`/trades/${tradeId}`, { fetch });
 			return { success: true };
 		} catch (error) {
 			return fail(500, { error });
 		}
 	},
 
-	import: async (event) => {
-		const formData = await event.request.formData();
+	import: async ({ request, fetch }) => {
+		const formData = await request.formData();
 		const file = formData.get('file') as File;
 
 		if (!file) {
@@ -121,10 +126,35 @@ export const actions = {
 		}
 
 		try {
-			await httpClient.sendFile('/trades/import', file);
+			await httpClient.sendFile('/trades/import', file, { fetch });
 			return { success: true };
 		} catch (error) {
 			return fail(500, { error });
 		}
+	},
+
+	logout: async ({ cookies, fetch }) => {
+		// Call backend logout to revoke refresh token in DB
+		try {
+			await httpClient.post('/auth/logout', {
+				fetch, // Use event's fetch to forward cookies
+			});
+		} catch (error) {
+			// Continue with logout even if backend call fails
+			console.error('Logout error:', error);
+		}
+
+		// Clear cookies (backend also clears them, but do it here too for safety)
+		cookies.set('access_token', '', {
+			path: '/',
+			expires: new Date(0),
+			sameSite: 'lax',
+		});
+		cookies.set('refresh_token', '', {
+			path: '/',
+			expires: new Date(0),
+			sameSite: 'lax',
+		});
+		throw redirect(303, '/login');
 	},
 } satisfies Actions;

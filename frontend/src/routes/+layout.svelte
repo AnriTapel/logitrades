@@ -1,11 +1,21 @@
 <script lang="ts">
 	import '../app.pcss';
 	import ErrorDialog from './_components/error-dialog.svelte';
-	import DashboardPreview from './dashboard-preview.svelte';
+	import { setAuth, clearAuth } from '$lib/stores/auth';
+
+	let { children, data } = $props();
+
+	// Sync auth state from server data
+	$effect(() => {
+		if (data.isAuthenticated && data.user) {
+			setAuth(data.user);
+		} else {
+			clearAuth();
+		}
+	});
 </script>
 
 <div class="container mx-auto p-4">
-	<slot />
-	<DashboardPreview />
+	{@render children()}
 	<ErrorDialog />
 </div>

@@ -10,7 +10,7 @@ Base = declarative_base()
 class TradeORM(Base):
     __tablename__ = "trades"
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(String, nullable=True)
+    user_id = Column(Integer, nullable=False)
     symbol = Column(String, index=True)
     open_price = Column(Float, nullable=False)  # renamed from price
     type = Column(String, index=True, nullable=False)

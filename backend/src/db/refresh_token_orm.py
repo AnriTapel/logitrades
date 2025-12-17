@@ -17,5 +17,5 @@ class RefreshTokenORM(Base):
     token = Column(String, index=True)
     user_id = Column(Integer, index=True)
     created_at = Column(DateTime(timezone=True), default=datetime.now(timezone.utc))
-    expires_at = Column(DateTime(timezone=True), default=(datetime.now(timezone.utc) + timedelta(minutes=REFRESH_TOKEN_EXPIRE_SEC)))
+    expires_at = Column(DateTime(timezone=True), default=(datetime.now(timezone.utc) + timedelta(seconds=REFRESH_TOKEN_EXPIRE_SEC)))
     revoked = Column(Boolean, default=False)

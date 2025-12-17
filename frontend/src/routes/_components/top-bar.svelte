@@ -8,6 +8,8 @@
 	import { formatIntToCurrency } from '$lib/formatters';
 	import { tradesStore } from '$lib/stores/trades';
 	import { onDestroy } from 'svelte';
+	import LogoutButton from './logout-button.svelte';
+	import { isAuthenticated, user, type User } from '$lib/stores/auth';
 
 	const {
 		handleOpenTradeForm,
@@ -20,6 +22,29 @@
 	let pnlLast7Days: number = $state(0);
 	let volumeLast7Days: number = $state(0);
 	let equityInOpenTrades: number = $state(0);
+
+	// Subscribe to auth stores for reactive updates and debugging
+	let authenticated = $state(false);
+	let currentUser = $state<User | null>(null);
+
+	const unsubscribeAuth = isAuthenticated.subscribe((value) => {
+		authenticated = value;
+		console.log('Auth state changed:', { isAuthenticated: value });
+	});
+
+	const unsubscribeUser = user.subscribe((value) => {
+		currentUser = value;
+		console.log('User data:', value);
+		if (value) {
+			console.log('User details:', {
+				id: value.id,
+				username: value.username,
+				email: value.email,
+				is_active: value.is_active,
+				is_verified: value.is_verified,
+			});
+		}
+	});
 
 	const unsubscibe = tradesStore.subscribe((trades) => {
 		const today = new Date();
@@ -38,6 +63,8 @@
 
 	onDestroy(() => {
 		unsubscibe();
+		unsubscribeAuth();
+		unsubscribeUser();
 	});
 </script>
 
@@ -74,5 +101,12 @@
 		<Button onclick={handleOpenImportDialog} variant="outline"
 			>Import from CSV</Button
 		>
+		{#if authenticated}
+			<LogoutButton />
+		{:else}
+			<a href="/login">
+				<Button variant="outline">Login</Button>
+			</a>
+		{/if}
 	</div>
 </div>
