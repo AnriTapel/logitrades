@@ -23,6 +23,10 @@ export type BarChartData = {
 		backgroundColor?: string | string[];
 		borderColor?: string | string[];
 		borderWidth?: number;
+		borderRadius?: number;
+		borderSkipped?: boolean | string;
+		barPercentage?: number;
+		categoryPercentage?: number;
 	}>;
 };
 
@@ -34,7 +38,10 @@ export type LineChartData = {
 		borderColor?: string;
 		backgroundColor?: string;
 		tension?: number;
-		fill?: boolean;
+		fill?: boolean | string;
+		borderWidth?: number;
+		pointRadius?: number;
+		pointHoverRadius?: number;
 	}>;
 };
 

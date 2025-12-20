@@ -1,6 +1,8 @@
 export { default as ValueStat } from './value-stat.svelte';
 export { default as DatePicker } from './date-time-picker.svelte';
 export { default as StatusBadge } from './status-badge.svelte';
+export { default as SymbolStatsTable } from './symbol-stats-table.svelte';
+export { default as TradeTypeStats } from './trade-type-stats.svelte';
 
 export { default as TradeTypeCell } from './cells/trade-type-cell.svelte';
 export { default as PnLDisplay } from './cells/pnl-display.svelte';

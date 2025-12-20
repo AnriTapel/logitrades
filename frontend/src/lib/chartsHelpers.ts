@@ -7,31 +7,29 @@ import type { BarChartData, LineChartData, PieChartData, Trade } from './types';
  *
  */
 
+// Glossy, cohesive color palette - ocean/sky tones with soft gradients
 const financialColors = {
-	profit: '#10b981', // green-500
-	loss: '#ef4444', // red-500
-	neutral: '#6b7280', // gray-500
-	primary: '#3b82f6', // blue-500
-	secondary: '#8b5cf6', // purple-500
-	success: '#22c55e', // green-500
-	warning: '#f59e0b', // amber-500
-	info: '#06b6d4', // cyan-500
-	indigo: '#6366f1', // indigo-500
-	pink: '#ec4899', // pink-500
-	teal: '#14b8a6', // teal-500
+	profit: '#34d399', // emerald-400 - softer green
+	loss: '#f87171', // red-400 - softer red
+	neutral: '#94a3b8', // slate-400 - muted gray
+	primary: '#60a5fa', // blue-400 - soft blue
+	secondary: '#818cf8', // indigo-400 - soft indigo
+	accent1: '#67e8f9', // cyan-300 - light cyan
+	accent2: '#a78bfa', // violet-400 - soft violet
+	accent3: '#93c5fd', // blue-300 - lighter blue
+	accent4: '#c4b5fd', // violet-300 - lighter violet
 } as const;
 
-// Generate color palette
+// Generate cohesive color palette with similar tones
 export const getColorPalette = (count: number): string[] => {
+	// Blue-violet gradient palette for cohesive look
 	const colors = [
 		financialColors.primary,
 		financialColors.secondary,
-		financialColors.success,
-		financialColors.warning,
-		financialColors.info,
-		financialColors.indigo,
-		financialColors.pink,
-		financialColors.teal,
+		financialColors.accent1,
+		financialColors.accent2,
+		financialColors.accent3,
+		financialColors.accent4,
 		financialColors.neutral,
 	];
 
@@ -47,6 +45,24 @@ export const getColorPalette = (count: number): string[] => {
  * Data convertion functions
  *
  */
+
+// Date formatting helpers
+function formatDateDDMMMYY(dateStr: string): string {
+	return new Intl.DateTimeFormat('en-GB', {
+		day: '2-digit',
+		month: 'short',
+		year: '2-digit',
+	}).format(new Date(dateStr));
+}
+
+function formatDateMMMYY(dateStr: string): string {
+	// dateStr is in format "YYYY-MM"
+	const [year, month] = dateStr.split('-');
+	return new Intl.DateTimeFormat('en-GB', {
+		month: 'short',
+		year: '2-digit',
+	}).format(new Date(parseInt(year), parseInt(month) - 1));
+}
 
 // Helper function to create monthly P&L data
 export function createMonthlyPnLData(trades: Trade[]): BarChartData {
@@ -70,7 +86,7 @@ export function createMonthlyPnLData(trades: Trade[]): BarChartData {
 	);
 
 	return {
-		labels: sortedEntries.map(([month]) => month),
+		labels: sortedEntries.map(([month]) => formatDateMMMYY(month)),
 		datasets: [
 			{
 				label: 'Monthly P&L',
@@ -78,81 +94,76 @@ export function createMonthlyPnLData(trades: Trade[]): BarChartData {
 				backgroundColor: sortedEntries.map(([, pnl]) =>
 					pnl >= 0 ? financialColors.profit : financialColors.loss
 				),
-				borderColor: '#374151',
-				borderWidth: 1,
+				borderWidth: 0,
+				borderRadius: 4,
 			},
 		],
 	};
 }
 
-export function createSymbolDistributionData(
-	trades: Trade[],
-	minPercentage: number = 2
-): PieChartData {
-	const volumeBySymbol = new Map<string, number>();
+export type SymbolStatsRow = {
+	symbol: string;
+	tradeCount: number;
+	winrate: number;
+};
+
+export function createSymbolStatsData(trades: Trade[]): SymbolStatsRow[] {
+	const statsBySymbol = new Map<string, { total: number; wins: number }>();
 
 	trades.forEach((trade) => {
-		const volume = trade.quantity * trade.openPrice;
-		volumeBySymbol.set(
-			trade.symbol,
-			(volumeBySymbol.get(trade.symbol) || 0) + volume
-		);
+		const stats = statsBySymbol.get(trade.symbol) || { total: 0, wins: 0 };
+		stats.total += 1;
+
+		// Only count closed trades for winrate
+		if (trade.closePrice && trade.closedAt) {
+			const pnl = calcAbsolutePnl(trade);
+			if (pnl !== null && pnl > 0) {
+				stats.wins += 1;
+			}
+		}
+
+		statsBySymbol.set(trade.symbol, stats);
 	});
 
-	const totalVolume = Array.from(volumeBySymbol.values()).reduce(
-		(sum, volume) => sum + volume,
-		0
-	);
-	const sortedEntries = Array.from(volumeBySymbol.entries())
-		.map(([symbol, volume]) => ({
-			symbol,
-			volume,
-			percentage: (volume / totalVolume) * 100,
-		}))
-		.sort((a, b) => b.volume - a.volume);
-
-	// Group small percentages into "Others"
-	const significantEntries = sortedEntries.filter(
-		(entry) => entry.percentage >= minPercentage
-	);
-	const othersVolume = sortedEntries
-		.filter((entry) => entry.percentage < minPercentage)
-		.reduce((sum, entry) => sum + entry.volume, 0);
-
-	const labels: string[] = significantEntries.map((entry) => entry.symbol);
-	const data: number[] = significantEntries.map((entry) => entry.volume);
-
-	if (othersVolume > 0) {
-		labels.push('Others');
-		data.push(othersVolume);
-	}
-
-	return {
-		labels,
-		datasets: [
-			{
-				label: 'Trading Volume by Symbol',
-				data,
-			},
-		],
-	};
+	return Array.from(statsBySymbol.entries())
+		.map(([symbol, stats]) => {
+			const closedTrades = trades.filter(
+				(t) => t.symbol === symbol && t.closePrice && t.closedAt
+			).length;
+			return {
+				symbol,
+				tradeCount: stats.total,
+				winrate: closedTrades > 0 ? (stats.wins / closedTrades) * 100 : 0,
+			};
+		})
+		.sort((a, b) => b.tradeCount - a.tradeCount);
 }
 
-// Helper function to create trade type distribution
-export function createTradeTypeDistributionData(trades: Trade[]): PieChartData {
-	const buyCount = trades.filter((trade) => trade.tradeType === 'buy').length;
-	const sellCount = trades.filter((trade) => trade.tradeType === 'sell').length;
+export type TradeTypeStats = {
+	type: 'long' | 'short';
+	tradeCount: number;
+	winrate: number;
+};
 
-	return {
-		labels: ['Buy', 'Sell'],
-		datasets: [
-			{
-				label: 'Trade Types',
-				data: [buyCount, sellCount],
-				backgroundColor: [financialColors.success, financialColors.loss],
-			},
-		],
+export function createTradeTypeStats(trades: Trade[]): TradeTypeStats[] {
+	const calculateStats = (tradeType: 'buy' | 'sell'): TradeTypeStats => {
+		const filteredTrades = trades.filter((t) => t.tradeType === tradeType);
+		const closedTrades = filteredTrades.filter(
+			(t) => t.closePrice && t.closedAt
+		);
+		const wins = closedTrades.filter((t) => {
+			const pnl = calcAbsolutePnl(t);
+			return pnl !== null && pnl > 0;
+		}).length;
+
+		return {
+			type: tradeType === 'buy' ? 'long' : 'short',
+			tradeCount: filteredTrades.length,
+			winrate: closedTrades.length > 0 ? (wins / closedTrades.length) * 100 : 0,
+		};
 	};
+
+	return [calculateStats('buy'), calculateStats('sell')];
 }
 
 // Helper function to create equity curve data
@@ -205,8 +216,13 @@ export function createEquityCurveData(
 		([a], [b]) => a.localeCompare(b)
 	);
 
-	// Create labels and data arrays
-	const labels = sortedEntries.map(([date]) => date);
+	// Create labels and data arrays with formatted dates
+	const labels = sortedEntries.map(([date]) => {
+		if (timeframe === 'monthly') {
+			return formatDateMMMYY(date);
+		}
+		return formatDateDDMMMYY(date);
+	});
 	const equityData = sortedEntries.map(([, equity]) => equity);
 
 	// Calculate drawdown data if requested
@@ -295,10 +311,10 @@ export function createRiskRewardDistribution(trades: Trade[]): BarChartData {
 					if (index === 4) return financialColors.neutral;
 					return financialColors.profit;
 				}),
-				borderColor: '#374151',
-				borderWidth: 1,
-				barPercentage: 0.8, // Controls bar width
-				categoryPercentage: 0.9, // Controls spacing between bars
+				borderWidth: 0,
+				borderRadius: 4,
+				barPercentage: 0.8,
+				categoryPercentage: 0.9,
 			},
 		],
 	};

@@ -96,11 +96,8 @@
 						...dataset,
 						backgroundColor:
 							dataset.backgroundColor || getColorPalette(dataset.data.length),
-						borderColor:
-							dataset.borderColor ||
-							dataset.backgroundColor ||
-							getColorPalette(dataset.data.length),
-						borderWidth: dataset.borderWidth || 2,
+						borderColor: 'transparent',
+						borderWidth: 0,
 					})),
 				},
 				options: getFinancialOptions(),
@@ -117,11 +114,8 @@
 					...dataset,
 					backgroundColor:
 						dataset.backgroundColor || getColorPalette(dataset.data.length),
-					borderColor:
-						dataset.borderColor ||
-						dataset.backgroundColor ||
-						getColorPalette(dataset.data.length),
-					borderWidth: dataset.borderWidth || 2,
+					borderColor: 'transparent',
+					borderWidth: 0,
 				})),
 			};
 			chart.update('none');

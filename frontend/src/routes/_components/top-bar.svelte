@@ -23,27 +23,15 @@
 	let volumeLast7Days: number = $state(0);
 	let equityInOpenTrades: number = $state(0);
 
-	// Subscribe to auth stores for reactive updates and debugging
 	let authenticated = $state(false);
 	let currentUser = $state<User | null>(null);
 
 	const unsubscribeAuth = isAuthenticated.subscribe((value) => {
 		authenticated = value;
-		console.log('Auth state changed:', { isAuthenticated: value });
 	});
 
 	const unsubscribeUser = user.subscribe((value) => {
 		currentUser = value;
-		console.log('User data:', value);
-		if (value) {
-			console.log('User details:', {
-				id: value.id,
-				username: value.username,
-				email: value.email,
-				is_active: value.is_active,
-				is_verified: value.is_verified,
-			});
-		}
 	});
 
 	const unsubscibe = tradesStore.subscribe((trades) => {

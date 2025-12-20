@@ -1,5 +1,10 @@
 <script lang="ts">
-	import { BarChart, ValueStat } from '$lib/components/custom';
+	import {
+		BarChart,
+		ValueStat,
+		SymbolStatsTable,
+		TradeTypeStats,
+	} from '$lib/components/custom';
 
 	import { tradesStore } from '$lib/stores/trades';
 	import {
@@ -9,13 +14,12 @@
 		calcWinrate,
 	} from '$lib/calcFunctions';
 	import LineChart from '$lib/components/custom/charts/line-chart.svelte';
-	import PieChart from '$lib/components/custom/charts/pie-chart.svelte';
 	import {
 		createEquityCurveData,
 		createMonthlyPnLData,
 		createRiskRewardDistribution,
-		createSymbolDistributionData,
-		createTradeTypeDistributionData,
+		createSymbolStatsData,
+		createTradeTypeStats,
 	} from '$lib/chartsHelpers';
 
 	let closedTrades = $derived(
@@ -59,7 +63,10 @@
 			>
 				<p class="text-l font-bold mb-4">Equity Curve & Drawdown</p>
 				{#if closedTrades.length}
-					<LineChart data={createEquityCurveData($tradesStore)} />
+					<LineChart
+						data={createEquityCurveData($tradesStore)}
+						showLegend={false}
+					/>
 				{:else}
 					<div class="w-full grow flex justify-center items-center">
 						<span class="text-s">Nothing to show yet</span>
@@ -70,18 +77,15 @@
 			<div
 				class="p-4 border grow rounded-lg shadow-sm w-full flex flex-col gap-4"
 			>
-				<p class="text-l font-bold mb-4">Trade Pair Distribution</p>
-				<PieChart
-					data={createSymbolDistributionData($tradesStore)}
-					height={260}
-				/>
+				<p class="text-l font-bold">Trade Pair Stats</p>
+				<SymbolStatsTable data={createSymbolStatsData($tradesStore)} />
 			</div>
 
 			<div
 				class="p-4 border grow rounded-lg shadow-sm w-full flex flex-col gap-4"
 			>
-				<p class="text-l font-bold mb-4">Trade Type Distribution</p>
-				<PieChart data={createTradeTypeDistributionData($tradesStore)} />
+				<p class="text-l font-bold">Trade Type Stats</p>
+				<TradeTypeStats data={createTradeTypeStats($tradesStore)} />
 			</div>
 
 			<div
@@ -89,7 +93,11 @@
 			>
 				<p class="text-l font-bold">Risk Reward Distribution</p>
 				{#if closedTrades.length}
-					<BarChart data={createRiskRewardDistribution($tradesStore)} />
+					<BarChart
+						data={createRiskRewardDistribution($tradesStore)}
+						financialMode={false}
+						showLegend={false}
+					/>
 				{:else}
 					<div class="w-full grow flex justify-center items-center">
 						<span class="text-s">Nothing to show yet</span>
@@ -102,7 +110,10 @@
 			>
 				<p class="text-l font-bold mb-4">Monthly PnL</p>
 				{#if closedTrades.length}
-					<BarChart data={createMonthlyPnLData($tradesStore)} />
+					<BarChart
+						data={createMonthlyPnLData($tradesStore)}
+						showLegend={false}
+					/>
 				{:else}
 					<div class="w-full grow flex justify-center items-center">
 						<span class="text-s">Nothing to show yet</span>

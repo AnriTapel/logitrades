@@ -92,7 +92,15 @@
 		if (canvas && data) {
 			chart = new Chart(canvas, {
 				type: 'bar',
-				data,
+				data: {
+					...data,
+					datasets: data.datasets.map((dataset) => ({
+						...dataset,
+						borderWidth: 0,
+						borderRadius: 4,
+						borderSkipped: false,
+					})),
+				},
 				options: {
 					...getFinancialOptions(),
 				},
@@ -103,7 +111,15 @@
 	// Update chart when data changes
 	$effect(() => {
 		if (chart && data) {
-			chart.data = data;
+			chart.data = {
+				...data,
+				datasets: data.datasets.map((dataset) => ({
+					...dataset,
+					borderWidth: 0,
+					borderRadius: 4,
+					borderSkipped: false,
+				})),
+			};
 			chart.update('none');
 		}
 	});

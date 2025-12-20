@@ -4,8 +4,6 @@
 	const { tradeType }: { tradeType: TradeType } = $props();
 </script>
 
-<span
-	class="capitalize {tradeType === 'buy' ? 'text-green-600' : 'text-red-600'}"
->
-	{tradeType}
+<span class={tradeType === 'buy' ? 'text-green-600' : 'text-red-600'}>
+	{tradeType === 'buy' ? 'Long' : 'Short'}
 </span>
