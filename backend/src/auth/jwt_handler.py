@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Literal
 import uuid
+import secrets
 
 from ..utils import _get_env_var
 
@@ -53,3 +54,8 @@ def decode_token_unsafe(token: str) -> dict | None:
 
 def _decode_token(token: str, verify_exp: bool = True) -> Optional[dict]:
     return jwt.decode(token, _get_env_var("JWT_SECRET_KEY"), algorithms=[ALGORITHM], options={"verify_exp": verify_exp})
+
+
+def create_email_verification_token() -> str:
+    """Generate a secure random token for email verification"""
+    return secrets.token_urlsafe(32)

@@ -27,6 +27,6 @@ export const actions = {
 			return fail(result.status, { form, error: result.error });
 		}
 
-		throw redirect(303, '/');
+		throw redirect(303, '/check-email');
 	},
 };

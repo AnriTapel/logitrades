@@ -50,8 +50,6 @@ export const handle: Handle = async ({ event, resolve }) => {
 			credentials: 'include',
 		});
 
-		console.log('response auth me', res.ok, res.status, res.statusText);
-
 		if (res.ok) {
 			const user = await res.json();
 			event.locals.user = user;

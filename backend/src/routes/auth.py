@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Response, Cookie
+from fastapi import APIRouter, Depends, HTTPException, Response, Cookie, BackgroundTasks
 from sqlalchemy.orm import Session
 from typing import Annotated
 from datetime import datetime, timezone
@@ -12,11 +12,13 @@ from ..auth import (
     validate_auth_token,
     create_auth_token,
     get_user_id_from_token,
-    decode_token_unsafe
+    decode_token_unsafe,
+    create_email_verification_token
 )
 from ..domain import UserDomain
-from ..models import UserCreate, UserLogin, UserResponse
-from ..db import UserORM, RefreshTokenORM
+from ..models import UserCreate, UserLogin, UserResponse, VerifyEmailRequest
+from ..db import UserORM, RefreshTokenORM, EmailVerificationTokenORM
+from ..services import email_service
 from .. import database
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -25,7 +27,12 @@ db_dependency = Annotated[Session, Depends(database.get_db)]
 
 
 @router.post("/signup")
-def signup(user: UserCreate, response: Response, db: db_dependency):
+async def signup(
+    user: UserCreate, 
+    response: Response, 
+    db: db_dependency,
+    background_tasks: BackgroundTasks
+):
     existing = db.query(UserORM).filter(UserORM.username == user.username).first()
     if existing:
         raise HTTPException(status_code=400, detail="This username is already taken")
@@ -49,6 +56,23 @@ def signup(user: UserCreate, response: Response, db: db_dependency):
     db.add(db_refresh_token)
     db.commit()
 
+    # Generate email verification token and send verification email
+    verification_token = create_email_verification_token()
+    db_verification_token = EmailVerificationTokenORM(
+        token=verification_token,
+        user_id=db_user.id
+    )
+    db.add(db_verification_token)
+    db.commit()
+
+    # Send verification email in background (non-blocking)
+    background_tasks.add_task(
+        email_service.send_verification_email,
+        db_user.email,
+        verification_token,
+        db_user.username
+    )
+
     response.set_cookie(
         key="access_token",
         value=access_token,
@@ -68,7 +92,7 @@ def signup(user: UserCreate, response: Response, db: db_dependency):
         path="/"
     )
 
-    return {"success": True, "username": db_user.username}
+    return {"success": True, "username": db_user.username, "email_sent": True}
 
 
 @router.post("/login")
@@ -276,4 +300,81 @@ def logout(
     response.delete_cookie(key="access_token", path="/", samesite="lax")
     response.delete_cookie(key="refresh_token", path="/", samesite="lax")
     return {"message": "Logged out successfully"}
+
+
+@router.post("/verify-email")
+def verify_email(request: VerifyEmailRequest, db: db_dependency):
+    """Verify user email using the token from verification email"""
+    db_token = db.query(EmailVerificationTokenORM).filter(
+        EmailVerificationTokenORM.token == request.token,
+        EmailVerificationTokenORM.used == False
+    ).first()
+
+    if not db_token:
+        raise HTTPException(status_code=400, detail="Invalid verification token")
+
+    if db_token.expires_at < datetime.now(timezone.utc):
+        raise HTTPException(status_code=400, detail="Verification token expired")
+
+    # Mark token as used
+    db_token.used = True
+
+    # Verify user
+    db_user = db.query(UserORM).filter(UserORM.id == db_token.user_id).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    db_user.is_verified = True
+    db.commit()
+
+    return {"success": True, "message": "Email verified successfully"}
+
+
+@router.post("/resend-verification")
+async def resend_verification(
+    db: db_dependency,
+    background_tasks: BackgroundTasks,
+    access_token: str | None = Cookie(None, alias="access_token")
+):
+    """Resend verification email to the current user"""
+    if not access_token:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
+    user_id = get_user_id_from_token(access_token)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    db_user = db.query(UserORM).filter(UserORM.id == user_id).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if db_user.is_verified:
+        raise HTTPException(status_code=400, detail="Email already verified")
+
+    # Invalidate old unused verification tokens
+    old_tokens = db.query(EmailVerificationTokenORM).filter(
+        EmailVerificationTokenORM.user_id == user_id,
+        EmailVerificationTokenORM.used == False
+    ).all()
+    for old_token in old_tokens:
+        old_token.used = True
+
+    # Create new verification token
+    verification_token = create_email_verification_token()
+    db_verification_token = EmailVerificationTokenORM(
+        token=verification_token,
+        user_id=user_id
+    )
+    db.add(db_verification_token)
+    db.commit()
+
+    # Send verification email in background
+    background_tasks.add_task(
+        email_service.send_verification_email,
+        db_user.email,
+        verification_token,
+        db_user.username
+    )
+
+    return {"success": True, "message": "Verification email sent"}
 

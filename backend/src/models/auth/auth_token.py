@@ -6,4 +6,8 @@ from pydantic import BaseModel
 class AuthToken(BaseModel):
     username: str
     expires_at: datetime
-    type: Literal['access', 'refresh'] 
+    type: Literal['access', 'refresh']
+
+
+class VerifyEmailRequest(BaseModel):
+    token: str 

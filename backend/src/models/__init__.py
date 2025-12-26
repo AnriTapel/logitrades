@@ -1,4 +1,4 @@
-from .auth.auth_token import AuthToken
+from .auth.auth_token import AuthToken, VerifyEmailRequest
 from .auth.user import UserCreate, UserLogin, UserResponse
 
 from .trade.trade_form import TradeForm

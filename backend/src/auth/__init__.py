@@ -6,6 +6,7 @@ from .jwt_handler import (
     validate_auth_token,
     create_auth_token,
     get_user_id_from_token,
-    decode_token_unsafe
+    decode_token_unsafe,
+    create_email_verification_token
 )
 from .hashing import get_password_hash, verify_password
