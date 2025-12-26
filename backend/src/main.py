@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from typing import Annotated
 
 from .auth import current_user_id
-from .errors.exception_handles import register_exception_handlers
+from .services import ErrorsHandlerService
 from .models import TradeForm, TradeImportModel
 from .models.trade.trade_response import TradeResponse
 from .utils.normalize_csv_row import normalize_csv_row
@@ -117,4 +117,5 @@ def delete_trade(trade_id: int, db: db_dependency, user_id: int = Depends(curren
 
 app.include_router(auth_routes.router, prefix="/api/v1")
 app.include_router(router, prefix="/api/v1")
-register_exception_handlers(app)
+
+ErrorsHandlerService.register_exception_handlers(app)

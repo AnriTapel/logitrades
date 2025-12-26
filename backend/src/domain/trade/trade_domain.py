@@ -36,7 +36,6 @@ class TradeDomain:
         self.id = id
         self.created_at = created_at
 
-        # бизнес-валидация
         validate_stop_loss(self)
         validate_take_profit(self)
         validate_closed_at(self)
