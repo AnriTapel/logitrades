@@ -53,8 +53,14 @@
 				<FieldErrors />
 			</Field>
 			<Button type="submit" class="w-full">Login</Button>
-			<div class="text-center">
-				<a href="/signup" class="text-sm text-primary hover:underline">
+			<div class="text-center space-y-2">
+				<a
+					href="/forgot-password"
+					class="text-sm text-primary hover:underline block"
+				>
+					Forgot your password?
+				</a>
+				<a href="/signup" class="text-sm text-primary hover:underline block">
 					Don't have an account? Sign up
 				</a>
 			</div>

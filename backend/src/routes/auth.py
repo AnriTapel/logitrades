@@ -16,8 +16,8 @@ from ..auth import (
     create_email_verification_token
 )
 from ..domain import UserDomain
-from ..models import UserCreate, UserLogin, UserResponse, VerifyEmailRequest
-from ..db import UserORM, RefreshTokenORM, EmailVerificationTokenORM
+from ..models import UserCreate, UserLogin, UserResponse, VerifyEmailRequest, ForgotPasswordRequest, ResetPasswordRequest
+from ..db import UserORM, RefreshTokenORM, EmailVerificationTokenORM, PasswordResetTokenORM
 from ..services import email_service
 from .. import database
 
@@ -377,4 +377,78 @@ async def resend_verification(
     )
 
     return {"success": True, "message": "Verification email sent"}
+
+
+@router.post("/forgot-password")
+async def forgot_password(
+    request: ForgotPasswordRequest,
+    db: db_dependency,
+    background_tasks: BackgroundTasks
+):
+    """Send password reset email"""
+    # Always return success to prevent email enumeration attacks
+    db_user = db.query(UserORM).filter(UserORM.email == request.email).first()
+
+    if db_user:
+        # Invalidate old unused reset tokens for this user
+        old_tokens = db.query(PasswordResetTokenORM).filter(
+            PasswordResetTokenORM.user_id == db_user.id,
+            PasswordResetTokenORM.used == False
+        ).all()
+        for old_token in old_tokens:
+            old_token.used = True
+
+        # Create new reset token
+        reset_token = create_email_verification_token()  # Reuse token generator
+        db_reset_token = PasswordResetTokenORM(
+            token=reset_token,
+            user_id=db_user.id
+        )
+        db.add(db_reset_token)
+        db.commit()
+
+        # Send reset email in background
+        background_tasks.add_task(
+            email_service.send_password_reset_email,
+            db_user.email,
+            reset_token,
+            db_user.username
+        )
+
+    return {"success": True, "message": "If an account with that email exists, a reset link has been sent"}
+
+
+@router.post("/reset-password")
+def reset_password(request: ResetPasswordRequest, db: db_dependency):
+    """Reset user password using the token from reset email"""
+    db_token = db.query(PasswordResetTokenORM).filter(
+        PasswordResetTokenORM.token == request.token,
+        PasswordResetTokenORM.used == False
+    ).first()
+
+    if not db_token:
+        raise HTTPException(status_code=400, detail="Invalid or expired reset token")
+
+    if db_token.expires_at < datetime.now(timezone.utc):
+        raise HTTPException(status_code=400, detail="Reset token has expired")
+
+    # Mark token as used
+    db_token.used = True
+
+    # Update user password
+    db_user = db.query(UserORM).filter(UserORM.id == db_token.user_id).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    db_user.hashed_password = get_password_hash(request.password)
+
+    # Revoke all refresh tokens to force re-login on all devices
+    db.query(RefreshTokenORM).filter(
+        RefreshTokenORM.user_id == db_user.id,
+        RefreshTokenORM.revoked == False
+    ).update({"revoked": True})
+
+    db.commit()
+
+    return {"success": True, "message": "Password reset successfully"}
 

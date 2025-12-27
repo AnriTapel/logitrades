@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Literal
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr, Field
 
 
 class AuthToken(BaseModel):
@@ -10,4 +10,14 @@ class AuthToken(BaseModel):
 
 
 class VerifyEmailRequest(BaseModel):
-    token: str 
+    token: str
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    password: str = Field(..., min_length=8, max_length=32)
+
