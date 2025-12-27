@@ -4,7 +4,8 @@ node_modules/
 .DS_Store
 .env
 .venv
+.cursor
 
 __pycache__/
 
-GEMINI.md
+AGENTS.md

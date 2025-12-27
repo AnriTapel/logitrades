@@ -2,7 +2,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import { goto } from '$app/navigation';
 	import type { ActionData } from './$types';
-	import CheckEmailMessage from '../_components/check-email-message.svelte';
+	import CheckEmailMessage from '$lib/layouts/check-email-message.svelte';
 
 	let { form }: { form: ActionData } = $props();
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import TradesTable from './_components/trades-table.svelte';
+	import TradesTable from '$lib/layouts/trades-table.svelte';
 	import { tradesStore } from '$lib/stores/trades';
 	import type { Trade } from '$lib/types';
 	import { onDestroy } from 'svelte';

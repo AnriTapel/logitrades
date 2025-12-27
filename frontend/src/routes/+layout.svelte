@@ -1,6 +1,6 @@
 <script lang="ts">
 	import '../app.pcss';
-	import ErrorDialog from './_components/error-dialog.svelte';
+	import ErrorDialog from '$lib/layouts/error-dialog.svelte';
 	import { setAuth, clearAuth } from '$lib/stores/auth';
 
 	let { children, data } = $props();

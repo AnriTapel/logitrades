@@ -8,7 +8,6 @@
 	import { formatIntToCurrency } from '$lib/formatters';
 	import { tradesStore } from '$lib/stores/trades';
 	import { onDestroy } from 'svelte';
-	import LogoutButton from './logout-button.svelte';
 	import { isAuthenticated, user, type User } from '$lib/stores/auth';
 
 	const {
@@ -90,7 +89,9 @@
 			>Import from CSV</Button
 		>
 		{#if authenticated}
-			<LogoutButton />
+			<form action="/?/logout" method="POST">
+				<Button type="submit" variant="outline">Logout</Button>
+			</form>
 		{:else}
 			<a href="/login">
 				<Button variant="outline">Login</Button>

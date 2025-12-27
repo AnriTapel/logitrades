@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
 	import { goto } from '$app/navigation';
-	import CheckEmailMessage from '../_components/check-email-message.svelte';
+	import CheckEmailMessage from '$lib/layouts/check-email-message.svelte';
 </script>
 
 <div class="flex items-center justify-center min-h-screen">

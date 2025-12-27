@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { writable } from 'svelte/store';
-	import TopBar from './_components/top-bar.svelte';
-	import TradesTable from './_components/trades-table.svelte';
+	import TopBar from '$lib/layouts/top-bar.svelte';
+	import TradesTable from '$lib/layouts/trades-table.svelte';
 	import type { Trade } from '$lib/types';
 	import { tradesStore } from '$lib/stores/trades';
 	import { onDestroy } from 'svelte';
