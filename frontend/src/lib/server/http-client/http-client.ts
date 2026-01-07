@@ -53,14 +53,11 @@ export class HttpClient {
 		return this.request<undefined, K>(url, 'DELETE', options);
 	}
 
-	public async sendFile(
+	public async sendFormData<K = unknown>(
 		url: string,
-		file: File,
+		formData: FormData,
 		options: HttpRequestOptions = {}
-	): Promise<ResponseType> {
-		const formData = new FormData();
-		formData.append('file', file);
-
+	): Promise<ResponseType<K>> {
 		const fetchFn = options.fetch || this.customFetch || fetch;
 		const response = await fetchFn(this.buildRequestUrl(url), {
 			method: 'POST',
@@ -71,6 +68,10 @@ export class HttpClient {
 		if (!response.ok) {
 			throw await response.json().catch(() => null);
 		}
+
+		const data = await response.json().catch(() => null);
+
+		return data as K;
 	}
 
 	/**

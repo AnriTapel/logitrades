@@ -2,6 +2,7 @@
 	import * as Dialog from '$lib/components/ui/dialog';
 	import type { Snippet } from 'svelte';
 	import Button from '../button/button.svelte';
+	import { cn } from '$lib/utils';
 
 	let {
 		open,
@@ -12,6 +13,7 @@
 		showCancel = true,
 		showSubmit = true,
 		disabled = false,
+		class: className = '',
 		onCancel = () => {},
 		onSubmit = () => {},
 		children,
@@ -24,6 +26,7 @@
 		showCancel?: boolean;
 		showSubmit?: boolean;
 		disabled?: boolean;
+		class?: string;
 		onCancel?: () => void;
 		onSubmit?: () => void;
 		children?: Snippet;
@@ -45,7 +48,7 @@
 </script>
 
 <Dialog.Root {open} onOpenChange={handleOpenChange}>
-	<Dialog.Content class="max-w-max min-w-[300px]">
+	<Dialog.Content class={cn('max-w-max min-w-[300px]', className)}>
 		{#if title}
 			<h2 class="text-lg font-semibold mb-1">{title}</h2>
 		{/if}

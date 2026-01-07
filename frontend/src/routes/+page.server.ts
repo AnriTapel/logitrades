@@ -119,14 +119,9 @@ export const actions = {
 
 	import: async ({ request, fetch }) => {
 		const formData = await request.formData();
-		const file = formData.get('file') as File;
-
-		if (!file) {
-			return fail(400, { error: 'No file provided' });
-		}
 
 		try {
-			await httpClient.sendFile('/trades/import', file, { fetch });
+			await httpClient.sendFormData('/trades/import', formData, { fetch });
 			return { success: true };
 		} catch (error) {
 			return fail(500, { error });

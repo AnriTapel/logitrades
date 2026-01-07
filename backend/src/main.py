@@ -1,9 +1,10 @@
+import json
 from dotenv import load_dotenv
 import os
 
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "..", ".env"))
 
-from fastapi import FastAPI, APIRouter, Depends, HTTPException, UploadFile
+from fastapi import FastAPI, APIRouter, Depends, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from typing import Annotated
@@ -16,8 +17,10 @@ from .utils.normalize_csv_row import normalize_csv_row
 from .db import TradeORM
 from . import database
 from .routes import auth as auth_routes
+from .errors import format_import_error
 
 from pydantic import ValidationError
+from pydantic_core import PydanticCustomError
 import csv
 import io
 app = FastAPI()
@@ -34,20 +37,29 @@ router = APIRouter()
 db_dependency = Annotated[Session, Depends(database.get_db)]
 
 @router.post("/trades/import")
-def import_trades_from_csv(file: UploadFile, db: db_dependency, user_id: int = Depends(current_user_id)):
+def import_trades_from_csv(file: Annotated[UploadFile, Form()], mapping: Annotated[str, Form()], db: db_dependency, user_id: int = Depends(current_user_id)):
     content = file.file.read().decode('utf-8')
+    fields_mapping = json.loads(mapping)
     csv_reader = csv.DictReader(io.StringIO(content))
     for index, row in enumerate(csv_reader, start=1):
         try:
-            trade_import = TradeImportModel(**normalize_csv_row(row))
+            trade_import = TradeImportModel(**normalize_csv_row(row, fields_mapping))
             trade = trade_import.to_trade()
             db_trade = TradeORM(**trade.to_dict())
             db_trade.user_id = user_id
             db.add(db_trade)
-        except (ValidationError, KeyError, ValueError) as e:
-            # Rollback the transaction on any error
+        except ValidationError as e:
             db.rollback()
-            raise HTTPException(status_code=400, detail=f"Invalid data in CSV file for row {index}: {e}")
+            raise HTTPException(status_code=400, detail=format_import_error(index, e))
+        except PydanticCustomError as e:
+            db.rollback()
+            raise HTTPException(status_code=400, detail=f"Row {index}: {e.message_template}")
+        except KeyError as e:
+            db.rollback()
+            raise HTTPException(status_code=400, detail=f"Row {index}: Missing column '{e.args[0]}'.")
+        except ValueError as e:
+            db.rollback()
+            raise HTTPException(status_code=400, detail=f"Row {index}: Invalid value - {str(e)}")
     db.commit()
     return {"message": "Trades imported successfully"}
 
