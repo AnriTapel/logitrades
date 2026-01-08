@@ -64,36 +64,67 @@ function formatDateMMMYY(dateStr: string): string {
 	}).format(new Date(parseInt(year), parseInt(month) - 1));
 }
 
+// Convert a Date to "YYYY-MM" month key format
+function toMonthKey(date: Date): string {
+	return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
+		2,
+		'0'
+	)}`;
+}
+
+// Generate array of consecutive month keys starting from a given month
+function generateMonthRange(startMonth: string, count: number): string[] {
+	const [year, month] = startMonth.split('-').map(Number);
+	const result: string[] = [];
+	for (let i = 0; i < count; i++) {
+		result.push(toMonthKey(new Date(year, month - 1 + i, 1)));
+	}
+	return result;
+}
+
 // Helper function to create monthly P&L data
+// Always shows 6 months starting from the earliest month with data
+// (within the last 6 months from current). Current month is always visible.
 export function createMonthlyPnLData(trades: Trade[]): BarChartData {
+	const MONTHS_TO_SHOW = 6;
 	const pnlByMonth = new Map<string, number>();
 
+	// Aggregate PnL by month
 	trades.forEach((trade) => {
 		const pnl = calcAbsolutePnl(trade);
-		if (pnl == null || !trade.closedAt) {
-			return;
-		}
-
-		const date = new Date(trade.closedAt);
-		const monthKey = `${date.getFullYear()}-${String(
-			date.getMonth() + 1
-		).padStart(2, '0')}`;
+		if (pnl == null || !trade.closedAt) return;
+		const monthKey = toMonthKey(new Date(trade.closedAt));
 		pnlByMonth.set(monthKey, (pnlByMonth.get(monthKey) || 0) + pnl);
 	});
 
-	const sortedEntries = Array.from(pnlByMonth.entries()).sort(([a], [b]) =>
-		a.localeCompare(b)
+	const currentMonth = toMonthKey(new Date());
+
+	// Calculate 6-month lookback window boundary
+	const [currYear, currMonth] = currentMonth.split('-').map(Number);
+	const windowStartKey = toMonthKey(
+		new Date(currYear, currMonth - MONTHS_TO_SHOW, 1)
 	);
 
+	// Find earliest month with data within the window
+	const monthsWithData = Array.from(pnlByMonth.keys())
+		.filter((m) => m >= windowStartKey && m <= currentMonth)
+		.sort();
+
+	// Start from earliest data in window, or current month if no data
+	const startMonth = monthsWithData[0] || currentMonth;
+	const monthsToDisplay = generateMonthRange(startMonth, MONTHS_TO_SHOW);
+
 	return {
-		labels: sortedEntries.map(([month]) => formatDateMMMYY(month)),
+		labels: monthsToDisplay.map(formatDateMMMYY),
 		datasets: [
 			{
 				label: 'Monthly P&L',
-				data: sortedEntries.map(([, pnl]) => pnl),
-				backgroundColor: sortedEntries.map(([, pnl]) =>
-					pnl >= 0 ? financialColors.profit : financialColors.loss
-				),
+				data: monthsToDisplay.map((m) => pnlByMonth.get(m) ?? null),
+				backgroundColor: monthsToDisplay.map((m) => {
+					const pnl = pnlByMonth.get(m);
+					if (pnl == null) return 'transparent';
+					return pnl >= 0 ? financialColors.profit : financialColors.loss;
+				}),
 				borderWidth: 0,
 				borderRadius: 4,
 			},
@@ -200,10 +231,7 @@ export function createEquityCurveData(
 				key = weekStart.toISOString().split('T')[0];
 				break;
 			case 'monthly':
-				key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
-					2,
-					'0'
-				)}`;
+				key = toMonthKey(date);
 				break;
 		}
 

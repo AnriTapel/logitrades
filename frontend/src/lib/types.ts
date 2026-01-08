@@ -19,7 +19,7 @@ export type BarChartData = {
 	labels: string[];
 	datasets: Array<{
 		label: string;
-		data: number[];
+		data: (number | null)[]; // null values are skipped by Chart.js (empty bar)
 		backgroundColor?: string | string[];
 		borderColor?: string | string[];
 		borderWidth?: number;
