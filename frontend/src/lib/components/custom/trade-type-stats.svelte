@@ -1,6 +1,7 @@
 <script lang="ts">
 	import * as Card from '$lib/components/ui/card';
 	import type { TradeTypeStats } from '$lib/chartsHelpers';
+	import EmptyState from './empty-state.svelte';
 
 	interface Props {
 		data: TradeTypeStats[];
@@ -21,13 +22,17 @@
 				<span class="text-sm font-semibold text-slate-700">Long</span>
 			</div>
 			<div class="flex gap-4 flex-1">
-				<div class="flex-1 bg-gray-100 rounded-lg p-3 flex flex-col justify-center items-center">
+				<div
+					class="flex-1 bg-gray-100 rounded-lg p-3 flex flex-col justify-center items-center"
+				>
 					<span class="text-xs text-slate-500 mb-1">Trades</span>
 					<span class="text-xl font-bold">
 						{longStats?.tradeCount ?? 0}
 					</span>
 				</div>
-				<div class="flex-1 bg-gray-100 rounded-lg p-3 flex flex-col justify-center items-center">
+				<div
+					class="flex-1 bg-gray-100 rounded-lg p-3 flex flex-col justify-center items-center"
+				>
 					<span class="text-xs text-slate-500 mb-1">Winrate</span>
 					<span
 						class="text-xl font-bold {(longStats?.winrate ?? 0) >= 50
@@ -51,13 +56,17 @@
 				<span class="text-sm font-semibold text-slate-700">Short</span>
 			</div>
 			<div class="flex gap-4 flex-1">
-				<div class="flex-1 bg-gray-100 rounded-lg p-3 flex flex-col justify-center items-center">
+				<div
+					class="flex-1 bg-gray-100 rounded-lg p-3 flex flex-col justify-center items-center"
+				>
 					<span class="text-xs text-slate-500 mb-1">Trades</span>
 					<span class="text-xl font-bold">
 						{shortStats?.tradeCount ?? 0}
 					</span>
 				</div>
-				<div class="flex-1 bg-gray-100 rounded-lg p-3 flex flex-col justify-center items-center">
+				<div
+					class="flex-1 bg-gray-100 rounded-lg p-3 flex flex-col justify-center items-center"
+				>
 					<span class="text-xs text-slate-500 mb-1">Winrate</span>
 					<span
 						class="text-xl font-bold {(shortStats?.winrate ?? 0) >= 50
@@ -73,4 +82,3 @@
 		</Card.Content>
 	</Card.Root>
 </div>
-

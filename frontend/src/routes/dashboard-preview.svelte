@@ -4,6 +4,7 @@
 		ValueStat,
 		SymbolStatsTable,
 		TradeTypeStats,
+		EmptyState,
 	} from '$lib/components/custom';
 
 	import { tradesStore } from '$lib/stores/trades';
@@ -17,10 +18,10 @@
 	import {
 		createEquityCurveData,
 		createMonthlyPnLData,
-		createRiskRewardDistribution,
 		createSymbolStatsData,
 		createTradeTypeStats,
 	} from '$lib/chartsHelpers';
+	import RiskRewardChart from '$lib/layouts/risk-reward-chart.svelte';
 
 	let closedTrades = $derived(
 		$tradesStore.filter((it) => it.closePrice && it.closedAt)
@@ -61,16 +62,14 @@
 			<div
 				class="p-4 border grow rounded-lg shadow-sm w-full flex flex-col gap-4"
 			>
-				<p class="text-l font-bold mb-4">Equity Curve & Drawdown</p>
+				<p class="text-l font-bold">Equity Curve & Drawdown</p>
 				{#if closedTrades.length}
 					<LineChart
 						data={createEquityCurveData($tradesStore)}
 						showLegend={false}
 					/>
 				{:else}
-					<div class="w-full grow flex justify-center items-center">
-						<span class="text-s">Nothing to show yet</span>
-					</div>
+					<EmptyState message="Close a trade to see your equity curve" />
 				{/if}
 			</div>
 
@@ -92,42 +91,27 @@
 				class="p-4 border grow rounded-lg shadow-sm w-full flex flex-col gap-4"
 			>
 				<p class="text-l font-bold">Risk Reward Distribution</p>
-				{#if closedTrades.length}
-					<BarChart
-						data={createRiskRewardDistribution($tradesStore)}
-						financialMode={false}
-						showLegend={false}
-					/>
-				{:else}
-					<div class="w-full grow flex justify-center items-center">
-						<span class="text-s">Nothing to show yet</span>
-					</div>
-				{/if}
+				<RiskRewardChart {closedTrades} />
 			</div>
 
 			<div
 				class="p-4 border grow rounded-lg shadow-sm w-full flex flex-col gap-4"
 			>
-				<p class="text-l font-bold mb-4">Monthly PnL</p>
+				<p class="text-l font-bold">Monthly PnL</p>
 				{#if closedTrades.length}
 					<BarChart
 						data={createMonthlyPnLData($tradesStore)}
 						showLegend={false}
 					/>
 				{:else}
-					<div class="w-full grow flex justify-center items-center">
-						<span class="text-s">Nothing to show yet</span>
-					</div>
+					<EmptyState message="Close a trade to see monthly P&L" />
 				{/if}
 			</div>
 		</div>
 	{:else}
-		<div
-			class="p-4 border rounded-lg shadow-sm h-[30vh] w-full flex items-center justify-center bg-gray-100"
-		>
-			<p class="text-l font-bold mb-4">
-				Create or import your first trade to see stats
-			</p>
-		</div>
+		<EmptyState
+			message="Create or import your first trade to see stats"
+			className="h-[30vh]"
+		/>
 	{/if}
 </section>
