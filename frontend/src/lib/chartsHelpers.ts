@@ -134,40 +134,35 @@ export function createMonthlyPnLData(trades: Trade[]): BarChartData {
 
 export type SymbolStatsRow = {
 	symbol: string;
-	tradeCount: number;
+	pnl: number;
+	notionalVolume: number;
 	winrate: number;
 };
 
-export function createSymbolStatsData(trades: Trade[]): SymbolStatsRow[] {
-	const statsBySymbol = new Map<string, { total: number; wins: number }>();
+export function getSymbolStats(allTrades: Trade[]): SymbolStatsRow[] {
+	const statsBySymbol = Object.groupBy(allTrades, (trade) => trade.symbol);
 
-	trades.forEach((trade) => {
-		const stats = statsBySymbol.get(trade.symbol) || { total: 0, wins: 0 };
-		stats.total += 1;
-
-		// Only count closed trades for winrate
-		if (trade.closePrice && trade.closedAt) {
-			const pnl = calcAbsolutePnl(trade);
-			if (pnl !== null && pnl > 0) {
-				stats.wins += 1;
-			}
-		}
-
-		statsBySymbol.set(trade.symbol, stats);
-	});
-
-	return Array.from(statsBySymbol.entries())
-		.map(([symbol, stats]) => {
-			const closedTrades = trades.filter(
-				(t) => t.symbol === symbol && t.closePrice && t.closedAt
-			).length;
+	return Object.entries(statsBySymbol)
+		.map(([symbol, trades = []]) => {
 			return {
 				symbol,
-				tradeCount: stats.total,
-				winrate: closedTrades > 0 ? (stats.wins / closedTrades) * 100 : 0,
+				pnl: trades.reduce(
+					(acc, trade) => acc + (calcAbsolutePnl(trade) ?? 0),
+					0
+				),
+				notionalVolume: trades.reduce(
+					(acc, trade) =>
+						acc + trade.quantity * trade.openPrice * (trade.leverage ?? 1),
+					0
+				),
+				winrate:
+					trades.length > 0
+						? trades.filter((trade) => trade.closePrice && trade.closedAt)
+								.length / trades.length
+						: 0,
 			};
 		})
-		.sort((a, b) => b.tradeCount - a.tradeCount);
+		.sort((a, b) => b.notionalVolume - a.notionalVolume);
 }
 
 export type TradeTypeStats = {

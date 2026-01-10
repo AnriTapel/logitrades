@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { SymbolStatsRow } from '$lib/chartsHelpers';
+	import { formatIntToCurrency, formatNumberPercentage } from '$lib/formatters';
 
 	interface Props {
 		data: SymbolStatsRow[];
@@ -10,27 +11,47 @@
 
 <div class="w-full h-full overflow-auto">
 	<table class="w-full text-sm">
-		<thead>
+		<thead class="sticky top-0 bg-white">
 			<tr class="border-b border-slate-200">
 				<th class="text-left py-2 px-3 font-semibold text-slate-600">Pair</th>
-				<th class="text-right py-2 px-3 font-semibold text-slate-600">Trades</th>
-				<th class="text-right py-2 px-3 font-semibold text-slate-600">Winrate</th>
+				<th class="text-right py-2 px-3 font-semibold text-slate-600"
+					>Notional Volume</th
+				>
+				<th class="text-right py-2 px-3 font-semibold text-slate-600">PnL</th>
+				<th class="text-right py-2 px-3 font-semibold text-slate-600"
+					>Winrate</th
+				>
 			</tr>
 		</thead>
 		<tbody>
 			{#each data as row}
-				<tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+				<tr
+					class="border-b border-slate-100 hover:bg-slate-50 transition-colors"
+				>
 					<td class="py-2 px-3 font-medium text-slate-800">{row.symbol}</td>
-					<td class="py-2 px-3 text-right text-slate-600">{row.tradeCount}</td>
+					<td class="py-2 px-3 text-right text-slate-600"
+						>{formatIntToCurrency(row.notionalVolume)}</td
+					>
 					<td class="py-2 px-3 text-right">
 						<span
-							class={row.winrate >= 50
+							class={row.pnl > 0
+								? 'text-green-600'
+								: row.pnl < 0
+									? 'text-red-600'
+									: 'text-gray-500'}
+						>
+							{formatIntToCurrency(row.pnl)}
+						</span>
+					</td>
+					<td class="py-2 px-3 text-right">
+						<span
+							class={row.winrate >= 0.5
 								? 'text-green-600'
 								: row.winrate > 0
 									? 'text-red-600'
 									: 'text-gray-500'}
 						>
-							{row.winrate.toFixed(1)}%
+							{formatNumberPercentage(row.winrate)}
 						</span>
 					</td>
 				</tr>
@@ -43,4 +64,3 @@
 		</div>
 	{/if}
 </div>
-

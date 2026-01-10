@@ -18,8 +18,8 @@
 	import {
 		createEquityCurveData,
 		createMonthlyPnLData,
-		createSymbolStatsData,
 		createTradeTypeStats,
+		getSymbolStats,
 	} from '$lib/chartsHelpers';
 	import RiskRewardChart from '$lib/layouts/risk-reward-chart.svelte';
 
@@ -32,7 +32,9 @@
 	<h1 class="text-2xl font-bold mb-4">Stats dashboard</h1>
 
 	{#if $tradesStore.length}
-		<div class="grid grid-cols-3 gap-4 grid-rows-2 mb-4">
+		<div
+			class="grid grid-cols-3 gap-4 grid-rows-[repeat(2,minmax(0,380px))] mb-4"
+		>
 			<div class="grid grid-cols-2 gap-4">
 				<ValueStat
 					label="Winrate"
@@ -77,7 +79,7 @@
 				class="p-4 border grow rounded-lg shadow-sm w-full flex flex-col gap-4"
 			>
 				<p class="text-l font-bold">Trade Pair Stats</p>
-				<SymbolStatsTable data={createSymbolStatsData($tradesStore)} />
+				<SymbolStatsTable data={getSymbolStats($tradesStore)} />
 			</div>
 
 			<div

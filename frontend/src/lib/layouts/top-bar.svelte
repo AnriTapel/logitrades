@@ -8,7 +8,7 @@
 	import { formatIntToCurrency } from '$lib/formatters';
 	import { tradesStore } from '$lib/stores/trades';
 	import { onDestroy } from 'svelte';
-	import { isAuthenticated, user, type User } from '$lib/stores/auth';
+	import { isAuthenticated } from '$lib/stores/auth';
 
 	const {
 		handleOpenTradeForm,
@@ -23,22 +23,17 @@
 	let equityInOpenTrades: number = $state(0);
 
 	let authenticated = $state(false);
-	let currentUser = $state<User | null>(null);
 
 	const unsubscribeAuth = isAuthenticated.subscribe((value) => {
 		authenticated = value;
 	});
 
-	const unsubscribeUser = user.subscribe((value) => {
-		currentUser = value;
-	});
-
 	const unsubscibe = tradesStore.subscribe((trades) => {
-		const today = new Date();
-		const sevenDaysAgo = new Date(today.setDate(today.getDate() - 7));
+		const pivotDate = new Date();
+		pivotDate.setDate(pivotDate.getDate() - 7);
 
 		const last7DaysTrades = trades.filter(
-			(trade) => new Date(trade.openedAt) >= sevenDaysAgo
+			(trade) => new Date(trade.openedAt) >= pivotDate
 		);
 
 		pnlLast7Days = pnlForPeriod(last7DaysTrades);
@@ -51,7 +46,6 @@
 	onDestroy(() => {
 		unsubscibe();
 		unsubscribeAuth();
-		unsubscribeUser();
 	});
 </script>
 

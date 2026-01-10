@@ -18,6 +18,13 @@ export const formatIntToCurrency = (value: number): string => {
 	}).format(value);
 };
 
+export const formatNumberPercentage = (value: number): string => {
+	return new Intl.NumberFormat('en-US', {
+		style: 'percent',
+		minimumFractionDigits: 2,
+		maximumFractionDigits: 2,
+	}).format(value);
+};
 export const formatNumber = (value: number, fractionDigits = 2): string => {
 	return new Intl.NumberFormat('en-US', {
 		minimumFractionDigits: fractionDigits,

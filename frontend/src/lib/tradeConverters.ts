@@ -10,11 +10,11 @@ export const convertApiTradeToUiTrade = (trade: any): Trade => {
 		tradeType: trade.type,
 		openPrice: trade.open_price, // updated to match backend field name
 		quantity: trade.quantity,
-		stopLoss: trade.stop_loss,
-		takeProfit: trade.take_profit,
-		leverage: trade.leverage,
+		stopLoss: trade.stop_loss ?? undefined,
+		takeProfit: trade.take_profit ?? undefined,
+		leverage: trade.leverage ?? undefined,
 		openedAt: formatDateTimeISO(trade.opened_at),
-		closePrice: trade.close_price,
+		closePrice: trade.close_price ?? undefined,
 		closedAt: trade.closed_at ? formatDateTimeISO(trade.closed_at) : undefined,
 		createdAt: formatDateTimeISO(trade.created_at),
 	};
