@@ -87,7 +87,7 @@ export function calcPnlPercentage(trade: Trade): number | null {
 	}
 	const investedAmount = trade.openPrice * trade.quantity;
 
-	return (absolutePnl / investedAmount) * 100;
+	return absolutePnl / investedAmount;
 }
 
 export function calculatePnl(trade: Trade): number {

@@ -8,7 +8,7 @@
 		TpSLDisplay,
 		TradeDatesDisplay,
 	} from '$lib';
-	import { formatIntToCurrency } from '$lib/formatters';
+	import { formatIntToCurrency, formatNumber } from '$lib/formatters';
 	import {
 		createTable,
 		Render,
@@ -54,11 +54,12 @@
 		table.column({
 			accessor: 'quantity',
 			header: 'Quantity',
+			cell: ({ value }) => formatNumber(value, 6),
 		}),
 		table.column({
 			accessor: 'openPrice',
 			header: 'Open Price',
-			cell: ({ value }) => formatIntToCurrency(value),
+			cell: ({ value }) => formatIntToCurrency(value, 6),
 		}),
 		table.column({
 			accessor: 'leverage',
@@ -77,7 +78,7 @@
 		table.column({
 			accessor: 'closePrice',
 			header: 'Close Price',
-			cell: ({ value }) => (value ? formatIntToCurrency(value) : '-'),
+			cell: ({ value }) => (value ? formatIntToCurrency(value, 6) : '-'),
 		}),
 		table.column({
 			accessor: ({ openedAt, closedAt }) => ({ openedAt, closedAt }),

@@ -1,12 +1,13 @@
 import type { Actions } from './$types';
 import { superValidate } from 'sveltekit-superforms';
-import { formSchema, type TradeFormInput } from '../lib/schemas/tradeSchemas';
+import { formSchema, type TradeFormInput } from '$lib/schemas/tradeSchemas';
 import { fail, redirect } from '@sveltejs/kit';
 import { zod } from 'sveltekit-superforms/adapters';
 import type { Trade } from '$lib/types';
 import {
 	convertUiTradeToTradeFormInput,
 	convertApiTradeToUiTrade,
+	normalizeTradeFormInputForApi,
 } from '$lib/tradeConverters';
 import { httpClient } from '$lib/server/http-client/http-client';
 
@@ -70,7 +71,7 @@ export const actions = {
 
 		try {
 			await httpClient.post<TradeFormInput, unknown>('/trades', {
-				payload: form.data,
+				payload: normalizeTradeFormInputForApi(form.data),
 				fetch,
 			});
 
@@ -91,7 +92,7 @@ export const actions = {
 
 		try {
 			await httpClient.put<TradeFormInput>(`/trades/${form.data.id}`, {
-				payload: form.data,
+				payload: normalizeTradeFormInputForApi(form.data),
 				fetch,
 			});
 		} catch (error) {

@@ -31,3 +31,12 @@ export const convertUiTradeToTradeFormInput = (
 		closePrice: trade.closePrice,
 	};
 };
+
+export const normalizeTradeFormInputForApi = (
+	trade: TradeFormInput
+): TradeFormInput => {
+	return {
+		...trade,
+		symbol: trade.symbol.toUpperCase(),
+	};
+};

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Trade } from '$lib/types';
-	import { formatIntToCurrency } from '$lib/formatters';
+	import { formatIntToCurrency, formatNumberPercentage } from '$lib/formatters';
 	import { calcAbsolutePnl, calcPnlPercentage } from '$lib/calcFunctions';
 
 	const { trade }: { trade: Trade } = $props();
@@ -19,7 +19,7 @@
 		<span
 			class="font-medium {pnlPercent >= 0 ? 'text-green-600' : 'text-red-600'}"
 		>
-			({pnlPercent >= 0 ? '+' : ''}{pnlPercent.toFixed(2)}%)
+			({pnlPercent >= 0 ? '+' : ''}{formatNumberPercentage(pnlPercent)})
 		</span>
 	{:else}
 		<span class="text-gray-500">-</span>

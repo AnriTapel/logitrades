@@ -47,15 +47,10 @@
 		: 'Create Trade Note';
 
 	const handleSubmit = async (): Promise<void> => {
-		form.submit();
-	};
-
-	const handleSymbolChange = (event: Event): void => {
-		const target = event.target as HTMLInputElement;
-		formData.update((data) => ({
-			...data,
-			symbol: target.value.toUpperCase(),
-		}));
+		const validatedForm = await form.validateForm();
+		if (validatedForm.valid) {
+			form.submit();
+		}
 	};
 
 	const handleCancel = (): void => {
@@ -114,13 +109,17 @@
 					<FormLabel>Symbol *</FormLabel>
 					<Input
 						{...props}
-						value={$formData.symbol}
+						class="uppercase"
 						required
-						oninput={handleSymbolChange}
+						bind:value={$formData.symbol}
 					/>
 				{/snippet}
 			</Control>
-			<FieldErrors />
+			<FieldErrors>
+				{#snippet children({ errors })}
+					<div class="text-destructive text-sm font-medium">{errors[0]}</div>
+				{/snippet}
+			</FieldErrors>
 		</Field>
 
 		<Field {form} name="openPrice">
@@ -130,14 +129,18 @@
 					<Input
 						{...props}
 						type="number"
-						min="0"
-						step="0.000001"
-						bind:value={$formData.openPrice}
 						required
+						step="0.000000001"
+						min="0.000000001"
+						bind:value={$formData.openPrice}
 					/>
 				{/snippet}
 			</Control>
-			<FieldErrors />
+			<FieldErrors>
+				{#snippet children({ errors })}
+					<div class="text-destructive text-sm font-medium">{errors[0]}</div>
+				{/snippet}
+			</FieldErrors>
 		</Field>
 
 		<Field {form} name="quantity">
@@ -147,14 +150,18 @@
 					<Input
 						{...props}
 						type="number"
-						min="0"
-						step="0.000001"
-						bind:value={$formData.quantity}
 						required
+						step="0.000000001"
+						min="0.000000001"
+						bind:value={$formData.quantity}
 					/>
 				{/snippet}
 			</Control>
-			<FieldErrors />
+			<FieldErrors>
+				{#snippet children({ errors })}
+					<div class="text-destructive text-sm font-medium">{errors[0]}</div>
+				{/snippet}
+			</FieldErrors>
 		</Field>
 
 		<Field {form} name="takeProfit">
@@ -164,8 +171,8 @@
 					<Input
 						{...props}
 						type="number"
-						min="0"
-						step="0.000001"
+						step="0.000000001"
+						min="0.000000001"
 						bind:value={$formData.takeProfit}
 					/>
 				{/snippet}
@@ -180,8 +187,8 @@
 					<Input
 						{...props}
 						type="number"
-						min="0"
-						step="0.000001"
+						step="0.000000001"
+						min="0.000000001"
 						bind:value={$formData.stopLoss}
 					/>
 				{/snippet}
@@ -248,8 +255,8 @@
 					<Input
 						{...props}
 						type="number"
-						min="0"
-						step="0.000001"
+						step="0.000000001"
+						min="0.000000001"
 						bind:value={$formData.closePrice}
 					/>
 				{/snippet}
@@ -280,6 +287,7 @@
 		grid-template-columns: repeat(3, 250px);
 		grid-template-rows: 6rem repeat(3, 6.5rem);
 		column-gap: 2rem;
+		row-gap: 1.5rem;
 		margin-inline: auto;
 	}
 
