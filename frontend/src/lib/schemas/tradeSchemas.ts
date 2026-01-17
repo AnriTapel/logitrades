@@ -9,13 +9,16 @@ export const formSchema = z.object({
 		.min(1, { message: 'Symbol must be at least 1 character' })
 		.max(24, { message: 'Symbol must be less than 24 characters' })
 		.regex(/^[A-Za-z0-9\/-]+$/, {
-			message:
-				'Symbol must contain only uppercase letters, numbers and / - characters',
+			message: 'Symbol can contain only letters, numbers and / -',
 		})
 		.nonempty({
 			message: 'Symbol is required',
 		}),
-	tradeType: z.enum(['buy', 'sell']),
+	tradeType: z.enum(['buy', 'sell'], {
+		required_error: 'Side is required',
+		invalid_type_error: 'Side must be either buy or sell',
+		message: 'Side must be either buy or sell',
+	}),
 	useLeverage: z.boolean(),
 	leverage: z
 		.number()

@@ -13,10 +13,11 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import { DatePicker } from '$lib';
-	import Button from '$lib/components/ui/button/button.svelte';
 	import ToggleGroup from '$lib/components/custom/toggle-group.svelte';
 	import { showServerErrors } from '$lib/stores/error';
 	import type { HttpError } from '$lib/server/http-client/types';
+	import Slider from '$lib/components/ui/slider/slider.svelte';
+	import { cn } from '$lib/utils';
 
 	export const {
 		data,
@@ -50,16 +51,14 @@
 		const validatedForm = await form.validateForm();
 		if (validatedForm.valid) {
 			form.submit();
+		} else {
+			form.errors.set(validatedForm.errors);
 		}
 	};
 
 	const handleCancel = (): void => {
 		form.reset();
 		onCancel();
-	};
-
-	const handleClearForm = (): void => {
-		form.reset();
 	};
 </script>
 
@@ -68,6 +67,7 @@
 	title={modalTitle}
 	onSubmit={handleSubmit}
 	onCancel={handleCancel}
+	class="w-[960px]"
 >
 	<form method="POST" use:enhance action={isEdit ? '?/update' : '?/create'}>
 		<!-- TODO: remove this inputs -->
@@ -79,216 +79,282 @@
 			<input type="hidden" name="createdAt" value={$formData.createdAt} />
 		{/if}
 
-		<Field {form} name="tradeType" class="col-span-2">
-			<Control>
-				{#snippet children({ props })}
-					<FormLabel>Trade Type *</FormLabel>
-					<ToggleGroup
-						{...props}
-						name="tradeType"
-						bind:value={$formData.tradeType}
-						options={[
-							{ label: 'Long', value: 'buy' },
-							{ label: 'Short', value: 'sell' },
-						]}
-					/>
-				{/snippet}
-			</Control>
-		</Field>
+		<section>
+			<Label class="text-gray-500">Trade Setup</Label>
+			<Field {form} name="tradeType" class="mb-2">
+				<Control>
+					{#snippet children({ props })}
+						<FormLabel>Side *</FormLabel>
+						<ToggleGroup
+							{...props}
+							name="tradeType"
+							bind:value={$formData.tradeType}
+							options={[
+								{ label: 'Long', value: 'buy' },
+								{ label: 'Short', value: 'sell' },
+							]}
+						/>
+					{/snippet}
+				</Control>
+				<FieldErrors>
+					{#snippet children({ errors })}
+						<span class="text-destructive text-sm font-medium">
+							{errors[0]}
+						</span>
+					{/snippet}
+				</FieldErrors>
+			</Field>
 
-		<Button
-			type="button"
-			variant="secondary"
-			class="ml-auto"
-			onclick={handleClearForm}>Clear</Button
-		>
-
-		<Field {form} name="symbol">
-			<Control>
-				{#snippet children({ props })}
-					<FormLabel>Symbol *</FormLabel>
-					<Input
-						{...props}
-						class="uppercase"
-						required
-						bind:value={$formData.symbol}
-					/>
-				{/snippet}
-			</Control>
-			<FieldErrors>
-				{#snippet children({ errors })}
-					<div class="text-destructive text-sm font-medium">{errors[0]}</div>
-				{/snippet}
-			</FieldErrors>
-		</Field>
-
-		<Field {form} name="openPrice">
-			<Control>
-				{#snippet children({ props })}
-					<FormLabel>Open Price *</FormLabel>
-					<Input
-						{...props}
-						type="number"
-						required
-						step="0.000000001"
-						min="0.000000001"
-						bind:value={$formData.openPrice}
-					/>
-				{/snippet}
-			</Control>
-			<FieldErrors>
-				{#snippet children({ errors })}
-					<div class="text-destructive text-sm font-medium">{errors[0]}</div>
-				{/snippet}
-			</FieldErrors>
-		</Field>
-
-		<Field {form} name="quantity">
-			<Control>
-				{#snippet children({ props })}
-					<FormLabel>Quantity *</FormLabel>
-					<Input
-						{...props}
-						type="number"
-						required
-						step="0.000000001"
-						min="0.000000001"
-						bind:value={$formData.quantity}
-					/>
-				{/snippet}
-			</Control>
-			<FieldErrors>
-				{#snippet children({ errors })}
-					<div class="text-destructive text-sm font-medium">{errors[0]}</div>
-				{/snippet}
-			</FieldErrors>
-		</Field>
-
-		<Field {form} name="takeProfit">
-			<Control>
-				{#snippet children({ props })}
-					<FormLabel>Take Profit</FormLabel>
-					<Input
-						{...props}
-						type="number"
-						step="0.000000001"
-						min="0.000000001"
-						bind:value={$formData.takeProfit}
-					/>
-				{/snippet}
-			</Control>
-			<FieldErrors />
-		</Field>
-
-		<Field {form} name="stopLoss">
-			<Control>
-				{#snippet children({ props })}
-					<FormLabel>Stop Loss</FormLabel>
-					<Input
-						{...props}
-						type="number"
-						step="0.000000001"
-						min="0.000000001"
-						bind:value={$formData.stopLoss}
-					/>
-				{/snippet}
-			</Control>
-			<FieldErrors />
-		</Field>
-
-		<div>
-			<Label for="leverage">Leverage</Label>
-			<div class="leverage-controls">
-				<Field {form} name="useLeverage">
+			<div class="flex gap-2">
+				<Field {form} name="symbol" class="flex-1">
 					<Control>
 						{#snippet children({ props })}
-							<div class="flex items-center gap-2">
-								<input
-									name="useLeverage"
-									value={$formData.useLeverage}
-									hidden
-								/>
-								<Checkbox {...props} bind:checked={$formData.useLeverage} />
-							</div>
-						{/snippet}
-					</Control>
-				</Field>
-
-				<Field {form} name="leverage" class="grow">
-					<Control>
-						{#snippet children({ props })}
+							<FormLabel>Symbol *</FormLabel>
 							<Input
 								{...props}
-								name="leverage"
-								type="number"
-								min={1}
-								max={50}
-								step={1}
-								disabled={!$formData.useLeverage}
-								bind:value={$formData.leverage}
+								class="uppercase"
+								required
+								placeholder="e.g. AAPL"
+								bind:value={$formData.symbol}
 							/>
 						{/snippet}
 					</Control>
+					<FieldErrors>
+						{#snippet children({ errors })}
+							<span class="text-destructive text-sm font-medium">
+								{errors[0]}
+							</span>
+						{/snippet}
+					</FieldErrors>
+				</Field>
+
+				<Field {form} name="quantity" class="flex-1">
+					<Control>
+						{#snippet children({ props })}
+							<FormLabel>Quantity *</FormLabel>
+							<Input
+								{...props}
+								type="number"
+								required
+								step="0.000000001"
+								min="0.000000001"
+								placeholder="0"
+								bind:value={$formData.quantity}
+							/>
+						{/snippet}
+					</Control>
+					<FieldErrors>
+						{#snippet children({ errors })}
+							<div class="text-destructive text-sm font-medium">
+								{errors[0]}
+							</div>
+						{/snippet}
+					</FieldErrors>
 				</Field>
 			</div>
-		</div>
+		</section>
 
-		<Field {form} name="openedAt">
-			<Control>
-				{#snippet children({ props })}
-					<DatePicker
-						{...props}
-						name="openedAt"
-						bind:value={$formData.openedAt}
-						withTime
-						label="Opened at*"
-					/>
-				{/snippet}
-			</Control>
-			<FieldErrors />
-		</Field>
+		<section>
+			<Label class="text-gray-500">Risk Management</Label>
+			<div class="mb-4">
+				<Label for="leverage">Leverage</Label>
+				<div class="leverage-controls">
+					<Field {form} name="useLeverage">
+						<Control>
+							{#snippet children({ props })}
+								<div class="flex items-center gap-2">
+									<input
+										name="useLeverage"
+										type="checkbox"
+										value={$formData.useLeverage}
+										hidden
+									/>
+									<Checkbox {...props} bind:checked={$formData.useLeverage} />
+								</div>
+							{/snippet}
+						</Control>
+					</Field>
 
-		<Field {form} name="closePrice">
-			<Control>
-				{#snippet children({ props })}
-					<FormLabel>Close Price</FormLabel>
-					<Input
-						{...props}
-						type="number"
-						step="0.000000001"
-						min="0.000000001"
-						bind:value={$formData.closePrice}
-					/>
-				{/snippet}
-			</Control>
-			<FieldErrors />
-		</Field>
+					<span
+						class={cn('text-sm font-medium block w-[30px]', {
+							'text-gray-500': !$formData.useLeverage,
+						})}
+					>
+						{$formData.leverage}x
+					</span>
 
-		<Field {form} name="closedAt">
-			<Control>
-				{#snippet children({ props })}
-					<DatePicker
-						{...props}
-						name="closedAt"
-						bind:value={$formData.closedAt}
-						withTime
-						label="Closed at"
-					/>
-				{/snippet}
-			</Control>
-			<FieldErrors />
-		</Field>
+					<Field {form} name="leverage" class="grow ">
+						<Control>
+							{#snippet children({ props })}
+								<input name="leverage" value={$formData.leverage} hidden />
+								<Slider
+									type="single"
+									{...props}
+									disabled={!$formData.useLeverage}
+									bind:value={$formData.leverage}
+									min={1}
+									max={50}
+									step={1}
+								/>
+							{/snippet}
+						</Control>
+					</Field>
+				</div>
+			</div>
+
+			<div class="flex gap-2">
+				<Field {form} name="takeProfit" class="flex-1">
+					<Control>
+						{#snippet children({ props })}
+							<FormLabel>Take Profit</FormLabel>
+							<Input
+								{...props}
+								type="number"
+								step="0.000000001"
+								min="0.000000001"
+								placeholder="0"
+								bind:value={$formData.takeProfit}
+							/>
+						{/snippet}
+					</Control>
+					<FieldErrors>
+						{#snippet children({ errors })}
+							<span class="text-destructive text-sm font-medium">
+								{errors[0]}
+							</span>
+						{/snippet}
+					</FieldErrors>
+				</Field>
+
+				<Field {form} name="stopLoss" class="flex-1">
+					<Control>
+						{#snippet children({ props })}
+							<FormLabel>Stop Loss</FormLabel>
+							<Input
+								{...props}
+								type="number"
+								step="0.000000001"
+								min="0.000000001"
+								placeholder="0"
+								bind:value={$formData.stopLoss}
+							/>
+						{/snippet}
+					</Control>
+					<FieldErrors>
+						{#snippet children({ errors })}
+							<span class="text-destructive text-sm font-medium">
+								{errors[0]}
+							</span>
+						{/snippet}
+					</FieldErrors>
+				</Field>
+			</div>
+		</section>
+
+		<section>
+			<Label class="text-gray-500">Entry & Exit</Label>
+			<div class="flex gap-2 mb-8">
+				<Field {form} name="openPrice" class="flex-grow">
+					<Control>
+						{#snippet children({ props })}
+							<FormLabel>Open Price *</FormLabel>
+							<Input
+								{...props}
+								type="number"
+								required
+								step="0.000000001"
+								min="0.000000001"
+								placeholder="0"
+								bind:value={$formData.openPrice}
+							/>
+						{/snippet}
+					</Control>
+					<FieldErrors>
+						{#snippet children({ errors })}
+							<div class="text-destructive text-sm font-medium absolute">
+								{errors[0]}
+							</div>
+						{/snippet}
+					</FieldErrors>
+				</Field>
+
+				<Field {form} name="openedAt">
+					<Control>
+						{#snippet children({ props })}
+							<DatePicker
+								{...props}
+								name="openedAt"
+								bind:value={$formData.openedAt}
+								withTime
+								label="Opened at*"
+							/>
+						{/snippet}
+					</Control>
+					<FieldErrors>
+						{#snippet children({ errors })}
+							<span class="text-destructive text-sm font-medium">
+								{errors[0]}
+							</span>
+						{/snippet}
+					</FieldErrors>
+				</Field>
+			</div>
+
+			<div class="flex gap-2">
+				<Field {form} name="closePrice" class="flex-grow">
+					<Control>
+						{#snippet children({ props })}
+							<FormLabel>Close Price</FormLabel>
+							<Input
+								{...props}
+								type="number"
+								step="0.000000001"
+								min="0.000000001"
+								placeholder="0"
+								bind:value={$formData.closePrice}
+							/>
+						{/snippet}
+					</Control>
+					<FieldErrors>
+						{#snippet children({ errors })}
+							<span class="text-destructive text-sm font-medium">
+								{errors[0]}
+							</span>
+						{/snippet}
+					</FieldErrors>
+				</Field>
+
+				<Field {form} name="closedAt">
+					<Control>
+						{#snippet children({ props })}
+							<DatePicker
+								{...props}
+								name="closedAt"
+								bind:value={$formData.closedAt}
+								withTime
+								label="Closed at"
+							/>
+						{/snippet}
+					</Control>
+					<FieldErrors>
+						{#snippet children({ errors })}
+							<span class="text-destructive text-sm font-medium">
+								{errors[0]}
+							</span>
+						{/snippet}
+					</FieldErrors>
+				</Field>
+			</div>
+		</section>
 	</form>
 </CommonDialog>
 
 <style>
 	form {
 		display: grid;
-		grid-template-columns: repeat(3, 250px);
-		grid-template-rows: 6rem repeat(3, 6.5rem);
-		column-gap: 2rem;
-		row-gap: 1.5rem;
-		margin-inline: auto;
+		grid-template-columns: repeat(2, 1fr);
+		grid-template-rows: repeat(2, 250px);
+		column-gap: 8rem;
 	}
 
 	.leverage-controls {

@@ -26,7 +26,7 @@ export const convertUiTradeToTradeFormInput = (
 	return {
 		...trade,
 		leverage: trade.leverage || 1,
-		useLeverage: trade.leverage !== 1 && trade.leverage !== null,
+		useLeverage: Boolean(trade.leverage) && trade.leverage !== 1,
 		openedAt: trade.openedAt ?? formatDateTimeISO(new Date().toISOString()), // default to current date-time in ISO format without seconds
 		closePrice: trade.closePrice,
 	};

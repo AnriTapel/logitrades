@@ -19,3 +19,12 @@
 	{@render children()}
 	<ErrorDialog />
 </div>
+
+<style>
+	:global(input[type='number']) {
+		&::-webkit-outer-spin-button,
+		&::-webkit-inner-spin-button {
+			appearance: none;
+		}
+	}
+</style>
