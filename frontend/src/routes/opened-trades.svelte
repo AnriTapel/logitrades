@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { writable } from 'svelte/store';
 	import TopBar from '$lib/layouts/top-bar.svelte';
-	import TradesTable from '$lib/layouts/trades-table.svelte';
+	import TradesDataTable from '$lib/layouts/trades-data-table.svelte';
 	import type { Trade } from '$lib/types';
 	import { tradesStore } from '$lib/stores/trades';
 	import { onDestroy } from 'svelte';
@@ -31,8 +31,8 @@
 
 <section class="mb-8">
 	<TopBar {handleOpenTradeForm} {handleOpenImportDialog} />
-	<TradesTable
-		styling={{ maxBodyHeight: '40vh' }}
+	<TradesDataTable
+		styling={{ maxBodyHeight: '60vh' }}
 		noTradesMessage="No opened trades found"
 		trades={openedTrades}
 		onDelete={handleTradeDelete}
