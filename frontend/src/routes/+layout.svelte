@@ -2,10 +2,12 @@
 	import '../app.pcss';
 	import ErrorDialog from '$lib/layouts/error-dialog.svelte';
 	import { setAuth, clearAuth } from '$lib/stores/auth';
+	import { tradesStore } from '$lib/stores/trades';
+	import TopBar from '$lib/layouts/top-bar.svelte';
+	import type { Trade } from '$lib/types';
 
 	let { children, data } = $props();
 
-	// Sync auth state from server data
 	$effect(() => {
 		if (data.isAuthenticated && data.user) {
 			setAuth(data.user);
@@ -13,12 +15,20 @@
 			clearAuth();
 		}
 	});
+
+	$effect(() => {
+		const trades = (data as typeof data & { trades?: Trade[] }).trades;
+		if (trades) {
+			tradesStore.set(trades);
+		}
+	});
 </script>
 
-<div class="container mx-auto p-4">
+<main class="container mx-auto p-4">
+	<TopBar />
 	{@render children()}
 	<ErrorDialog />
-</div>
+</main>
 
 <style>
 	:global(input[type='number']) {

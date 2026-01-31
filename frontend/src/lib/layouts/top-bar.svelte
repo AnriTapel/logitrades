@@ -8,32 +8,32 @@
 	import { formatIntToCurrency } from '$lib/formatters';
 	import { tradesStore } from '$lib/stores/trades';
 	import { onDestroy } from 'svelte';
-	import { isAuthenticated } from '$lib/stores/auth';
-
-	const {
-		handleOpenTradeForm,
-		handleOpenImportDialog,
-	}: {
-		handleOpenTradeForm: () => void;
-		handleOpenImportDialog: () => void;
-	} = $props();
+	import { userStore, type User } from '$lib/stores/auth';
+	import {
+		Root as DropdownMenuRoot,
+		Trigger as DropdownMenuTrigger,
+		Content as DropdownMenuContent,
+		Item as DropdownMenuItem,
+		Label as DropdownMenuLabel,
+	} from '$lib/components/ui/dropdown-menu';
+	import { goto } from '$app/navigation';
 
 	let pnlLast7Days: number = $state(0);
 	let volumeLast7Days: number = $state(0);
 	let equityInOpenTrades: number = $state(0);
 
-	let authenticated = $state(false);
+	let userState = $state<User | null>(null);
 
-	const unsubscribeAuth = isAuthenticated.subscribe((value) => {
-		authenticated = value;
+	const unsubscribeAuth = userStore.subscribe((user) => {
+		userState = user;
 	});
 
-	const unsubscibe = tradesStore.subscribe((trades) => {
+	const unsubscibeTrades = tradesStore.subscribe((trades) => {
 		const pivotDate = new Date();
 		pivotDate.setDate(pivotDate.getDate() - 7);
 
 		const last7DaysTrades = trades.filter(
-			(trade) => new Date(trade.openedAt) >= pivotDate
+			(trade) => new Date(trade.openedAt) >= pivotDate,
 		);
 
 		pnlLast7Days = pnlForPeriod(last7DaysTrades);
@@ -44,15 +44,15 @@
 	});
 
 	onDestroy(() => {
-		unsubscibe();
+		unsubscibeTrades();
 		unsubscribeAuth();
 	});
 </script>
 
-<div class="flex justify-between items-center mb-4">
-	<h1 class="text-2xl font-bold">Opened trades</h1>
+<div class="flex justify-between items-center mb-12">
+	<a href="/"><h1 class="text-2xl font-bold">LogiTrades</h1></a>
 
-	<div class="flex gap-12 mt-4">
+	<div class="flex gap-12 mt-4 items-bottom">
 		<div>
 			<div class="text-sm text-gray-500">7-Day PnL</div>
 			<div
@@ -75,21 +75,30 @@
 				{formatIntToCurrency(equityInOpenTrades)}
 			</div>
 		</div>
+		<Button variant="link" size="lg" onclick={() => goto('/dashboard')}
+			>More Stats</Button
+		>
 	</div>
 
-	<div class="flex gap-2">
-		<Button onclick={handleOpenTradeForm}>Add Trade</Button>
-		<Button onclick={handleOpenImportDialog} variant="outline"
-			>Import from CSV</Button
-		>
-		{#if authenticated}
-			<form action="/?/logout" method="POST">
-				<Button type="submit" variant="outline">Logout</Button>
-			</form>
-		{:else}
-			<a href="/login">
-				<Button variant="outline">Login</Button>
-			</a>
-		{/if}
-	</div>
+	{#if userState}
+		<DropdownMenuRoot>
+			<DropdownMenuTrigger>
+				<Button variant="outline" class="rounded-full"
+					>{userState.username.charAt(0)}</Button
+				>
+			</DropdownMenuTrigger>
+			<DropdownMenuContent>
+				<DropdownMenuLabel>{userState.username}</DropdownMenuLabel>
+				<DropdownMenuItem>
+					<form action="/?/logout" method="POST">
+						<Button type="submit" variant="link">Logout</Button>
+					</form>
+				</DropdownMenuItem>
+			</DropdownMenuContent>
+		</DropdownMenuRoot>
+	{:else}
+		<a href="/login">
+			<Button variant="outline">Login</Button>
+		</a>
+	{/if}
 </div>

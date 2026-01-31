@@ -5,16 +5,16 @@ import type { User } from '../../app.d.ts';
 export type { User };
 
 export const isAuthenticated = writable<boolean>(false);
-export const user = writable<User | null>(null);
+export const userStore = writable<User | null>(null);
 
 // Helper function to clear auth state
 export function clearAuth() {
 	isAuthenticated.set(false);
-	user.set(null);
+	userStore.set(null);
 }
 
 // Helper function to set auth state
 export function setAuth(userData: User) {
 	isAuthenticated.set(true);
-	user.set(userData);
+	userStore.set(userData);
 }

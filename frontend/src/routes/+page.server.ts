@@ -1,4 +1,4 @@
-import type { Actions } from './$types';
+import type { Actions, PageServerLoad } from './$types';
 import { superValidate } from 'sveltekit-superforms';
 import { formSchema, type TradeFormInput } from '$lib/schemas/tradeSchemas';
 import { fail, redirect } from '@sveltejs/kit';
@@ -6,46 +6,20 @@ import { zod } from 'sveltekit-superforms/adapters';
 import type { Trade } from '$lib/types';
 import {
 	convertUiTradeToTradeFormInput,
-	convertApiTradeToUiTrade,
 	normalizeTradeFormInputForApi,
 } from '$lib/tradeConverters';
 import { httpClient } from '$lib/server/http-client/http-client';
 
-const sortTradesByClosedAt = (
-	{ closedAt: closedAtA, openedAt: openedAtA }: Trade,
-	{ closedAt: closedAtB, openedAt: openedAtB }: Trade
-): number => {
-	if (closedAtA && closedAtB) {
-		return closedAtB.localeCompare(closedAtA);
-	}
-
-	if (closedAtA && !closedAtB) {
-		return 1;
-	}
-
-	if (closedAtB && !closedAtA) {
-		return -1;
-	}
-
-	return openedAtB.localeCompare(openedAtA);
-};
-
-export const load = async ({ url, fetch, locals }) => {
-	// Redirect to login if not authenticated
-	// User is set in handle hook (hooks.server.ts) before this runs
-	if (!locals.user) {
-		throw redirect(303, '/login');
-	}
-
-	const response = await httpClient.get<Trade[]>('/trades', { fetch });
-	const trades =
-		response?.map(convertApiTradeToUiTrade).sort(sortTradesByClosedAt) ?? [];
+export const load: PageServerLoad = async ({ url, parent }) => {
+	const parentData = await parent();
+	const trades = (parentData as typeof parentData & { trades: Trade[] }).trades;
+	
 	// TODO :better way/place to handle edit mode
 	const tradeId = url.searchParams.get('edit');
 	let form;
 
 	if (tradeId) {
-		const tradeToEdit = trades.find((trade) => trade.id === Number(tradeId));
+		const tradeToEdit = trades.find((trade: Trade) => trade.id === Number(tradeId));
 		form = tradeToEdit
 			? await superValidate(
 					convertUiTradeToTradeFormInput(tradeToEdit),
@@ -56,7 +30,7 @@ export const load = async ({ url, fetch, locals }) => {
 		form = await superValidate(zod(formSchema));
 	}
 
-	return { trades, form, isEditMode: tradeId !== null };
+	return { form, isEditMode: tradeId !== null };
 };
 
 export const actions = {
