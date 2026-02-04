@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from .db import TradeORM, UserORM, RefreshTokenORM, PasswordResetTokenORM
+from .db import TradeORM, UserORM, RefreshTokenORM, PasswordResetTokenORM, EmailVerificationTokenORM
 
 from .utils import _get_env_var
 
@@ -15,6 +15,7 @@ TradeORM.metadata.create_all(bind=engine)
 UserORM.metadata.create_all(bind=engine)
 RefreshTokenORM.metadata.create_all(bind=engine)
 PasswordResetTokenORM.metadata.create_all(bind=engine)
+EmailVerificationTokenORM.metadata.create_all(bind=engine)
 
 def get_db():
     db = SessionLocal()
