@@ -11,9 +11,10 @@ import {
 import { httpClient } from '$lib/server/http-client/http-client';
 
 export const load: PageServerLoad = async ({ url, parent }) => {
-	const parentData = await parent();
-	const trades = (parentData as typeof parentData & { trades: Trade[] }).trades;
-	
+	const { isAuthenticated, trades } = await parent();
+	if (!isAuthenticated) {
+		throw redirect(303, '/login');
+	}
 	// TODO :better way/place to handle edit mode
 	const tradeId = url.searchParams.get('edit');
 	let form;
