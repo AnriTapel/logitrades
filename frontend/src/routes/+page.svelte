@@ -51,6 +51,10 @@
 	}
 </script>
 
+<svelte:head>
+	<title>LogiTrades - Trading Journal & Analytics Platform | Track & Analyze Your Trades</title>
+</svelte:head>
+
 <OpenedTrades
 	{handleTradeDelete}
 	{handleTradeEdit}

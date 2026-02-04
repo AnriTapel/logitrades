@@ -32,6 +32,10 @@
 	const { form: formData, enhance } = form;
 </script>
 
+<svelte:head>
+	<title>Reset Your Password | LogiTrades</title>
+</svelte:head>
+
 <div class="flex items-center justify-center min-h-screen">
 	<div class="w-full max-w-md p-8 space-y-6">
 		{#if !data.hasToken}

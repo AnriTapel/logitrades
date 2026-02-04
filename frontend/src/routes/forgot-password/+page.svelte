@@ -30,6 +30,10 @@
 	const { form: formData, enhance } = form;
 </script>
 
+<svelte:head>
+	<title>Forgot Password - Reset Your Account | LogiTrades</title>
+</svelte:head>
+
 <div class="flex items-center justify-center min-h-screen">
 	<div class="w-full max-w-md p-8 space-y-8">
 		<h1 class="text-2xl font-bold text-center">Forgot Password</h1>

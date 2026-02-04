@@ -28,6 +28,10 @@
 	);
 </script>
 
+<svelte:head>
+	<title>Trading Dashboard - Analytics & Performance Stats | LogiTrades</title>
+</svelte:head>
+
 <section class="mb-12">
 	<h1 class="text-2xl font-bold mb-4">Stats dashboard</h1>
 
