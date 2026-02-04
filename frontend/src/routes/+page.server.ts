@@ -20,7 +20,9 @@ export const load: PageServerLoad = async ({ url, parent }) => {
 	let form;
 
 	if (tradeId) {
-		const tradeToEdit = trades.find((trade: Trade) => trade.id === Number(tradeId));
+		const tradeToEdit = trades.find(
+			(trade: Trade) => trade.id === Number(tradeId)
+		);
 		form = tradeToEdit
 			? await superValidate(
 					convertUiTradeToTradeFormInput(tradeToEdit),

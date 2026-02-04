@@ -28,12 +28,12 @@
 		userState = user;
 	});
 
-	const unsubscibeTrades = tradesStore.subscribe((trades) => {
+	const unsubscribeTrades = tradesStore.subscribe((trades) => {
 		const pivotDate = new Date();
 		pivotDate.setDate(pivotDate.getDate() - 7);
 
 		const last7DaysTrades = trades.filter(
-			(trade) => new Date(trade.openedAt) >= pivotDate,
+			(trade) => new Date(trade.openedAt) >= pivotDate
 		);
 
 		pnlLast7Days = pnlForPeriod(last7DaysTrades);
@@ -44,7 +44,7 @@
 	});
 
 	onDestroy(() => {
-		unsubscibeTrades();
+		unsubscribeTrades();
 		unsubscribeAuth();
 	});
 </script>
@@ -52,33 +52,38 @@
 <div class="flex justify-between items-center mb-12">
 	<a href="/"><h1 class="text-2xl font-bold">LogiTrades</h1></a>
 
-	<div class="flex gap-12 mt-4 items-bottom">
-		<div>
-			<div class="text-sm text-gray-500">7-Day PnL</div>
-			<div
-				class="text-lg font-semibold"
-				class:text-green-600={pnlLast7Days > 0}
-				class:text-red-600={pnlLast7Days < 0}
-			>
-				{formatIntToCurrency(pnlLast7Days)}
+	{#if userState}
+		<div class="flex gap-12 mt-4 items-bottom">
+			<div>
+				<div class="text-sm text-gray-500">7-Day PnL</div>
+				<div
+					class="text-lg font-semibold"
+					class:text-green-600={pnlLast7Days > 0}
+					class:text-red-600={pnlLast7Days < 0}
+				>
+					{formatIntToCurrency(pnlLast7Days)}
+				</div>
 			</div>
-		</div>
-		<div>
-			<div class="text-sm text-gray-500">7-Day Volume</div>
-			<div class="text-lg font-semibold">
-				{formatIntToCurrency(volumeLast7Days)}
+			<div>
+				<div class="text-sm text-gray-500">7-Day Volume</div>
+				<div class="text-lg font-semibold">
+					{formatIntToCurrency(volumeLast7Days)}
+				</div>
 			</div>
-		</div>
-		<div>
-			<div class="text-sm text-gray-500">Open Equity</div>
-			<div class="text-lg font-semibold">
-				{formatIntToCurrency(equityInOpenTrades)}
+			<div>
+				<div class="text-sm text-gray-500">Open Equity</div>
+				<div class="text-lg font-semibold">
+					{formatIntToCurrency(equityInOpenTrades)}
+				</div>
 			</div>
+			<Button
+				variant="link"
+				class="text-base"
+				onclick={() => goto('/dashboard')}
+				>More Stats
+			</Button>
 		</div>
-		<Button variant="link" size="lg" onclick={() => goto('/dashboard')}
-			>More Stats</Button
-		>
-	</div>
+	{/if}
 
 	{#if userState}
 		<DropdownMenuRoot>
