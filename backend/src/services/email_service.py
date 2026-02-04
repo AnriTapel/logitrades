@@ -31,7 +31,7 @@ class EmailService:
         verification_url = f"{self._frontend_url}/verify-email?token={token}"
 
         message = MIMEMultipart("alternative")
-        message["Subject"] = "Verify your email - Market Memo"
+        message["Subject"] = "Verify your email - LogiTrades"
         message["From"] = f"LogiTrades <{self._from_email}>"
         message["To"] = to_email
 
@@ -54,7 +54,7 @@ If you didn't create this account, please ignore this email."""
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
     <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
-        <h1 style="color: white; margin: 0; font-size: 28px;">Welcome to Market Memo!</h1>
+        <h1 style="color: white; margin: 0; font-size: 28px;">Welcome to LogiTrades!</h1>
     </div>
     <div style="background: #ffffff; padding: 30px; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 10px 10px;">
         <p style="font-size: 16px;">Hi <strong>{username}</strong>,</p>
