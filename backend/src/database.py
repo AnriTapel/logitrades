@@ -11,11 +11,13 @@ connect_args = {"check_same_thread": False} if database_url.startswith("sqlite")
 engine = create_engine(database_url, connect_args=connect_args)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-TradeORM.metadata.create_all(bind=engine)
-UserORM.metadata.create_all(bind=engine)
-RefreshTokenORM.metadata.create_all(bind=engine)
-PasswordResetTokenORM.metadata.create_all(bind=engine)
-EmailVerificationTokenORM.metadata.create_all(bind=engine)
+def init_db():
+    """Initialize database tables. Should be called on app startup."""
+    TradeORM.metadata.create_all(bind=engine)
+    UserORM.metadata.create_all(bind=engine)
+    RefreshTokenORM.metadata.create_all(bind=engine)
+    PasswordResetTokenORM.metadata.create_all(bind=engine)
+    EmailVerificationTokenORM.metadata.create_all(bind=engine)
 
 def get_db():
     db = SessionLocal()

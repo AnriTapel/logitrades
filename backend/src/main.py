@@ -23,7 +23,14 @@ from pydantic import ValidationError
 from pydantic_core import PydanticCustomError
 import csv
 import io
+
 app = FastAPI()
+
+@app.on_event("startup")
+def on_startup():
+    """Initialize database tables on application startup."""
+    database.init_db()
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://localhost:3000", "http://0.0.0.0:3000"],
