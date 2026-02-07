@@ -34,7 +34,7 @@
 	<title>Create Your Trading Journal Account | LogiTrades</title>
 </svelte:head>
 
-<div class="flex items-center justify-center min-h-screen">
+<div class="flex items-center justify-center grow">
 	<div class="w-full max-w-md p-8 space-y-8">
 		<h1 class="text-2xl font-bold text-center">Sign Up</h1>
 		<form method="POST" use:enhance class="space-y-4">

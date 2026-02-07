@@ -11,8 +11,8 @@
 		FieldErrors,
 	} from '$lib/components/ui/form';
 	import { goto } from '$app/navigation';
-    import {showServerErrors} from "$lib/stores/error";
-    import type {HttpError} from "$lib/server/http-client/types";
+	import { showServerErrors } from '$lib/stores/error';
+	import type { HttpError } from '$lib/server/http-client/types';
 
 	export let data: { form: SuperValidated<LoginFormInput> };
 
@@ -22,9 +22,9 @@
 			if (result.type === 'redirect') {
 				goto(result.location);
 			} else if (result.type == 'failure') {
-                showServerErrors(result.data?.error as HttpError);
-            }
-		}
+				showServerErrors(result.data?.error as HttpError);
+			}
+		},
 	});
 
 	const { form: formData, enhance } = form;
@@ -34,7 +34,7 @@
 	<title>Login to Your Trading Journal | LogiTrades</title>
 </svelte:head>
 
-<div class="flex items-center justify-center min-h-screen">
+<div class="flex items-center justify-center grow">
 	<div class="w-full max-w-md p-8 space-y-8">
 		<h1 class="text-2xl font-bold text-center">Login</h1>
 		<form method="POST" use:enhance class="space-y-4">

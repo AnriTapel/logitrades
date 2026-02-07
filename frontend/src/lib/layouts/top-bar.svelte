@@ -49,7 +49,7 @@
 	});
 </script>
 
-<div class="flex justify-between items-center mb-12">
+<div class="flex justify-between items-center">
 	<a href="/" class="flex items-center gap-3">
 		<img src="/logo.svg" alt="LogiTrades" class="h-14 w-14" />
 		<h1 class="text-2xl font-bold">LogiTrades</h1>

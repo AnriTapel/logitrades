@@ -36,7 +36,7 @@
 	<title>Reset Your Password | LogiTrades</title>
 </svelte:head>
 
-<div class="flex items-center justify-center min-h-screen">
+<div class="flex items-center justify-center grow">
 	<div class="w-full max-w-md p-8 space-y-6">
 		{#if !data.hasToken}
 			<div class="text-center flex flex-col items-center gap-4">

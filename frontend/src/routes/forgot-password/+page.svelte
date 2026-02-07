@@ -34,12 +34,11 @@
 	<title>Forgot Password - Reset Your Account | LogiTrades</title>
 </svelte:head>
 
-<div class="flex items-center justify-center min-h-screen">
+<div class="flex items-center justify-center grow">
 	<div class="w-full max-w-md p-8 space-y-8">
 		<h1 class="text-2xl font-bold text-center">Forgot Password</h1>
 		<p class="text-muted-foreground text-center">
-			Enter your email address and we'll send you a link to reset your
-			password.
+			Enter your email address and we'll send you a link to reset your password.
 		</p>
 		<form method="POST" use:enhance class="space-y-4">
 			<Field {form} name="email">
@@ -60,4 +59,3 @@
 		</form>
 	</div>
 </div>
-

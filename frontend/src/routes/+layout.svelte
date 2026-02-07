@@ -28,7 +28,6 @@
 	<!-- Favicon -->
 	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 	<link rel="alternate icon" href="/favicon.svg" />
-
 	<!-- Primary Meta Tags -->
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	<meta
@@ -46,7 +45,10 @@
 	<!-- Open Graph / Facebook -->
 	<meta property="og:type" content="website" />
 	<meta property="og:url" content="https://logitrades.com/" />
-	<meta property="og:title" content="LogiTrades - Trading Journal & Analytics Platform" />
+	<meta
+		property="og:title"
+		content="LogiTrades - Trading Journal & Analytics Platform"
+	/>
 	<meta
 		property="og:description"
 		content="Track your trades, analyze performance, and improve your trading discipline with powerful insights and statistics."
@@ -58,12 +60,18 @@
 	<!-- Twitter Card -->
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:url" content="https://logitrades.com/" />
-	<meta name="twitter:title" content="LogiTrades - Trading Journal & Analytics Platform" />
+	<meta
+		name="twitter:title"
+		content="LogiTrades - Trading Journal & Analytics Platform"
+	/>
 	<meta
 		name="twitter:description"
 		content="Track your trades, analyze performance, and improve your trading discipline with powerful insights and statistics."
 	/>
-	<meta name="twitter:image" content="https://logitrades.com/twitter-image.png" />
+	<meta
+		name="twitter:image"
+		content="https://logitrades.com/twitter-image.png"
+	/>
 
 	<!-- Additional SEO -->
 	<meta name="robots" content="index, follow" />

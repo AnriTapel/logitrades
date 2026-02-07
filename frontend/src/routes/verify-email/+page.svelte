@@ -15,7 +15,7 @@
 	<title>Email Verification | LogiTrades</title>
 </svelte:head>
 
-<div class="flex items-center justify-center min-h-screen">
+<div class="flex items-center justify-center grow">
 	<div class="w-full max-w-md p-8 space-y-6 text-center">
 		<div class="flex flex-col items-center gap-4">
 			{#if data.status === 'success'}
