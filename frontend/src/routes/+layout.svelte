@@ -25,6 +25,10 @@
 </script>
 
 <svelte:head>
+	<!-- Favicon -->
+	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+	<link rel="alternate icon" href="/favicon.svg" />
+
 	<!-- Primary Meta Tags -->
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	<meta
@@ -68,7 +72,7 @@
 	<link rel="canonical" href="https://logitrades.com/" />
 </svelte:head>
 
-<main class="container mx-auto p-4">
+<main class="container mx-auto p-4 min-h-screen flex flex-col gap-12">
 	<TopBar />
 	{@render children()}
 	<ErrorDialog />
