@@ -3,7 +3,7 @@
 	import {
 		pnlForPeriod,
 		totalTradedVolumeForPeriod,
-		totalEquityInOpenedTrades,
+		totalEquityInOpenedTrades, calcAbsolutePnl,
 	} from '$lib/calcFunctions';
 	import { formatIntToCurrency } from '$lib/formatters';
 	import { tradesStore } from '$lib/stores/trades';
@@ -21,6 +21,7 @@
 	let pnlLast7Days: number = $state(0);
 	let volumeLast7Days: number = $state(0);
 	let equityInOpenTrades: number = $state(0);
+	let totalPnL: number = $state(0);
 
 	let userState = $state<User | null>(null);
 
@@ -35,6 +36,10 @@
 		const last7DaysTrades = trades.filter(
 			(trade) => new Date(trade.openedAt) >= pivotDate
 		);
+
+		totalPnL = trades.reduce((acc, trade) => {
+			return acc + (calcAbsolutePnl(trade) ?? 0);
+		}, 0);
 
 		pnlLast7Days = pnlForPeriod(last7DaysTrades);
 		volumeLast7Days = totalTradedVolumeForPeriod(last7DaysTrades);
@@ -58,6 +63,18 @@
 	{#if userState}
 		<div class="flex gap-12 mt-4 items-bottom">
 			<div>
+				<div class="text-sm text-gray-500">Open Equity</div>
+				<div class="text-lg font-semibold">
+					{formatIntToCurrency(equityInOpenTrades)}
+				</div>
+			</div>
+			<div>
+				<div class="text-sm text-gray-500">7-Day Volume</div>
+				<div class="text-lg font-semibold">
+					{formatIntToCurrency(volumeLast7Days)}
+				</div>
+			</div>
+			<div>
 				<div class="text-sm text-gray-500">7-Day PnL</div>
 				<div
 					class="text-lg font-semibold"
@@ -68,15 +85,12 @@
 				</div>
 			</div>
 			<div>
-				<div class="text-sm text-gray-500">7-Day Volume</div>
-				<div class="text-lg font-semibold">
-					{formatIntToCurrency(volumeLast7Days)}
-				</div>
-			</div>
-			<div>
-				<div class="text-sm text-gray-500">Open Equity</div>
-				<div class="text-lg font-semibold">
-					{formatIntToCurrency(equityInOpenTrades)}
+				<div class="text-sm text-gray-500">Total PnL</div>
+				<div class="text-lg font-semibold"
+					 class:text-green-600={totalPnL > 0}
+					 class:text-red-600={totalPnL < 0}
+				>
+					{formatIntToCurrency(totalPnL)}
 				</div>
 			</div>
 			<Button

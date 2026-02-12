@@ -9,7 +9,7 @@
 	let { data }: Props = $props();
 </script>
 
-<div class="w-full h-full overflow-auto">
+<div class="w-full h-auto max-h-[310px] overflow-auto min-h-0 sm:h-[310px]">
 	<table class="w-full text-sm">
 		<thead class="sticky top-0 bg-white">
 			<tr class="border-b border-slate-200">
