@@ -92,10 +92,10 @@
 	);
 </script>
 
-<div class="w-full space-y-4">
+<div class="w-full space-y-3 md:space-y-4">
 	<!-- Filter controls -->
-	<div class="flex gap-4 items-center">
-		<div class="flex-1 max-w-xs">
+	<div class="flex flex-row flex-wrap gap-2 items-center">
+		<div class="flex-1 min-w-[140px] max-w-xs">
 			<Input
 				type="text"
 				placeholder="Filter by symbol..."
@@ -104,7 +104,7 @@
 			/>
 		</div>
 
-		<div class="flex gap-2">
+		<div class="flex gap-2 flex-wrap">
 			<Button
 				variant={typeFilter === '' ? 'default' : 'outline'}
 				size="sm"
@@ -129,17 +129,17 @@
 		</div>
 	</div>
 
-	<!-- Table with virtual scrolling -->
+	<!-- Table with virtual scrolling and horizontal scroll on mobile -->
 	<div
-		class="rounded-md border relative overflow-y-auto"
+		class="rounded-md border relative overflow-x-auto overflow-y-auto"
 		style={styling?.maxBodyHeight ? `max-height: ${styling.maxBodyHeight}` : ''}
 	>
-		<Table.Root noWrapper>
+		<Table.Root noWrapper class="min-w-[640px]">
 			<Table.Header class="sticky top-0 bg-background z-10">
 				{#each table.getHeaderGroups() as headerGroup}
 					<Table.Row>
 						{#each headerGroup.headers as header}
-							<Table.Head>
+							<Table.Head class="whitespace-nowrap">
 								{#if !header.isPlaceholder}
 									{#if header.column.getCanSort()}
 										<Button
@@ -154,7 +154,7 @@
 													header.column.clearSorting();
 												}
 											}}
-											class="h-8 px-2"
+											class="h-8 px-2 whitespace-nowrap"
 										>
 											<FlexRender
 												content={header.column.columnDef.header}

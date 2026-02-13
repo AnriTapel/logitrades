@@ -5,7 +5,7 @@
 	import { tradesStore } from '$lib/stores/trades';
 	import { onDestroy } from 'svelte';
 	import { Button } from '$lib/components/ui/button';
-	import { Plus } from 'lucide-svelte';
+	import { Plus, FileUp } from 'lucide-svelte';
 
 	let {
 		handleOpenTradeForm,
@@ -30,14 +30,16 @@
 	});
 </script>
 
-<section class="mb-12">
-	<div class="flex justify-between items-center">
-		<h1 class="text-2xl font-bold mb-2">Opened trades</h1>
-		<div class="flex gap-2 items-center">
-			<Button onclick={handleOpenImportDialog} variant="link"
-				>Import from CSV</Button
-			>
-			<Button onclick={handleOpenTradeForm}>Add Trade <Plus /></Button>
+<section class="mb-6 md:mb-12">
+	<div class="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center mb-4">
+		<h1 class="text-xl sm:text-2xl font-bold order-2 sm:order-1">Opened trades</h1>
+		<div class="flex flex-col sm:flex-row gap-2 sm:items-center order-1 sm:order-2">
+			<Button onclick={handleOpenImportDialog} variant="outline" class="w-full sm:w-auto">
+				<FileUp /> Import from CSV
+			</Button>
+			<Button onclick={handleOpenTradeForm} class="w-full sm:w-auto">
+				<Plus /> Add Trade
+			</Button>
 		</div>
 	</div>
 	<TradesDataTable

@@ -25,8 +25,8 @@
 	});
 </script>
 
-<section class="mb-12">
-	<h1 class="text-2xl font-bold mb-2">Closed trades</h1>
+<section class="mb-6 md:mb-12">
+	<h1 class="text-xl sm:text-2xl font-bold mb-4">Closed trades</h1>
 	<TradesDataTable
 		styling={{ maxBodyHeight: '60vh' }}
 		noTradesMessage="No closed trades found"
