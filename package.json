@@ -8,7 +8,8 @@
 		"frontend:dev": "cd frontend && pnpm dev",
 		"frontend:build": "cd frontend && pnpm build",
 		"backend:dev": "cd backend && poetry run uvicorn src.main:app --reload",
-		"dev": "concurrently \"pnpm frontend:dev\" \"pnpm backend:dev\""
+		"dev": "concurrently \"pnpm frontend:dev\" \"pnpm backend:dev\"",
+		"docker:build": "docker build -t anrisnep/logitrades:frontend ./frontend && docker build -t anrisnep/logitrades:backend ./backend"
 	},
 	"keywords": [],
 	"author": "",

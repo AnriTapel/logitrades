@@ -5,6 +5,7 @@ node_modules/
 .env
 .venv
 .cursor
+.env.*
 
 __pycache__/
 
