@@ -16,7 +16,7 @@ RUN poetry install --only main --no-interaction --no-ansi
 
 COPY . .
 
-COPY .env.docker .env
+COPY .env.production .env
 
 EXPOSE 8000
 
