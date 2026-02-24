@@ -7,7 +7,6 @@ COPY package.json pnpm-lock.yaml* ./
 RUN pnpm install --frozen-lockfile
 
 COPY . .
-COPY .env.production .env
 
 ARG BACKEND_API_URL
 ENV BACKEND_API_URL=${BACKEND_API_URL}
@@ -21,8 +20,6 @@ WORKDIR /app
 COPY --from=build /app/build ./build
 COPY --from=build /app/package.json ./
 
-COPY .env.production .env
-
 EXPOSE 3000
 
-CMD ["node", "--env-file=/app/.env", "build"]
+CMD ["node", "build"]

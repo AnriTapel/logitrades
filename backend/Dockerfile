@@ -16,8 +16,6 @@ RUN poetry install --only main --no-interaction --no-ansi
 
 COPY . .
 
-COPY .env.production .env
-
 EXPOSE 8000
 
 CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
