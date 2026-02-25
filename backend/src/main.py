@@ -2,7 +2,7 @@ import json
 from dotenv import load_dotenv
 import os
 
-load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "..", ".env"))
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "..", "..", ".env"), override=False)
 
 from fastapi import FastAPI, APIRouter, Depends, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from typing import Annotated
 
 from .auth import current_user_id
+from .utils import _get_env_var
 from .services import ErrorsHandlerService
 from .models import TradeForm, TradeImportModel
 from .models.trade.trade_response import TradeResponse
@@ -31,9 +32,10 @@ def on_startup():
     """Initialize database tables on application startup."""
     database.init_db()
 
+allowed_origins = _get_env_var("ALLOWED_ORIGINS").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000", "http://0.0.0.0:3000"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["POST", "GET", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
