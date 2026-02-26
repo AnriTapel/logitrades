@@ -1,11 +1,9 @@
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, Boolean
-from sqlalchemy.orm import declarative_base
 
+from .base import Base
 from ..domain import UserDomain
 from ..utils import get_current_time
-
-Base = declarative_base()
 
 class UserORM(Base):
     __tablename__ = "users"

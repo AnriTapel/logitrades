@@ -1,8 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from sqlalchemy import Boolean, Column, DateTime, Integer, String
-from sqlalchemy.orm import declarative_base
 
-Base = declarative_base()
+from .base import Base
 
 EMAIL_VERIFICATION_TOKEN_EXPIRE_SEC = 60 * 60 * 24  # 24 hours
 

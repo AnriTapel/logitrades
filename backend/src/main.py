@@ -27,11 +27,6 @@ import io
 
 app = FastAPI()
 
-@app.on_event("startup")
-def on_startup():
-    """Initialize database tables on application startup."""
-    database.init_db()
-
 allowed_origins = _get_env_var("ALLOWED_ORIGINS").split(",")
 app.add_middleware(
     CORSMiddleware,

@@ -8,6 +8,9 @@ RUN pnpm install --frozen-lockfile
 
 COPY . .
 
+ARG BACKEND_API_URL
+ENV BACKEND_API_URL=${BACKEND_API_URL}
+
 RUN pnpm build
 
 # Stage 2: Run

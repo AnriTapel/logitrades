@@ -2,14 +2,13 @@
 	"name": "logitrades",
 	"version": "1.0.0",
 	"description": "",
-	"main": "index.js",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"frontend:dev": "cd frontend && pnpm dev",
 		"frontend:build": "cd frontend && pnpm build",
 		"backend:dev": "cd backend && poetry run uvicorn src.main:app --reload",
 		"dev": "concurrently \"pnpm frontend:dev\" \"pnpm backend:dev\"",
-		"docker:build": "docker build -t anrisnep/logitrades:frontend ./frontend && docker build -t anrisnep/logitrades:backend ./backend"
+		"docker:build": "docker compose build --no-cache"
 	},
 	"keywords": [],
 	"author": "",

@@ -1,11 +1,9 @@
-from sqlalchemy import Column, Integer, Float, String
-from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
+from sqlalchemy import Column, Integer, Float, String
 
+from .base import Base
 from ..domain import TradeDomain
 from ..utils import get_current_time
-
-Base = declarative_base()
 
 class TradeORM(Base):
     __tablename__ = "trades"

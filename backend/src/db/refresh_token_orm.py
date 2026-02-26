@@ -1,14 +1,9 @@
 from datetime import datetime, timedelta, timezone
-from annotated_types import Timezone
 from sqlalchemy import Boolean, Column, DateTime, Integer, String
-from sqlalchemy.orm import declarative_base
 
+from .base import Base
 from ..auth import REFRESH_TOKEN_EXPIRE_SEC
-
 from ..utils import get_current_time
-
-
-Base = declarative_base()
 
 class RefreshTokenORM(Base):
     __tablename__ = "refresh_tokens"

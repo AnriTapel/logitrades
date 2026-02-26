@@ -19,6 +19,8 @@ services:
   frontend:
     build:
       context: ./frontend
+      args:
+        BACKEND_API_URL: http://backend:8000
     environment:
       - BACKEND_API_URL=http://backend:8000
       - ORIGIN=${ORIGIN}
