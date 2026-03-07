@@ -5,6 +5,7 @@
 	import { tradesStore } from '$lib/stores/trades';
 	import TopBar from '$lib/layouts/top-bar.svelte';
 	import type { Trade } from '$lib/types';
+	import Footer from '$lib/layouts/footer.svelte';
 
 	let { children, data } = $props();
 
@@ -84,6 +85,7 @@
 	<TopBar />
 	{@render children()}
 	<ErrorDialog />
+	<Footer />
 </main>
 
 <style>
