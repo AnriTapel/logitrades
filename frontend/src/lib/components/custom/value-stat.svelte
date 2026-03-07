@@ -1,4 +1,10 @@
 <script lang="ts">
+	import {
+		formatDateTimeISO,
+		formatIntToCurrency,
+		formatNumber,
+		formatNumberPercentage,
+	} from '$lib/formatters';
 	import { cn } from '$lib/utils';
 
 	const {
@@ -19,23 +25,13 @@
 		const numValue = Number(value);
 
 		if (type === 'money') {
-			return new Intl.NumberFormat('en-US', {
-				style: 'currency',
-				currency: 'USD',
-			}).format(numValue);
+			return formatIntToCurrency(numValue);
 		} else if (type === 'percentage') {
-			return `${numValue.toFixed(2)}%`;
+			return formatNumberPercentage(numValue);
 		} else if (type === 'integer') {
-			return new Intl.NumberFormat('en-US', {
-				notation: 'standard',
-			}).format(Math.round(numValue));
+			return formatNumber(Math.round(numValue));
 		} else if (type === 'date') {
-			const date = new Date(value);
-			return date.toLocaleDateString('en-US', {
-				year: 'numeric',
-				month: 'short',
-				day: 'numeric',
-			});
+			return formatDateTimeISO(value as string);
 		} else {
 			return value.toString();
 		}

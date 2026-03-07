@@ -1,4 +1,9 @@
-import { calcAbsolutePnl } from './calcFunctions';
+import {
+	calcAbsolutePnl,
+	calcWinrate,
+	pnlForPeriod,
+	totalTradedVolumeForPeriod,
+} from './calcFunctions';
 import type { BarChartData, LineChartData, PieChartData, Trade } from './types';
 
 /**
@@ -68,7 +73,7 @@ function formatDateMMMYY(dateStr: string): string {
 function toMonthKey(date: Date): string {
 	return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
 		2,
-		'0'
+		'0',
 	)}`;
 }
 
@@ -102,7 +107,7 @@ export function createMonthlyPnLData(trades: Trade[]): BarChartData {
 	// Calculate 6-month lookback window boundary
 	const [currYear, currMonth] = currentMonth.split('-').map(Number);
 	const windowStartKey = toMonthKey(
-		new Date(currYear, currMonth - MONTHS_TO_SHOW, 1)
+		new Date(currYear, currMonth - MONTHS_TO_SHOW, 1),
 	);
 
 	// Find earliest month with data within the window
@@ -146,20 +151,9 @@ export function getSymbolStats(allTrades: Trade[]): SymbolStatsRow[] {
 		.map(([symbol, trades = []]) => {
 			return {
 				symbol,
-				pnl: trades.reduce(
-					(acc, trade) => acc + (calcAbsolutePnl(trade) ?? 0),
-					0
-				),
-				notionalVolume: trades.reduce(
-					(acc, trade) =>
-						acc + trade.quantity * trade.openPrice * (trade.leverage ?? 1),
-					0
-				),
-				winrate:
-					trades.length > 0
-						? trades.filter((trade) => trade.closePrice && trade.closedAt)
-								.length / trades.length
-						: 0,
+				pnl: pnlForPeriod(trades),
+				notionalVolume: totalTradedVolumeForPeriod(trades),
+				winrate: calcWinrate(trades),
 			};
 		})
 		.sort((a, b) => b.notionalVolume - a.notionalVolume);
@@ -175,7 +169,7 @@ export function createTradeTypeStats(trades: Trade[]): TradeTypeStats[] {
 	const calculateStats = (tradeType: 'buy' | 'sell'): TradeTypeStats => {
 		const filteredTrades = trades.filter((t) => t.tradeType === tradeType);
 		const closedTrades = filteredTrades.filter(
-			(t) => t.closePrice && t.closedAt
+			(t) => t.closePrice && t.closedAt,
 		);
 		const wins = closedTrades.filter((t) => {
 			const pnl = calcAbsolutePnl(t);
@@ -196,7 +190,7 @@ export function createTradeTypeStats(trades: Trade[]): TradeTypeStats[] {
 export function createEquityCurveData(
 	trades: Trade[],
 	initialBalance: number = 0,
-	timeframe: 'daily' | 'weekly' | 'monthly' = 'daily'
+	timeframe: 'daily' | 'weekly' | 'monthly' = 'daily',
 ): LineChartData {
 	// Get all closed trades sorted by close date
 	const closedTrades = trades
@@ -236,7 +230,7 @@ export function createEquityCurveData(
 
 	// Convert to array and sort by date
 	const sortedEntries = Array.from(equityByTimeframe.entries()).sort(
-		([a], [b]) => a.localeCompare(b)
+		([a], [b]) => a.localeCompare(b),
 	);
 
 	// Create labels and data arrays with formatted dates
@@ -279,7 +273,7 @@ export function createEquityCurveData(
 							pointRadius: 0,
 							pointHoverRadius: 4,
 						},
-				  ]
+					]
 				: []),
 		],
 	};
@@ -316,7 +310,7 @@ export function createRiskRewardDistribution(trades: Trade[]): BarChartData {
 
 		// Find the appropriate range and increment its counter
 		const rangeIndex = ranges.findIndex(
-			(range) => ratio >= range.min && ratio < range.max
+			(range) => ratio >= range.min && ratio < range.max,
 		);
 		if (rangeIndex !== -1) {
 			rangeCounts[rangeIndex]++;
