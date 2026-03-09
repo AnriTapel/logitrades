@@ -5,6 +5,7 @@
 		formatNumber,
 		formatNumberPercentage,
 	} from '$lib/formatters';
+	import { localeStore } from '$lib/stores/locale';
 	import { cn } from '$lib/utils';
 
 	const {
@@ -25,7 +26,7 @@
 		const numValue = Number(value);
 
 		if (type === 'money') {
-			return formatIntToCurrency(numValue);
+			return formatIntToCurrency(numValue, $localeStore.currency);
 		} else if (type === 'percentage') {
 			return formatNumberPercentage(numValue);
 		} else if (type === 'integer') {

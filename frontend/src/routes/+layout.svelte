@@ -82,10 +82,10 @@
 </svelte:head>
 
 <main class="container mx-auto p-4 min-h-screen flex flex-col gap-12">
-	<TopBar />
+	<TopBar userState={data.user} />
 	{@render children()}
 	<ErrorDialog />
-	<Footer />
+	<Footer isAuthenticated={data.isAuthenticated} />
 </main>
 
 <style>

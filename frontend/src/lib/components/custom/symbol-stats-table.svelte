@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { SymbolStatsRow } from '$lib/chartsHelpers';
 	import { formatIntToCurrency, formatNumberPercentage } from '$lib/formatters';
+	import { localeStore } from '$lib/stores/locale';
 
 	interface Props {
 		data: SymbolStatsRow[];
@@ -30,7 +31,10 @@
 				>
 					<td class="py-2 px-3 font-medium text-slate-800">{row.symbol}</td>
 					<td class="py-2 px-3 text-right text-slate-600"
-						>{formatIntToCurrency(row.notionalVolume)}</td
+						>{formatIntToCurrency(
+							row.notionalVolume,
+							$localeStore.currency,
+						)}</td
 					>
 					<td class="py-2 px-3 text-right">
 						<span
@@ -40,7 +44,7 @@
 									? 'text-red-600'
 									: 'text-gray-500'}
 						>
-							{formatIntToCurrency(row.pnl)}
+							{formatIntToCurrency(row.pnl, $localeStore.currency)}
 						</span>
 					</td>
 					<td class="py-2 px-3 text-right">

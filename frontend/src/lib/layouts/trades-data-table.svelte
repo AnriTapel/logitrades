@@ -10,6 +10,7 @@
 	import * as Table from '$lib/components/ui/table';
 	import { Input } from '$lib/components/ui/input';
 	import { createColumns } from './trades-table-columns';
+	import { localeStore } from '$lib/stores/locale';
 	import type { Trade } from '$lib/types';
 	import type { Writable } from 'svelte/store';
 	import ArrowUpDown from 'lucide-svelte/icons/arrow-up-down';
@@ -55,8 +56,10 @@
 		columnFilters = filters;
 	});
 
-	// Create columns with callbacks
-	const columns = createColumns(onEdit, onDelete);
+	// Create columns with callbacks (derived so they react to currency changes)
+	const columns = $derived(
+		createColumns(onEdit, onDelete, $localeStore.currency)
+	);
 
 	// Create table instance
 	const table = $derived(

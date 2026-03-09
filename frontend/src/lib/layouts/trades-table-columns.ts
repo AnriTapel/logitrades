@@ -13,7 +13,8 @@ import DataTableActions from './trades-table-actions.svelte';
 
 export function createColumns(
 	onEdit: (id: number) => void,
-	onDelete: (id: number) => void
+	onDelete: (id: number) => void,
+	currency: string
 ): ColumnDef<Trade>[] {
 	return [
 		// Symbol column - sortable, filterable
@@ -82,14 +83,18 @@ export function createColumns(
 			accessorKey: 'openPrice',
 			header: 'Open Price',
 			cell: ({ row }) => {
-				const priceSnippet = createRawSnippet<[{ price: number }]>((getPrice) => {
-					const { price } = getPrice();
+				const priceSnippet = createRawSnippet<[
+					{ price: number; currency: string }
+				]>((getPrice) => {
+					const { price, currency: curr } = getPrice();
 					return {
-						render: () => `<span>${formatIntToCurrency(price, 6)}</span>`,
+						render: () =>
+							`<span>${formatIntToCurrency(price, curr, 6)}</span>`,
 					};
 				});
 				return renderSnippet(priceSnippet, {
-					price: row.original.openPrice
+					price: row.original.openPrice,
+					currency,
 				});
 			},
 			enableSorting: false,
@@ -138,15 +143,18 @@ export function createColumns(
 			accessorKey: 'closePrice',
 			header: 'Close Price',
 			cell: ({ row }) => {
-				const closePriceSnippet = createRawSnippet<[{ price: number | undefined }]>((getPrice) => {
-					const { price } = getPrice();
+				const closePriceSnippet = createRawSnippet<[
+					{ price: number | undefined; currency: string }
+				]>((getPrice) => {
+					const { price, currency: curr } = getPrice();
 					return {
 						render: () =>
-							`<span>${price ? formatIntToCurrency(price, 6) : '-'}</span>`,
+							`<span>${price ? formatIntToCurrency(price, curr, 6) : '-'}</span>`,
 					};
 				});
 				return renderSnippet(closePriceSnippet, {
-					price: row.original.closePrice
+					price: row.original.closePrice,
+					currency,
 				});
 			},
 			enableSorting: false,

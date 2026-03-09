@@ -3,6 +3,8 @@
 	import { Chart, registerables } from 'chart.js';
 	import type { Trade, PieChartData } from '$lib/types';
 	import { getColorPalette } from '$lib/chartsHelpers';
+	import { formatIntToCurrency } from '$lib/formatters';
+	import { localeStore } from '$lib/stores/locale';
 
 	// Register all Chart.js components
 	Chart.register(...registerables);
@@ -14,6 +16,7 @@
 		showLegend?: boolean;
 		financialMode?: boolean;
 		chartType?: 'pie' | 'doughnut';
+		currency?: string;
 	}
 
 	let {
@@ -23,13 +26,16 @@
 		showLegend = true,
 		financialMode = true,
 		chartType = 'pie',
+		currency,
 	}: Props = $props();
+
+	const effectiveCurrency = $derived(currency ?? $localeStore.currency);
 
 	let canvas: HTMLCanvasElement;
 	let chart: Chart | null = null;
 
-	// Default financial styling
-	const getFinancialOptions = () => ({
+	// Default financial styling (currency used in tooltips)
+	const getFinancialOptions = (curr: string) => ({
 		responsive: true,
 		maintainAspectRatio: false,
 		plugins: {
@@ -66,12 +72,12 @@
 						const value = context.parsed;
 						const total = context.dataset.data.reduce(
 							(a: number, b: number) => a + b,
-							0
+							0,
 						);
 						const percentage = ((value / total) * 100).toFixed(1);
 
 						if (financialMode) {
-							return `${label}: $${value.toFixed(2)} (${percentage}%)`;
+							return `${label}: ${formatIntToCurrency(value, curr)} (${percentage}%)`;
 						}
 						return `${label}: ${value} (${percentage}%)`;
 					},
@@ -100,7 +106,7 @@
 						borderWidth: 0,
 					})),
 				},
-				options: getFinancialOptions(),
+				options: getFinancialOptions(effectiveCurrency),
 			});
 		}
 	});
@@ -122,10 +128,10 @@
 		}
 	});
 
-	// Update chart type when prop changes
+	// Update chart options when props (e.g. currency, chartType) change
 	$effect(() => {
 		if (chart) {
-			const options = getFinancialOptions();
+			const options = getFinancialOptions(effectiveCurrency);
 			options.cutout = chartType === 'doughnut' ? '50%' : 0;
 			chart.options = options;
 			chart.update('none');

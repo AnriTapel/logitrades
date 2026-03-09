@@ -2,6 +2,8 @@
 	import { onMount, onDestroy } from 'svelte';
 	import { Chart, registerables } from 'chart.js';
 	import type { BarChartData, Trade } from '$lib/types';
+	import { formatIntToCurrency } from '$lib/formatters';
+	import { localeStore } from '$lib/stores/locale';
 
 	// Register all Chart.js components
 	Chart.register(...registerables);
@@ -13,6 +15,7 @@
 		showLegend?: boolean;
 		financialMode?: boolean;
 		chartType?: 'bar' | 'horizontalBar';
+		currency?: string;
 	}
 
 	let {
@@ -21,13 +24,16 @@
 		height = 300,
 		showLegend = true,
 		financialMode = true,
+		currency,
 	}: Props = $props();
+
+	const effectiveCurrency = $derived(currency ?? $localeStore.currency);
 
 	let canvas: HTMLCanvasElement;
 	let chart: Chart | null = null;
 
-	// Default financial styling
-	const getFinancialOptions = () => ({
+	// Default financial styling (currency used in tooltips and Y-axis)
+	const getFinancialOptions = (curr: string) => ({
 		responsive: true,
 		maintainAspectRatio: false,
 		indexAsix: 'x',
@@ -54,7 +60,7 @@
 				callbacks: {
 					label: (context: any) => {
 						const value = context.parsed.y || context.parsed.x;
-						return `${context.dataset.label}: ${financialMode ? `$${value.toFixed(2)}` : value}`;
+						return `${context.dataset.label}: ${financialMode ? formatIntToCurrency(value, curr) : value}`;
 					},
 				},
 			},
@@ -77,7 +83,9 @@
 				ticks: {
 					color: '#6b7280',
 					callback: (value: any) => {
-						return financialMode ? `$${value}` : value;
+						return financialMode
+							? formatIntToCurrency(Number(value), curr)
+							: value;
 					},
 				},
 			},
@@ -102,7 +110,7 @@
 					})),
 				},
 				options: {
-					...getFinancialOptions(),
+					...getFinancialOptions(effectiveCurrency),
 				},
 			});
 		}
@@ -124,10 +132,10 @@
 		}
 	});
 
-	// Update chart type when prop changes
+	// Update chart options when props (e.g. currency) change
 	$effect(() => {
 		if (chart) {
-			const options = getFinancialOptions();
+			const options = getFinancialOptions(effectiveCurrency);
 			chart.options = options;
 			chart.update('none');
 		}

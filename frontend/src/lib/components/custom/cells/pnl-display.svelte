@@ -2,6 +2,7 @@
 	import type { Trade } from '$lib/types';
 	import { formatIntToCurrency, formatNumberPercentage } from '$lib/formatters';
 	import { calcAbsolutePnl, calcPnlPercentage } from '$lib/calcFunctions';
+	import { localeStore } from '$lib/stores/locale';
 
 	const { trade }: { trade: Trade } = $props();
 
@@ -14,7 +15,10 @@
 		<span
 			class="font-medium {pnlAbsolute >= 0 ? 'text-green-600' : 'text-red-600'}"
 		>
-			{pnlAbsolute >= 0 ? '+' : ''}{formatIntToCurrency(pnlAbsolute)}
+			{pnlAbsolute >= 0 ? '+' : ''}{formatIntToCurrency(
+				pnlAbsolute,
+				$localeStore.currency,
+			)}
 		</span>
 		<span
 			class="font-medium {pnlPercent >= 0 ? 'text-green-600' : 'text-red-600'}"

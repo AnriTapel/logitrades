@@ -8,6 +8,7 @@
 	} from '$lib/calcFunctions';
 	import { formatIntToCurrency } from '$lib/formatters';
 	import { tradesStore } from '$lib/stores/trades';
+	import { localeStore } from '$lib/stores/locale';
 	import { onDestroy } from 'svelte';
 	import { userStore, type User } from '$lib/stores/auth';
 	import {
@@ -27,11 +28,7 @@
 	let totalPnL: number = $state(0);
 	let mobileMenuOpen: boolean = $state(false);
 
-	let userState = $state<User | null>(null);
-
-	const unsubscribeAuth = userStore.subscribe((user) => {
-		userState = user;
-	});
+	const { userState } = $props<{ userState: User | null }>();
 
 	const unsubscribeTrades = tradesStore.subscribe((trades) => {
 		const pivotDate = new Date();
@@ -54,7 +51,6 @@
 
 	onDestroy(() => {
 		unsubscribeTrades();
-		unsubscribeAuth();
 	});
 
 	function handleDashboardNavigation() {
@@ -78,13 +74,13 @@
 			<div>
 				<div class="text-xs xl:text-sm text-muted-foreground">Open Equity</div>
 				<div class="text-sm xl:text-lg font-semibold">
-					{formatIntToCurrency(equityInOpenTrades)}
+					{formatIntToCurrency(equityInOpenTrades, $localeStore.currency)}
 				</div>
 			</div>
 			<div>
 				<div class="text-xs xl:text-sm text-muted-foreground">7-Day Volume</div>
 				<div class="text-sm xl:text-lg font-semibold">
-					{formatIntToCurrency(volumeLast7Days)}
+					{formatIntToCurrency(volumeLast7Days, $localeStore.currency)}
 				</div>
 			</div>
 			<div>
@@ -94,7 +90,7 @@
 					class:text-green-600={pnlLast7Days > 0}
 					class:text-red-600={pnlLast7Days < 0}
 				>
-					{formatIntToCurrency(pnlLast7Days)}
+					{formatIntToCurrency(pnlLast7Days, $localeStore.currency)}
 				</div>
 			</div>
 			<div>
@@ -104,7 +100,7 @@
 					class:text-green-600={totalPnL > 0}
 					class:text-red-600={totalPnL < 0}
 				>
-					{formatIntToCurrency(totalPnL)}
+					{formatIntToCurrency(totalPnL, $localeStore.currency)}
 				</div>
 			</div>
 			<Button
@@ -181,13 +177,16 @@
 							<div class="p-4 bg-muted/50 rounded-lg border">
 								<div class="text-sm text-muted-foreground">Open Equity</div>
 								<div class="text-xl font-semibold mt-1">
-									{formatIntToCurrency(equityInOpenTrades)}
+									{formatIntToCurrency(
+										equityInOpenTrades,
+										$localeStore.currency,
+									)}
 								</div>
 							</div>
 							<div class="p-4 bg-muted/50 rounded-lg border">
 								<div class="text-sm text-muted-foreground">7-Day Volume</div>
 								<div class="text-xl font-semibold mt-1">
-									{formatIntToCurrency(volumeLast7Days)}
+									{formatIntToCurrency(volumeLast7Days, $localeStore.currency)}
 								</div>
 							</div>
 							<div class="p-4 bg-muted/50 rounded-lg border">
@@ -197,7 +196,7 @@
 									class:text-green-600={pnlLast7Days > 0}
 									class:text-red-600={pnlLast7Days < 0}
 								>
-									{formatIntToCurrency(pnlLast7Days)}
+									{formatIntToCurrency(pnlLast7Days, $localeStore.currency)}
 								</div>
 							</div>
 							<div class="p-4 bg-muted/50 rounded-lg border">
@@ -207,7 +206,7 @@
 									class:text-green-600={totalPnL > 0}
 									class:text-red-600={totalPnL < 0}
 								>
-									{formatIntToCurrency(totalPnL)}
+									{formatIntToCurrency(totalPnL, $localeStore.currency)}
 								</div>
 							</div>
 						</div>

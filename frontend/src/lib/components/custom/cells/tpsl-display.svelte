@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { formatIntToCurrency } from '$lib/formatters';
+	import { localeStore } from '$lib/stores/locale';
 
 	const {
 		takeProfit,
@@ -10,10 +11,10 @@
 	} = $props();
 
 	const takeProfitDisplay = $derived(
-		takeProfit ? formatIntToCurrency(takeProfit, 6) : '-'
+		takeProfit ? formatIntToCurrency(takeProfit, $localeStore.currency, 6) : '-'
 	);
 	const stopLossDisplay = $derived(
-		stopLoss ? formatIntToCurrency(stopLoss, 6) : '-'
+		stopLoss ? formatIntToCurrency(stopLoss, $localeStore.currency, 6) : '-'
 	);
 </script>
 
