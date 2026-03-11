@@ -30,11 +30,21 @@
 	});
 </script>
 
-<section class="mb-6 md:mb-12">
-	<div class="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center mb-4">
-		<h1 class="text-xl sm:text-2xl font-bold order-2 sm:order-1">Opened trades</h1>
-		<div class="flex flex-col sm:flex-row gap-2 sm:items-center order-1 sm:order-2">
-			<Button onclick={handleOpenImportDialog} variant="outline" class="w-full sm:w-auto">
+<section class="mb-8">
+	<div
+		class="flex flex-col gap-4 sm:gap-0 sm:flex-row sm:justify-between sm:items-center mb-4"
+	>
+		<h1 class="text-xl sm:text-2xl font-bold order-2 sm:order-1">
+			Opened trades
+		</h1>
+		<div
+			class="flex flex-col sm:flex-row gap-2 sm:items-center order-1 sm:order-2"
+		>
+			<Button
+				onclick={handleOpenImportDialog}
+				variant="outline"
+				class="w-full sm:w-auto"
+			>
 				<FileUp /> Import from CSV
 			</Button>
 			<Button onclick={handleOpenTradeForm} class="w-full sm:w-auto">

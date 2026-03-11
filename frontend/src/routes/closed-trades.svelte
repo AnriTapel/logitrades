@@ -25,7 +25,7 @@
 	});
 </script>
 
-<section class="mb-6 md:mb-12">
+<section class="mb-8">
 	<h1 class="text-xl sm:text-2xl font-bold mb-4">Closed trades</h1>
 	<TradesDataTable
 		styling={{ maxBodyHeight: '60vh' }}

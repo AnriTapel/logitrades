@@ -42,13 +42,14 @@
 <div
 	class={cn(
 		className,
-		bordered ? 'flex flex-col gap-4 p-4 border rounded-lg shadow-sm' : '',
+		bordered
+			? 'flex flex-col gap-4 p-4 border rounded-lg shadow-s bg-white'
+			: '',
 	)}
 >
 	<p class="text-l font-bold text-gray-500">{label}</p>
 	<div
 		class={cn(
-			className,
 			bordered
 				? 'bg-gray-100 p-4 rounded flex justify-center items-center flex-1'
 				: 'pt-2',

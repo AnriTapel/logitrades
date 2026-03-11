@@ -14,8 +14,6 @@
 		calcProfitFactor,
 		calcWinrate,
 		calcExpectancy,
-		calcBestTrade,
-		calcWorstTrade,
 		calcMaxWinStreak,
 		calcMaxLossStreak,
 		calcAverageTradeDuration,
@@ -91,10 +89,10 @@
 			/>
 		</div>
 
-		<h2 class="text-xl font-semibold mb-4">Equity Analysis</h2>
-		<div class="grid grid-cols-1 gap-4 mb-16 sm:grid-cols-4">
+		<h2 class="text-xl font-semibold lg:mb-4 mb-8">Equity Analysis</h2>
+		<div class="grid grid-cols-1 gap-8 sm:gap-4 mb-16 sm:grid-cols-4">
 			<div
-				class="col-span-1 p-4 border rounded-lg shadow-sm flex flex-col gap-4 sm:col-span-3"
+				class="col-span-1 p-4 border rounded-lg shadow-md flex flex-col gap-4 sm:col-span-3"
 			>
 				<p class="text-l font-bold">Equity Curve & Drawdown</p>
 				{#if closedTrades.length}
@@ -111,101 +109,117 @@
 					label="Gross Profit"
 					value={calcGrossProfit(closedTrades)}
 					type={'money'}
-					className="flex-1 col-span-1"
+					className="flex-1 col-span-1 shadow-md"
 				/>
 				<ValueStat
 					label="Gross Loss"
 					value={calcGrossLoss(closedTrades)}
 					type={'money'}
-					className="flex-1 col-span-1"
+					className="flex-1 col-span-1 shadow-md"
 				/>
 			</div>
 		</div>
 
-		<h2 class="text-xl font-semibold mb-4">Trade Statistics</h2>
-		<div class="grid grid-cols-2 gap-4 mb-16 sm:grid-cols-4">
-			<ValueStat
-				className="col-span-1"
-				label="Avg Win"
-				value={calcAverageWin(closedTrades)}
-				type={'money'}
-			/>
-			<ValueStat
-				className="col-span-1"
-				label="Avg Loss"
-				value={calcAverageLoss(closedTrades)}
-				type={'money'}
-			/>
-			<ValueStat
-				className="col-span-1"
-				label="Best Trade"
-				value={calcBestTrade(closedTrades) ?? 0}
-				type={'money'}
-			/>
-			<ValueStat
-				className="col-span-1"
-				label="Worst Trade"
-				value={calcWorstTrade(closedTrades) ?? 0}
-				type={'money'}
-			/>
-			<ValueStat
-				className="col-span-1"
-				label="Max Win Streak"
-				value={calcMaxWinStreak(closedTrades)}
-				type={'integer'}
-			/>
-			<ValueStat
-				className="col-span-1"
-				label="Max Loss Streak"
-				value={calcMaxLossStreak(closedTrades)}
-				type={'integer'}
-			/>
-			<ValueStat
-				className="col-span-1"
-				label="Avg Trade Duration"
-				value={calcAverageTradeDuration(closedTrades)}
-				type={'string'}
-			/>
-			<ValueStat
-				className="col-span-1"
-				label="Avg Risk:Reward"
-				value={avgRiskReward ?? 0}
-				type={'integer'}
-			/>
-			<ValueStat
-				className="col-span-1"
-				label="Max Drawdown"
-				value={maxDrawdown.absolute}
-				type={'money'}
-			/>
-			<ValueStat
-				className="col-span-1"
-				label="Max DD %"
-				value={maxDrawdown.percentage}
-				type={'percentage'}
-			/>
+		<h2 class="text-xl font-semibold lg:mb-4 mb-8">Trade Statistics</h2>
+		<div
+			class="lg:shadow-md lg:border lg:rounded-lg lg:grid-cols-2 lg:gap-x-24 lg:gap-y-4 grid grid-cols-1 gap-8 mb-16"
+		>
+			<!-- Profitability -->
+			<div class="lg:p-4 flex flex-col gap-4">
+				<p class="text-l font-bold">Profitability</p>
+				<div class="flex flex-col md:flex-row gap-4">
+					<ValueStat
+						label="Avg Win"
+						value={calcAverageWin(closedTrades)}
+						type={'money'}
+						className="w-full shadow-md lg:shadow-none"
+					/>
+					<ValueStat
+						label="Avg Loss"
+						value={calcAverageLoss(closedTrades)}
+						type={'money'}
+						className="w-full shadow-md lg:shadow-none"
+					/>
+				</div>
+			</div>
+			<!-- Behavior -->
+			<div class="lg:p-4 flex flex-col gap-4">
+				<p class="text-l font-bold">Behavior</p>
+				<div class="flex flex-col md:flex-row gap-4">
+					<ValueStat
+						label="Avg Trade Duration"
+						value={calcAverageTradeDuration(closedTrades)}
+						type={'string'}
+						className="w-full shadow-md lg:shadow-none"
+					/>
+					<ValueStat
+						label="Avg Risk:Reward"
+						value={avgRiskReward ?? 0}
+						type={'integer'}
+						className="w-full shadow-md lg:shadow-none"
+					/>
+				</div>
+			</div>
+			<!-- Consistency -->
+			<div class="lg:p-4 flex flex-col gap-4">
+				<p class="text-l font-bold">Consistency</p>
+				<div class="flex flex-col md:flex-row gap-4">
+					<ValueStat
+						label="Max Win Streak"
+						value={calcMaxWinStreak(closedTrades)}
+						type={'integer'}
+						className="w-full shadow-md lg:shadow-none"
+					/>
+					<ValueStat
+						label="Max Loss Streak"
+						value={calcMaxLossStreak(closedTrades)}
+						type={'integer'}
+						className="w-full shadow-md lg:shadow-none"
+					/>
+				</div>
+			</div>
+			<!-- Risk -->
+			<div class="lg:p-4 flex flex-col gap-4">
+				<p class="text-l font-bold">Risk</p>
+				<div class="flex flex-col md:flex-row gap-4">
+					<ValueStat
+						label="Max Drawdown"
+						value={maxDrawdown.absolute}
+						type={'money'}
+						className="w-full shadow-md lg:shadow-none"
+					/>
+					<ValueStat
+						label="Max DD %"
+						value={maxDrawdown.percentage}
+						type={'percentage'}
+						className="w-full shadow-md lg:shadow-none"
+					/>
+				</div>
+			</div>
 		</div>
 
-		<h2 class="text-xl font-semibold mb-4">Market Breakdown</h2>
-		<div class="grid grid-cols-1 gap-4 mb-16 xl:grid-cols-3 sm:grid-cols-2">
-			<div class="p-4 border rounded-lg shadow-sm flex flex-col gap-4">
+		<h2 class="text-xl font-semibold lg:mb-4 mb-8">Market Breakdown</h2>
+		<div
+			class="grid grid-cols-1 sm:gap-4 gap-8 mb-16 xl:grid-cols-3 sm:grid-cols-2"
+		>
+			<div class="p-4 border rounded-lg shadow-md flex flex-col gap-4">
 				<p class="text-l font-bold">Risk Reward Distribution</p>
 				<RiskRewardChart {closedTrades} />
 			</div>
-			<div class="p-4 border rounded-lg shadow-sm flex flex-col gap-4">
+			<div class="p-4 border rounded-lg shadow-md flex flex-col gap-4">
 				<p class="text-l font-bold">Trade Type Stats</p>
 				<TradeTypeStats data={createTradeTypeStats(closedTrades)} />
 			</div>
-			<div class="p-4 border rounded-lg shadow-sm flex flex-col gap-4">
+			<div class="p-4 border rounded-lg shadow-md flex flex-col gap-4">
 				<p class="text-l font-bold">Trade Pair Stats</p>
 				<SymbolStatsTable data={getSymbolStats(closedTrades)} />
 			</div>
 		</div>
 
-		<h2 class="text-xl font-semibold mb-4">Monthly Performance</h2>
+		<h2 class="text-xl font-semibold lg:mb-4 mb-8">Monthly Performance</h2>
 		<div class="mb-8 grid grid-cols-1 gap-4 xl:grid-cols-3 sm:grid-cols-2">
 			<div
-				class="p-4 border rounded-lg shadow-sm flex flex-col gap-4 col-span-1"
+				class="p-4 border rounded-lg shadow-md flex flex-col gap-4 col-span-1"
 			>
 				<p class="text-l font-bold">Monthly PnL</p>
 				{#if closedTrades.length}

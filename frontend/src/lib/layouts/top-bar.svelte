@@ -115,7 +115,7 @@
 		<!-- Right section: User dropdown + Mobile menu -->
 		<div class="flex items-center gap-2 shrink-0">
 			<!-- User dropdown - Hidden on mobile, visible on tablet+ -->
-			<div class="hidden md:block">
+			<div class="hidden lg:block">
 				<DropdownMenuRoot>
 					<DropdownMenuTrigger>
 						<Button variant="outline" class="rounded-full h-10 w-10 p-0">
