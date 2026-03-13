@@ -211,12 +211,10 @@ export function calcGrossLoss(trades: Trade[]): number {
 	const closedTrades = trades.filter(
 		(t) => t.closePrice != null && t.closedAt != null,
 	);
-	return Math.abs(
-		closedTrades
-			.map((trade) => calcAbsolutePnl(trade))
-			.filter((pnl): pnl is number => pnl !== null && pnl < 0)
-			.reduce((sum, pnl) => sum + pnl, 0),
-	);
+	return closedTrades
+		.map((trade) => calcAbsolutePnl(trade))
+		.filter((pnl): pnl is number => pnl !== null && pnl < 0)
+		.reduce((sum, pnl) => sum + pnl, 0);
 }
 
 export function calcMaxWinStreak(trades: Trade[]): number {
@@ -342,11 +340,11 @@ export function calcMaxDrawdown(trades: Trade[]): {
 			maxDrawdownAbs = currentDrawdown;
 			// Calculate percentage drawdown from peak
 			maxDrawdownPct =
-				peakEquity !== 0 ? (currentDrawdown / Math.abs(peakEquity)) * 100 : 0;
+				peakEquity !== 0 ? currentDrawdown / Math.abs(peakEquity) : 0;
 		}
 	}
 
-	return { absolute: maxDrawdownAbs, percentage: maxDrawdownPct };
+	return { absolute: -maxDrawdownAbs, percentage: -maxDrawdownPct };
 }
 
 export function calcAverageRiskReward(trades: Trade[]): number | null {

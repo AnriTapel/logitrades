@@ -9,8 +9,9 @@
 	import { formatIntToCurrency } from '$lib/formatters';
 	import { tradesStore } from '$lib/stores/trades';
 	import { localeStore } from '$lib/stores/locale';
+	import { getFinancialColor } from '$lib/utils';
 	import { onDestroy } from 'svelte';
-	import { userStore, type User } from '$lib/stores/auth';
+	import { type User } from '$lib/stores/auth';
 	import {
 		Root as DropdownMenuRoot,
 		Trigger as DropdownMenuTrigger,
@@ -86,9 +87,10 @@
 			<div>
 				<div class="text-xs xl:text-sm text-muted-foreground">7-Day PnL</div>
 				<div
-					class="text-sm xl:text-lg font-semibold"
-					class:text-green-600={pnlLast7Days > 0}
-					class:text-red-600={pnlLast7Days < 0}
+					class="text-sm xl:text-lg font-semibold {getFinancialColor(
+						pnlLast7Days,
+						0,
+					)}"
 				>
 					{formatIntToCurrency(pnlLast7Days, $localeStore.currency)}
 				</div>
@@ -96,9 +98,10 @@
 			<div>
 				<div class="text-xs xl:text-sm text-muted-foreground">Total PnL</div>
 				<div
-					class="text-sm xl:text-lg font-semibold"
-					class:text-green-600={totalPnL > 0}
-					class:text-red-600={totalPnL < 0}
+					class="text-sm xl:text-lg font-semibold {getFinancialColor(
+						totalPnL,
+						0,
+					)}"
 				>
 					{formatIntToCurrency(totalPnL, $localeStore.currency)}
 				</div>
@@ -192,9 +195,10 @@
 							<div class="p-4 bg-muted/50 rounded-lg border">
 								<div class="text-sm text-muted-foreground">7-Day PnL</div>
 								<div
-									class="text-xl font-semibold mt-1"
-									class:text-green-600={pnlLast7Days > 0}
-									class:text-red-600={pnlLast7Days < 0}
+									class="text-xl font-semibold mt-1 {getFinancialColor(
+										pnlLast7Days,
+										0,
+									)}"
 								>
 									{formatIntToCurrency(pnlLast7Days, $localeStore.currency)}
 								</div>
@@ -202,9 +206,10 @@
 							<div class="p-4 bg-muted/50 rounded-lg border">
 								<div class="text-sm text-muted-foreground">Total PnL</div>
 								<div
-									class="text-xl font-semibold mt-1"
-									class:text-green-600={totalPnL > 0}
-									class:text-red-600={totalPnL < 0}
+									class="text-xl font-semibold mt-1 {getFinancialColor(
+										totalPnL,
+										0,
+									)}"
 								>
 									{formatIntToCurrency(totalPnL, $localeStore.currency)}
 								</div>

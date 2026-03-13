@@ -2,6 +2,7 @@
 	import * as Card from '$lib/components/ui/card';
 	import type { TradeTypeStats } from '$lib/chartsHelpers';
 	import EmptyState from './empty-state.svelte';
+	import { getFinancialColor } from '$lib/utils';
 
 	interface Props {
 		data: TradeTypeStats[];
@@ -35,11 +36,10 @@
 				>
 					<span class="text-xs text-slate-500 mb-1">Winrate</span>
 					<span
-						class="text-xl font-bold {(longStats?.winrate ?? 0) >= 50
-							? 'text-green-600'
-							: (longStats?.winrate ?? 0) > 0
-								? 'text-red-600'
-								: 'text-gray-500'}"
+						class="text-xl font-bold {getFinancialColor(
+							longStats?.winrate ?? 0,
+							50,
+						)}"
 					>
 						{(longStats?.winrate ?? 0).toFixed(1)}%
 					</span>
@@ -69,11 +69,10 @@
 				>
 					<span class="text-xs text-slate-500 mb-1">Winrate</span>
 					<span
-						class="text-xl font-bold {(shortStats?.winrate ?? 0) >= 50
-							? 'text-green-600'
-							: (shortStats?.winrate ?? 0) > 0
-								? 'text-red-600'
-								: 'text-gray-500'}"
+						class="text-xl font-bold {getFinancialColor(
+							shortStats?.winrate ?? 0,
+							50,
+						)}"
 					>
 						{(shortStats?.winrate ?? 0).toFixed(1)}%
 					</span>

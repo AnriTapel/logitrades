@@ -6,7 +6,7 @@
 		formatNumberPercentage,
 	} from '$lib/formatters';
 	import { localeStore } from '$lib/stores/locale';
-	import { cn } from '$lib/utils';
+	import { cn, getFinancialColor } from '$lib/utils';
 
 	const {
 		label,
@@ -14,17 +14,19 @@
 		type = 'string',
 		bordered = true,
 		className = '',
+		baselineValue,
 	}: {
 		label: string;
 		value: string | number;
 		type?: 'money' | 'percentage' | 'integer' | 'string' | 'date';
 		bordered?: boolean;
 		className?: string;
+		baselineValue?: number;
 	} = $props();
 
-	const data = $derived(() => {
-		const numValue = Number(value);
+	const numValue = $derived(Number(value));
 
+	const data = $derived(() => {
 		if (type === 'money') {
 			return formatIntToCurrency(numValue, $localeStore.currency);
 		} else if (type === 'percentage') {
@@ -37,13 +39,23 @@
 			return value.toString();
 		}
 	});
+
+	const colorClass = $derived(() => {
+		if (
+			baselineValue !== undefined &&
+			(type === 'money' || type === 'percentage')
+		) {
+			return getFinancialColor(numValue, baselineValue);
+		}
+		return '';
+	});
 </script>
 
 <div
 	class={cn(
 		className,
 		bordered
-			? 'flex flex-col gap-4 p-4 border rounded-lg shadow-s bg-white'
+			? 'flex flex-col gap-4 p-4 border rounded-lg shadow-md bg-white'
 			: '',
 	)}
 >
@@ -55,6 +67,6 @@
 				: 'pt-2',
 		)}
 	>
-		<span class="text-xl font-semibold">{data()}</span>
+		<span class={cn('text-xl font-semibold', colorClass())}>{data()}</span>
 	</div>
 </div>

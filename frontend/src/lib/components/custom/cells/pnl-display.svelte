@@ -3,6 +3,7 @@
 	import { formatIntToCurrency, formatNumberPercentage } from '$lib/formatters';
 	import { calcAbsolutePnl, calcPnlPercentage } from '$lib/calcFunctions';
 	import { localeStore } from '$lib/stores/locale';
+	import { getFinancialColor } from '$lib/utils';
 
 	const { trade }: { trade: Trade } = $props();
 
@@ -12,17 +13,13 @@
 
 <div class="w-[100px] flex flex-col gap-1 items-end">
 	{#if pnlAbsolute && pnlPercent}
-		<span
-			class="font-medium {pnlAbsolute >= 0 ? 'text-green-600' : 'text-red-600'}"
-		>
+		<span class="font-medium {getFinancialColor(pnlAbsolute, 0)}">
 			{pnlAbsolute >= 0 ? '+' : ''}{formatIntToCurrency(
 				pnlAbsolute,
 				$localeStore.currency,
 			)}
 		</span>
-		<span
-			class="font-medium {pnlPercent >= 0 ? 'text-green-600' : 'text-red-600'}"
-		>
+		<span class="font-medium {getFinancialColor(pnlPercent, 0)}">
 			({pnlPercent >= 0 ? '+' : ''}{formatNumberPercentage(pnlPercent)})
 		</span>
 	{:else}

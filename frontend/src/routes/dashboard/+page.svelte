@@ -62,12 +62,14 @@
 				value={pnlForPeriod(closedTrades)}
 				type={'money'}
 				bordered={false}
+				baselineValue={0}
 			/>
 			<ValueStat
 				label="Winrate"
 				value={calcWinrate(closedTrades)}
 				type={'percentage'}
 				bordered={false}
+				baselineValue={0.5}
 			/>
 			<ValueStat
 				label="Total Trades"
@@ -86,6 +88,7 @@
 				value={calcExpectancy(closedTrades)}
 				type={'money'}
 				bordered={false}
+				baselineValue={0}
 			/>
 		</div>
 
@@ -109,13 +112,15 @@
 					label="Gross Profit"
 					value={calcGrossProfit(closedTrades)}
 					type={'money'}
-					className="flex-1 col-span-1 shadow-md"
+					className="flex-1 col-span-1"
+					baselineValue={0}
 				/>
 				<ValueStat
 					label="Gross Loss"
 					value={calcGrossLoss(closedTrades)}
 					type={'money'}
-					className="flex-1 col-span-1 shadow-md"
+					className="flex-1 col-span-1"
+					baselineValue={0}
 				/>
 			</div>
 		</div>
@@ -132,13 +137,15 @@
 						label="Avg Win"
 						value={calcAverageWin(closedTrades)}
 						type={'money'}
-						className="w-full shadow-md lg:shadow-none"
+						className="w-full lg:shadow-none"
+						baselineValue={0}
 					/>
 					<ValueStat
 						label="Avg Loss"
 						value={calcAverageLoss(closedTrades)}
 						type={'money'}
-						className="w-full shadow-md lg:shadow-none"
+						className="w-full lg:shadow-none"
+						baselineValue={0}
 					/>
 				</div>
 			</div>
@@ -150,13 +157,13 @@
 						label="Avg Trade Duration"
 						value={calcAverageTradeDuration(closedTrades)}
 						type={'string'}
-						className="w-full shadow-md lg:shadow-none"
+						className="w-full lg:shadow-none"
 					/>
 					<ValueStat
 						label="Avg Risk:Reward"
 						value={avgRiskReward ?? 0}
 						type={'integer'}
-						className="w-full shadow-md lg:shadow-none"
+						className="w-full lg:shadow-none"
 					/>
 				</div>
 			</div>
@@ -168,13 +175,13 @@
 						label="Max Win Streak"
 						value={calcMaxWinStreak(closedTrades)}
 						type={'integer'}
-						className="w-full shadow-md lg:shadow-none"
+						className="w-full lg:shadow-none"
 					/>
 					<ValueStat
 						label="Max Loss Streak"
 						value={calcMaxLossStreak(closedTrades)}
 						type={'integer'}
-						className="w-full shadow-md lg:shadow-none"
+						className="w-full lg:shadow-none"
 					/>
 				</div>
 			</div>
@@ -186,13 +193,15 @@
 						label="Max Drawdown"
 						value={maxDrawdown.absolute}
 						type={'money'}
-						className="w-full shadow-md lg:shadow-none"
+						className="w-full lg:shadow-none"
+						baselineValue={0}
 					/>
 					<ValueStat
 						label="Max DD %"
 						value={maxDrawdown.percentage}
 						type={'percentage'}
-						className="w-full shadow-md lg:shadow-none"
+						className="w-full lg:shadow-none"
+						baselineValue={0}
 					/>
 				</div>
 			</div>

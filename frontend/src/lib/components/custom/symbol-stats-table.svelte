@@ -2,6 +2,7 @@
 	import type { SymbolStatsRow } from '$lib/chartsHelpers';
 	import { formatIntToCurrency, formatNumberPercentage } from '$lib/formatters';
 	import { localeStore } from '$lib/stores/locale';
+	import { getFinancialColor } from '$lib/utils';
 
 	interface Props {
 		data: SymbolStatsRow[];
@@ -37,24 +38,12 @@
 						)}</td
 					>
 					<td class="py-2 px-3 text-right">
-						<span
-							class={row.pnl > 0
-								? 'text-green-600'
-								: row.pnl < 0
-									? 'text-red-600'
-									: 'text-gray-500'}
-						>
+						<span class={getFinancialColor(row.pnl, 0)}>
 							{formatIntToCurrency(row.pnl, $localeStore.currency)}
 						</span>
 					</td>
 					<td class="py-2 px-3 text-right">
-						<span
-							class={row.winrate >= 0.5
-								? 'text-green-600'
-								: row.winrate > 0
-									? 'text-red-600'
-									: 'text-gray-500'}
-						>
+						<span class={getFinancialColor(row.winrate, 0.5)}>
 							{formatNumberPercentage(row.winrate)}
 						</span>
 					</td>
