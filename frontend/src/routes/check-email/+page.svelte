@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
-	import { goto } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
 	import type { ActionData } from './$types';
 	import CheckEmailMessage from '$lib/layouts/check-email-message.svelte';
 
@@ -10,12 +10,16 @@
 
 	async function handleResend() {
 		isResending = true;
-
-		await fetch('?/resend', {
-			method: 'POST',
-		});
-
-		isResending = false;
+		try {
+			const res = await fetch('?/resend', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+				body: ''
+			});
+			if (res.ok) await invalidateAll();
+		} finally {
+			isResending = false;
+		}
 	}
 </script>
 

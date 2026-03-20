@@ -25,7 +25,7 @@
 					Your email has been verified successfully. You can now access all
 					features.
 				</p>
-				<Button onclick={() => goto('/')}>Go to Dashboard</Button>
+				<Button onclick={() => goto('/')}>Go to Home</Button>
 			{:else if data.status === 'error'}
 				<CircleXIcon class="size-12" />
 				<h1 class="text-2xl font-bold">Verification Failed</h1>
