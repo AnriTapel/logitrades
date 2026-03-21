@@ -1,5 +1,5 @@
 <script lang="ts">
-	import '../app.pcss';
+	import '../app.css';
 	import ErrorDialog from '$lib/layouts/error-dialog.svelte';
 	import { setAuth, clearAuth } from '$lib/stores/auth';
 	import { tradesStore } from '$lib/stores/trades';
