@@ -2,8 +2,9 @@
 FROM node:22 AS build
 WORKDIR /app
 
-RUN npm install -g pnpm
-COPY package.json pnpm-lock.yaml* ./
+RUN corepack enable
+COPY package.json pnpm-lock.yaml* pnpm-workspace.yaml* ./
+RUN corepack prepare --activate
 RUN pnpm install --frozen-lockfile
 
 COPY . .
