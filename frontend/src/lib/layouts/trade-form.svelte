@@ -353,7 +353,7 @@
 	form {
 		display: grid;
 		grid-template-columns: repeat(2, 1fr);
-		grid-template-rows: repeat(2, 250px);
+		grid-template-rows: repeat(2, 200px);
 		column-gap: 8rem;
 	}
 

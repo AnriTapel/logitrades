@@ -41,7 +41,7 @@
 	/>
 	<meta name="author" content="LogiTrades" />
 	<meta name="application-name" content="LogiTrades" />
-	<meta name="theme-color" content="#000000" />
+	<meta name="theme-color" content="#246aac" />
 
 	<!-- Open Graph / Facebook -->
 	<meta property="og:type" content="website" />
@@ -81,12 +81,19 @@
 	<link rel="canonical" href="https://logitrades.com/" />
 </svelte:head>
 
-<main class="container mx-auto p-4 min-h-screen flex flex-col gap-12">
-	<TopBar userState={data.user} />
-	{@render children()}
-	<ErrorDialog />
-	<Footer isAuthenticated={data.isAuthenticated} />
-</main>
+{#if data.showAppChrome}
+	<main class="container mx-auto p-4 min-h-screen flex flex-col gap-12">
+		<TopBar userState={data.user} />
+		{@render children()}
+		<ErrorDialog />
+		<Footer isAuthenticated={data.isAuthenticated} />
+	</main>
+{:else}
+	<main class="min-h-screen">
+		{@render children()}
+		<ErrorDialog />
+	</main>
+{/if}
 
 <style>
 	:global(input[type='number']) {

@@ -4,6 +4,7 @@
 	import type { BarChartData, Trade } from '$lib/types';
 	import { formatIntToCurrency } from '$lib/formatters';
 	import { localeStore } from '$lib/stores/locale';
+	import { chartGridColor, chartTheme, cssHslVar, cssHslVarAlpha } from '$lib/chart-theme';
 
 	// Register all Chart.js components
 	Chart.register(...registerables);
@@ -45,17 +46,21 @@
 					size: 16,
 					weight: 'bold' as const,
 				},
-				color: '#374151',
+				color: cssHslVar('--foreground', chartTheme.foreground),
 			},
 			legend: {
 				display: showLegend,
 				position: 'top' as const,
 			},
 			tooltip: {
-				backgroundColor: 'rgba(0, 0, 0, 0.8)',
-				titleColor: '#fff',
-				bodyColor: '#fff',
-				borderColor: '#374151',
+				backgroundColor: cssHslVarAlpha(
+					'--foreground',
+					0.92,
+					'hsl(204 9.1% 10.8% / 0.92)',
+				),
+				titleColor: cssHslVar('--primary-foreground', chartTheme.primaryForeground),
+				bodyColor: cssHslVar('--primary-foreground', chartTheme.primaryForeground),
+				borderColor: cssHslVar('--border', chartTheme.border),
 				borderWidth: 1,
 				callbacks: {
 					label: (context: any) => {
@@ -69,19 +74,19 @@
 			x: {
 				display: true,
 				grid: {
-					color: 'rgba(0, 0, 0, 0.1)',
+					color: chartGridColor(),
 				},
 				ticks: {
-					color: '#6b7280',
+					color: cssHslVar('--muted-foreground', chartTheme.mutedForeground),
 				},
 			},
 			y: {
 				display: true,
 				grid: {
-					color: 'rgba(0, 0, 0, 0.1)',
+					color: chartGridColor(),
 				},
 				ticks: {
-					color: '#6b7280',
+					color: cssHslVar('--muted-foreground', chartTheme.mutedForeground),
 					callback: (value: any) => {
 						return financialMode
 							? formatIntToCurrency(Number(value), curr)

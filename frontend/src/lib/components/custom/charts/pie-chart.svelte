@@ -5,6 +5,7 @@
 	import { getColorPalette } from '$lib/chartsHelpers';
 	import { formatIntToCurrency } from '$lib/formatters';
 	import { localeStore } from '$lib/stores/locale';
+	import { chartTheme, cssHslVar, cssHslVarAlpha } from '$lib/chart-theme';
 
 	// Register all Chart.js components
 	Chart.register(...registerables);
@@ -46,7 +47,7 @@
 					size: 16,
 					weight: 'bold' as const,
 				},
-				color: '#374151',
+				color: cssHslVar('--foreground', chartTheme.foreground),
 			},
 			legend: {
 				display: showLegend,
@@ -54,17 +55,21 @@
 				labels: {
 					usePointStyle: true,
 					padding: 20,
-					color: '#374151',
+					color: cssHslVar('--foreground', chartTheme.foreground),
 					font: {
 						size: 12,
 					},
 				},
 			},
 			tooltip: {
-				backgroundColor: 'rgba(0, 0, 0, 0.8)',
-				titleColor: '#fff',
-				bodyColor: '#fff',
-				borderColor: '#374151',
+				backgroundColor: cssHslVarAlpha(
+					'--foreground',
+					0.92,
+					'hsl(204 9.1% 10.8% / 0.92)',
+				),
+				titleColor: cssHslVar('--primary-foreground', chartTheme.primaryForeground),
+				bodyColor: cssHslVar('--primary-foreground', chartTheme.primaryForeground),
+				borderColor: cssHslVar('--border', chartTheme.border),
 				borderWidth: 1,
 				callbacks: {
 					label: (context: any) => {

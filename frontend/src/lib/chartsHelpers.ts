@@ -4,6 +4,7 @@ import {
 	pnlForPeriod,
 	totalTradedVolumeForPeriod,
 } from './calcFunctions';
+import { chartTheme } from './chart-theme';
 import type { BarChartData, LineChartData, PieChartData, Trade } from './types';
 
 /**
@@ -12,22 +13,20 @@ import type { BarChartData, LineChartData, PieChartData, Trade } from './types';
  *
  */
 
-// Glossy, cohesive color palette - ocean/sky tones with soft gradients
 const financialColors = {
-	profit: '#34d399', // emerald-400 - softer green
-	loss: '#f87171', // red-400 - softer red
-	neutral: '#94a3b8', // slate-400 - muted gray
-	primary: '#60a5fa', // blue-400 - soft blue
-	secondary: '#818cf8', // indigo-400 - soft indigo
-	accent1: '#67e8f9', // cyan-300 - light cyan
-	accent2: '#a78bfa', // violet-400 - soft violet
-	accent3: '#93c5fd', // blue-300 - lighter blue
-	accent4: '#c4b5fd', // violet-300 - lighter violet
+	profit: chartTheme.profit,
+	loss: chartTheme.loss,
+	neutral: chartTheme.neutral,
+	primary: chartTheme.primary,
+	secondary: 'hsl(209.1 55% 52%)',
+	accent1: 'hsl(209.1 40% 58%)',
+	accent2: 'hsl(200 15% 55%)',
+	accent3: 'hsl(200 10.5% 65%)',
+	accent4: 'hsl(200 8.6% 40%)',
 } as const;
 
 // Generate cohesive color palette with similar tones
 export const getColorPalette = (count: number): string[] => {
-	// Blue-violet gradient palette for cohesive look
 	const colors = [
 		financialColors.primary,
 		financialColors.secondary,
@@ -252,7 +251,7 @@ export function createEquityCurveData(
 				label: 'Equity Curve',
 				data: equityData,
 				borderColor: financialColors.primary,
-				backgroundColor: `${financialColors.primary}20`,
+				backgroundColor: 'hsl(209.1 65.4% 40.8% / 0.15)',
 				tension: 0.4,
 				fill: false,
 				borderWidth: 3,
@@ -266,7 +265,7 @@ export function createEquityCurveData(
 							label: 'Drawdown',
 							data: drawdownData,
 							borderColor: financialColors.loss,
-							backgroundColor: `${financialColors.loss}30`,
+							backgroundColor: 'hsl(0 40% 48% / 0.22)',
 							tension: 0.4,
 							fill: '+1', // Fill to the previous dataset
 							borderWidth: 2,
