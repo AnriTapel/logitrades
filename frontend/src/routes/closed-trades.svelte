@@ -17,7 +17,9 @@
 
 	const storeSubscription = tradesStore.subscribe((value) => {
 		// React to store updates if necessary
-		closedTrades.set(value.filter((trade) => trade.closePrice));
+		closedTrades.set(
+			value.filter((trade) => trade.closePrice && trade.closedAt),
+		);
 	});
 
 	onDestroy(() => {

@@ -10,11 +10,12 @@ import TpSLDisplay from '$lib/components/custom/cells/tpsl-display.svelte';
 import TradeDatesDisplay from '$lib/components/custom/cells/trade-dates-display.svelte';
 import PnLDisplay from '$lib/components/custom/cells/pnl-display.svelte';
 import DataTableActions from './trades-table-actions.svelte';
+import LeverageDisplay from '$lib/components/custom/cells/leverage-display.svelte';
 
 export function createColumns(
 	onEdit: (id: number) => void,
 	onDelete: (id: number) => void,
-	currency: string
+	currency: string,
 ): ColumnDef<Trade>[] {
 	return [
 		// Symbol column - sortable, filterable
@@ -22,14 +23,16 @@ export function createColumns(
 			accessorKey: 'symbol',
 			header: 'Symbol',
 			cell: ({ row }) => {
-				const symbolSnippet = createRawSnippet<[{ symbol: string }]>((getSymbol) => {
-					const { symbol } = getSymbol();
-					return {
-						render: () => `<span class="font-medium">${symbol}</span>`,
-					};
-				});
+				const symbolSnippet = createRawSnippet<[{ symbol: string }]>(
+					(getSymbol) => {
+						const { symbol } = getSymbol();
+						return {
+							render: () => `<span class="font-medium">${symbol}</span>`,
+						};
+					},
+				);
 				return renderSnippet(symbolSnippet, {
-					symbol: row.original.symbol
+					symbol: row.original.symbol,
 				});
 			},
 			enableSorting: true,
@@ -56,7 +59,7 @@ export function createColumns(
 				renderComponent(TradeTypeCell, {
 					tradeType: row.getValue<TradeType>('tradeType'),
 				}),
-			enableSorting: true,
+			enableSorting: false,
 			enableColumnFilter: true,
 		},
 
@@ -72,8 +75,8 @@ export function createColumns(
 					};
 				});
 				return renderSnippet(qtySnippet, {
-					qty: row.original.quantity
-				  });
+					qty: row.original.quantity,
+				});
 			},
 			enableSorting: false,
 		},
@@ -83,13 +86,12 @@ export function createColumns(
 			accessorKey: 'openPrice',
 			header: 'Open Price',
 			cell: ({ row }) => {
-				const priceSnippet = createRawSnippet<[
-					{ price: number; currency: string }
-				]>((getPrice) => {
+				const priceSnippet = createRawSnippet<
+					[{ price: number; currency: string }]
+				>((getPrice) => {
 					const { price, currency: curr } = getPrice();
 					return {
-						render: () =>
-							`<span>${formatIntToCurrency(price, curr, 6)}</span>`,
+						render: () => `<span>${formatIntToCurrency(price, curr, 6)}</span>`,
 					};
 				});
 				return renderSnippet(priceSnippet, {
@@ -105,24 +107,22 @@ export function createColumns(
 			accessorKey: 'leverage',
 			header: 'Leverage',
 			cell: ({ row }) => {
-				const leverageSnippet = createRawSnippet<[{ leverage: number | undefined }]>((getLeverage) => {
-						const { leverage } = getLeverage();
-						return {
-							render: () =>
-								`<span>${leverage ? `${leverage}x` : '-'}</span>`,
-						};
-					}
-				);
-				return renderSnippet(leverageSnippet, {
-					leverage: row.original.leverage
+				return renderComponent(LeverageDisplay, {
+					leverage: row.original.leverage,
 				});
 			},
-			enableSorting: false,
+			enableSorting: true,
+			sortUndefined: -1,
+			sortingFn: (rowA, rowB) =>
+				(rowA.original.leverage ?? 1) - (rowB.original.leverage ?? 1),
 		},
 
 		// TP/SL column
 		{
-			accessorFn: (row) => ({ takeProfit: row.takeProfit, stopLoss: row.stopLoss }),
+			accessorFn: (row) => ({
+				takeProfit: row.takeProfit,
+				stopLoss: row.stopLoss,
+			}),
 			id: 'tpsl',
 			header: 'TP/SL',
 			cell: ({ row }) => {
@@ -143,9 +143,9 @@ export function createColumns(
 			accessorKey: 'closePrice',
 			header: 'Close Price',
 			cell: ({ row }) => {
-				const closePriceSnippet = createRawSnippet<[
-					{ price: number | undefined; currency: string }
-				]>((getPrice) => {
+				const closePriceSnippet = createRawSnippet<
+					[{ price: number | undefined; currency: string }]
+				>((getPrice) => {
 					const { price, currency: curr } = getPrice();
 					return {
 						render: () =>
@@ -171,7 +171,15 @@ export function createColumns(
 					closedAt: row.original.closedAt,
 				}),
 			enableSorting: true,
-			sortingFn: 'basic',
+			sortingFn: (rowA, rowB) => {
+				if (rowA.original.closedAt && rowB.original.closedAt) {
+					return rowA.original.closedAt.localeCompare(rowB.original.closedAt);
+				}
+				if (rowA.original.openedAt && rowB.original.openedAt) {
+					return rowA.original.openedAt.localeCompare(rowB.original.openedAt);
+				}
+				return 0;
+			},
 		},
 
 		// PnL column - sortable by absolute PnL
