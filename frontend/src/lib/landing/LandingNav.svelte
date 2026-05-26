@@ -32,8 +32,9 @@
 	>
 		<a
 			href={isAuthenticated ? '/journal' : '/'}
-			class="text-2xl font-extrabold tracking-tight text-primary"
+			class="flex items-center gap-2 text-2xl font-extrabold tracking-tight text-primary"
 		>
+			<img src="/logo.svg" alt="LogiTrades" class="h-12 w-12" />
 			LogiTrades
 		</a>
 		<nav class="hidden items-center gap-8 lg:flex">

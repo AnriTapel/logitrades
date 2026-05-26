@@ -2,7 +2,11 @@ import type { Actions, PageServerLoad } from "./$types";
 import { redirect } from "@sveltejs/kit";
 import { httpClient } from "$lib/server/http-client/http-client";
 
-export const load: PageServerLoad = async () => {
+export const load: PageServerLoad = async ({ locals }) => {
+	if (locals.user) {
+		throw redirect(303, "/journal");
+	}
+
 	return {};
 };
 

@@ -63,7 +63,7 @@
 <div class="flex justify-between items-center w-full">
 	<!-- Logo - Always visible -->
 	<a href={userState ? "/journal" : "/"} class="flex items-center gap-2 sm:gap-3 shrink-0">
-		<img src="/logo.svg" alt="LogiTrades" class="h-10 w-10 sm:h-14 sm:w-14" />
+		<img src="/logo.svg" alt="LogiTrades" class="h-10 w-10 sm:h-12 sm:w-12" />
 		<h1 class="text-lg sm:text-2xl font-bold">LogiTrades</h1>
 	</a>
 
