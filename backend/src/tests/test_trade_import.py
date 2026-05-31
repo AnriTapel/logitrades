@@ -39,11 +39,29 @@ class TestValidTradeImport:
         assert trade.symbol == "BTCUSDT"
         assert trade.type.value == "buy"
         assert trade.open_price == 100
+        # Quantity is stored as notional position size (as entered), not divided by leverage
         assert trade.quantity == 10
         assert trade.take_profit == 150
         assert trade.stop_loss == 80
         assert trade.leverage == 2
         assert trade.close_price == 120
+
+    def test_leveraged_trade_stores_notional_quantity_as_entered(
+        self, fields_mapping: dict, valid_row: dict
+    ):
+        """Leveraged imports persist notional quantity unchanged."""
+        row = {
+            **valid_row,
+            "Amount": "1000",
+            "Leverage": "10",
+        }
+
+        normalized = normalize_csv_row(row, fields_mapping)
+        trade_import = TradeImport(**normalized)
+        trade = trade_import.to_trade()
+
+        assert trade.quantity == 1000
+        assert trade.leverage == 10
 
     def test_valid_trade_minimal(self, fields_mapping: dict, valid_row: dict):
         """Minimal required fields only."""

@@ -302,9 +302,7 @@ export function createRiskRewardDistribution(trades: Trade[]): BarChartData {
 		}
 
 		const risk =
-			Math.abs(trade.stopLoss - trade.openPrice) *
-			trade.quantity *
-			(trade.leverage ?? 1);
+			Math.abs(trade.stopLoss - trade.openPrice) * trade.quantity;
 		const ratio = pnl / risk;
 
 		// Find the appropriate range and increment its counter

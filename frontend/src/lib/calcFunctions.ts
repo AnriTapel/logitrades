@@ -11,20 +11,15 @@ export function calcAbsolutePnl(trade: Trade): number | null {
 		const liquidationPriceShort = openPrice * (1 + 1 / leverage);
 
 		if (tradeType === 'buy' && closePrice <= liquidationPriceLong) {
-			return -openPrice * quantity;
+			return (-openPrice * quantity) / leverage;
 		}
 
 		if (tradeType === 'sell' && closePrice >= liquidationPriceShort) {
-			return -openPrice * quantity;
+			return (-openPrice * quantity) / leverage;
 		}
 	}
 
-	return (
-		(closePrice - openPrice) *
-		quantity *
-		(leverage ?? 1) *
-		(tradeType === 'buy' ? 1 : -1)
-	);
+	return (closePrice - openPrice) * quantity * (tradeType === 'buy' ? 1 : -1);
 }
 
 export function calcWinrate(trades: Trade[]): number {
@@ -94,7 +89,8 @@ export function calcPnlPercentage(trade: Trade): number | null {
 	if (absolutePnl === null) {
 		return null;
 	}
-	const investedAmount = trade.openPrice * trade.quantity;
+	const investedAmount =
+		(trade.openPrice * trade.quantity) / (trade.leverage ?? 1);
 
 	return absolutePnl / investedAmount;
 }
@@ -111,18 +107,15 @@ export function calculatePnl(trade: Trade): number {
 		const liquidationPriceShort = openPrice * (1 + 1 / leverage);
 
 		if (tradeType === 'buy' && closePrice <= liquidationPriceLong) {
-			return -openPrice * quantity;
+			return (-openPrice * quantity) / leverage;
 		}
 
 		if (tradeType === 'sell' && closePrice >= liquidationPriceShort) {
-			return -openPrice * quantity;
+			return (-openPrice * quantity) / leverage;
 		}
 	}
 
-	const pnl =
-		(closePrice - openPrice) * quantity * (tradeType === 'buy' ? 1 : -1);
-
-	return pnl * leverage;
+	return (closePrice - openPrice) * quantity * (tradeType === 'buy' ? 1 : -1);
 }
 
 export function pnlForPeriod(trades: Trade[]): number {
@@ -137,10 +130,7 @@ export function pnlForPeriod(trades: Trade[]): number {
 export function totalTradedVolumeForPeriod(trades: Trade[]): number {
 	return trades.reduce((total, trade) => {
 		const closePrice = trade.closePrice || 0;
-		return (
-			total +
-			(trade.openPrice + closePrice) * trade.quantity * (trade.leverage ?? 1)
-		);
+		return total + (trade.openPrice + closePrice) * trade.quantity;
 	}, 0);
 }
 
@@ -367,9 +357,7 @@ export function calcAverageRiskReward(trades: Trade[]): number | null {
 
 		// Calculate planned risk
 		const plannedRisk =
-			Math.abs(trade.stopLoss! - trade.openPrice) *
-			trade.quantity *
-			(trade.leverage ?? 1);
+			Math.abs(trade.stopLoss! - trade.openPrice) * trade.quantity;
 
 		if (plannedRisk === 0) continue;
 
