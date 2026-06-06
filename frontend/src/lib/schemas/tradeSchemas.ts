@@ -1,6 +1,46 @@
 import { formatDateTimeISO } from '$lib/formatters';
 import { z } from 'zod';
 
+const MIN_POSITIVE_DECIMAL = 0.000000001;
+const DECIMAL_PLACES_REGEX = /^\d+(\.\d{1,9})?$/;
+
+const coerceFormNumber = (val: unknown): number | undefined =>
+	val === '' || val === null || val === undefined ? undefined : Number(val);
+
+const withPositiveDecimalChecks = (schema: z.ZodNumber, label: string) =>
+	schema
+		.min(MIN_POSITIVE_DECIMAL, {
+			message: `${label} must be greater than 0`,
+		})
+		.refine((value) => DECIMAL_PLACES_REGEX.test(value.toString()), {
+			message: `${label} cannot have more than 9 decimal places`,
+		});
+
+const requiredDecimal = (label: string) =>
+	z.preprocess(
+		coerceFormNumber,
+		withPositiveDecimalChecks(
+			z.number({
+				required_error: `${label} is required`,
+				invalid_type_error: `${label} must be a number`,
+			}),
+			label,
+		),
+	);
+
+const optionalDecimal = (label: string) =>
+	z.preprocess(
+		coerceFormNumber,
+		withPositiveDecimalChecks(
+			z.number({
+				invalid_type_error: `${label} must be a number`,
+			}),
+			label,
+		)
+			.optional()
+			.nullable(),
+	);
+
 export const formSchema = z.object({
 	id: z.number().optional(),
 	createdAt: z.string().datetime().optional().nullable(),
@@ -25,50 +65,30 @@ export const formSchema = z.object({
 		.min(1, { message: 'Leverage must be equal or greater than 1' })
 		.max(50, { message: 'Leverage must be equal or less than 50' })
 		.default(1),
-	quantity: z
-		.number()
-		.min(0.000000001, { message: 'Quantity must be greater than 0.000000001' })
-		.refine((value) => /^\d+(\.\d{1,9})?$/.test(value.toString()), {
-			message: 'Quantity cannot have more than 9 decimal places',
-		}),
-	openPrice: z
-		.number()
-		.min(0.000000001, {
-			message: 'Open Price must be greater than 0.000000001',
-		})
-		.refine((value) => /^\d+(\.\d{1,9})?$/.test(value.toString()), {
-			message: 'Open Price cannot have more than 9 decimal places',
-		}),
+	quantity: requiredDecimal('Quantity'),
+	openPrice: requiredDecimal('Open Price'),
 	openedAt: z.string().datetime().default(formatDateTimeISO(new Date())),
-	takeProfit: z
-		.number()
-		.min(0.000000001, {
-			message: 'Take Profit must be greater than 0.000000001',
-		})
-		.refine((value) => /^\d+(\.\d{1,9})?$/.test(value.toString()), {
-			message: 'Take Profit cannot have more than 9 decimal places',
-		})
-		.optional()
-		.nullable(),
-	stopLoss: z
-		.number()
-		.min(0.000000001, { message: 'Stop Loss must be greater than 0.000000001' })
-		.refine((value) => /^\d+(\.\d{1,9})?$/.test(value.toString()), {
-			message: 'Stop Loss cannot have more than 9 decimal places',
-		})
-		.optional()
-		.nullable(),
-	closePrice: z
-		.number()
-		.min(0.000000001, {
-			message: 'Close Price must be greater than 0.000000001',
-		})
-		.refine((value) => /^\d+(\.\d{1,9})?$/.test(value.toString()), {
-			message: 'Close Price cannot have more than 9 decimal places',
-		})
-		.optional()
-		.nullable(),
+	takeProfit: optionalDecimal('Take Profit'),
+	stopLoss: optionalDecimal('Stop Loss'),
+	closePrice: optionalDecimal('Close Price'),
 	closedAt: z.string().datetime().optional().nullable(),
 });
 
+/** Validated form output (after Zod parse). */
 export type TradeFormInput = z.infer<typeof formSchema>;
+
+/** In-progress form state — required decimals may be empty before submit. */
+export type TradeFormData = Omit<TradeFormInput, 'quantity' | 'openPrice'> & {
+	quantity?: number;
+	openPrice?: number;
+};
+
+export function createTradeFormDefaults(): TradeFormData {
+	return {
+		symbol: '',
+		tradeType: 'buy',
+		useLeverage: false,
+		leverage: 1,
+		openedAt: formatDateTimeISO(new Date()),
+	};
+}

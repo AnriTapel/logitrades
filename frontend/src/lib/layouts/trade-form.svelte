@@ -7,7 +7,7 @@
 		FieldErrors,
 	} from '$lib/components/ui/form';
 	import { Label } from '$lib/components/ui/label';
-	import { formSchema, type TradeFormInput } from '$lib/schemas/tradeSchemas';
+	import { formSchema, type TradeFormData } from '$lib/schemas/tradeSchemas';
 	import { type SuperValidated, superForm } from 'sveltekit-superforms';
 	import { zodClient } from 'sveltekit-superforms/adapters';
 	import { Input } from '$lib/components/ui/input';
@@ -24,7 +24,7 @@
 		isEdit = false,
 		onCancel,
 	}: {
-		data: SuperValidated<TradeFormInput>;
+		data: SuperValidated<TradeFormData>;
 		isEdit?: boolean;
 		onCancel: () => void;
 	} = $props();
@@ -59,6 +59,13 @@
 	const handleCancel = (): void => {
 		form.reset();
 		onCancel();
+	};
+
+	const setDecimalField = (
+		field: 'quantity' | 'openPrice',
+		raw: string,
+	): void => {
+		$formData[field] = raw === '' ? undefined : Number(raw);
 	};
 </script>
 
@@ -139,7 +146,9 @@
 								step="0.000000001"
 								min="0.000000001"
 								placeholder="0"
-								bind:value={$formData.quantity}
+								value={$formData.quantity ?? ''}
+								oninput={(e) =>
+									setDecimalField('quantity', e.currentTarget.value)}
 							/>
 						{/snippet}
 					</Control>
@@ -265,7 +274,9 @@
 								step="0.000000001"
 								min="0.000000001"
 								placeholder="0"
-								bind:value={$formData.openPrice}
+								value={$formData.openPrice ?? ''}
+								oninput={(e) =>
+									setDecimalField('openPrice', e.currentTarget.value)}
 							/>
 						{/snippet}
 					</Control>
