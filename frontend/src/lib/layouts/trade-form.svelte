@@ -112,7 +112,7 @@
 				</FieldErrors>
 			</Field>
 
-			<div class="flex gap-2">
+			<div class="flex gap-4">
 				<Field {form} name="symbol" class="flex-1">
 					<Control>
 						{#snippet children({ props })}
@@ -211,7 +211,7 @@
 				</div>
 			</div>
 
-			<div class="flex gap-2">
+			<div class="flex gap-4">
 				<Field {form} name="takeProfit" class="flex-1">
 					<Control>
 						{#snippet children({ props })}
@@ -262,7 +262,7 @@
 
 		<section>
 			<Label class="text-gray-500">Entry & Exit</Label>
-			<div class="flex gap-2 mb-8">
+			<div class="flex gap-4 mb-8">
 				<Field {form} name="openPrice" class="flex-grow">
 					<Control>
 						{#snippet children({ props })}
@@ -311,7 +311,7 @@
 				</Field>
 			</div>
 
-			<div class="flex gap-2">
+			<div class="flex gap-4">
 				<Field {form} name="closePrice" class="flex-grow">
 					<Control>
 						{#snippet children({ props })}

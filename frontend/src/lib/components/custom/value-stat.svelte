@@ -1,6 +1,6 @@
 <script lang="ts">
+	import { formatTradeDateTimeLocal } from '$lib/dates';
 	import {
-		formatDateTimeISO,
 		formatIntToCurrency,
 		formatNumber,
 		formatNumberPercentage,
@@ -34,7 +34,7 @@
 		} else if (type === 'integer') {
 			return formatNumber(Math.round(numValue));
 		} else if (type === 'date') {
-			return formatDateTimeISO(value as string);
+			return formatTradeDateTimeLocal(value as string);
 		} else {
 			return value.toString();
 		}

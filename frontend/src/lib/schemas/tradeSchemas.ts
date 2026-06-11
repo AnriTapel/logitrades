@@ -1,4 +1,4 @@
-import { formatDateTimeISO } from '$lib/formatters';
+import { toUtcIso, type UtcIsoDateTime } from '$lib/dates';
 import { z } from 'zod';
 
 const MIN_POSITIVE_DECIMAL = 0.000000001;
@@ -41,9 +41,24 @@ const optionalDecimal = (label: string) =>
 			.nullable(),
 	);
 
+const utcIsoDateTimeSchema = z
+	.string()
+	.datetime({ offset: true })
+	.transform(toUtcIso);
+
+const optionalUtcIsoDateTimeSchema = z.preprocess(
+	(val) => (val === '' || val === null || val === undefined ? null : val),
+	z
+		.string()
+		.datetime({ offset: true })
+		.transform(toUtcIso)
+		.nullable()
+		.optional(),
+);
+
 export const formSchema = z.object({
 	id: z.number().optional(),
-	createdAt: z.string().datetime().optional().nullable(),
+	createdAt: optionalUtcIsoDateTimeSchema,
 	symbol: z
 		.string()
 		.min(1, { message: 'Symbol must be at least 1 character' })
@@ -67,11 +82,11 @@ export const formSchema = z.object({
 		.default(1),
 	quantity: requiredDecimal('Quantity'),
 	openPrice: requiredDecimal('Open Price'),
-	openedAt: z.string().datetime().default(formatDateTimeISO(new Date())),
+	openedAt: utcIsoDateTimeSchema.default(() => toUtcIso(new Date())),
 	takeProfit: optionalDecimal('Take Profit'),
 	stopLoss: optionalDecimal('Stop Loss'),
 	closePrice: optionalDecimal('Close Price'),
-	closedAt: z.string().datetime().optional().nullable(),
+	closedAt: optionalUtcIsoDateTimeSchema,
 });
 
 /** Validated form output (after Zod parse). */
@@ -89,6 +104,6 @@ export function createTradeFormDefaults(): TradeFormData {
 		tradeType: 'buy',
 		useLeverage: false,
 		leverage: 1,
-		openedAt: formatDateTimeISO(new Date()),
+		openedAt: toUtcIso(new Date()),
 	};
 }

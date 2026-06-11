@@ -3,6 +3,7 @@ import { superValidate } from 'sveltekit-superforms';
 import {
 	createTradeFormDefaults,
 	formSchema,
+	type TradeFormData,
 	type TradeFormInput,
 } from '$lib/schemas/tradeSchemas';
 import { fail, redirect } from '@sveltejs/kit';
@@ -62,9 +63,15 @@ export const actions = {
 				fetch,
 			});
 
-			return { success: true, form };
+			return {
+				success: true,
+				form,
+			};
 		} catch (error) {
-			return fail(500, { form, error });
+			return fail(500, {
+				form,
+				error,
+			});
 		}
 	},
 
@@ -83,7 +90,10 @@ export const actions = {
 				fetch,
 			});
 		} catch (error) {
-			return fail(500, { form, error });
+			return fail(500, {
+				form,
+				error,
+			});
 		}
 
 		throw redirect(303, '?');

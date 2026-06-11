@@ -30,6 +30,8 @@ FIELD_ERROR_MESSAGES: dict[str, dict[str, str]] = {
         'datetime_parsing': "Opened at must be a valid date/time.",
         'datetime_type': "Opened at must be a valid date/time.",
         'datetime_from_date_parsing': "Opened at must be a valid date/time.",
+        'opened_at.in_the_future': "Opened at must be in the past.",
+        'opened_at.invalid_format': "Opened at must be a valid date/time.",
     },
     'take_profit': {
         'float_parsing': "Take profit must be a valid number.",

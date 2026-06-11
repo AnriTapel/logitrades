@@ -6,6 +6,7 @@ from pydantic_core import PydanticCustomError
 
 from ...domain.trade.enums import TradeType
 from ...domain.trade.trade_domain import TradeDomain
+from ...utils.datetime_utils import ensure_utc, utc_now
 
 
 class TradeImport(BaseModel):
@@ -13,7 +14,7 @@ class TradeImport(BaseModel):
     trade_type: TradeType = Field(..., json_schema_extra={"example": "buy"})
     open_price: float = Field(..., json_schema_extra={"example": 150.0})
     quantity: float = Field(..., json_schema_extra={"example": 10})
-    opened_at: Optional[datetime] = Field(datetime.now(), json_schema_extra={"example": "2023-10-01T10:00:00Z"})
+    opened_at: Optional[datetime] = Field(None, json_schema_extra={"example": "2023-10-01T10:00:00Z"})
     take_profit: Optional[float] = Field(None, json_schema_extra={"example": 160.0})
     stop_loss: Optional[float] = Field(None, json_schema_extra={"example": 140.0})
     leverage: Optional[int] = Field(None, json_schema_extra={"example": 1.0})
@@ -51,6 +52,37 @@ class TradeImport(BaseModel):
             raise PydanticCustomError('leverage.not_positive', 'Leverage must be greater than 0.')
         return v
 
+    @field_validator('opened_at')
+    @classmethod
+    def validate_opened_at(cls, v: Optional[datetime]) -> datetime:
+        if v is None:
+            return utc_now()
+        if not isinstance(v, datetime):
+            raise PydanticCustomError('opened_at.invalid_format', 'Opened at must be a valid datetime.')
+
+        opened_at = ensure_utc(v)
+        if opened_at > utc_now():
+            raise PydanticCustomError('opened_at.in_the_future', 'Opened at must be in the past.')
+        return opened_at
+
+    @field_validator('closed_at')
+    @classmethod
+    def validate_closed_at(cls, v: Optional[datetime]) -> Optional[datetime]:
+        if v is None:
+            return None
+        if not isinstance(v, datetime):
+            raise PydanticCustomError('closed_at.invalid_format', 'Closed at must be a valid datetime.')
+        return ensure_utc(v)
+
+    @field_validator('created_at')
+    @classmethod
+    def validate_created_at(cls, v: Optional[datetime]) -> Optional[datetime]:
+        if v is None:
+            return None
+        if not isinstance(v, datetime):
+            raise PydanticCustomError('created_at.invalid_format', 'Created at must be a valid datetime.')
+        return ensure_utc(v)
+
     def to_trade(self) -> "TradeDomain":
         return TradeDomain(
             symbol=self.symbol,
@@ -63,5 +95,5 @@ class TradeImport(BaseModel):
             leverage=self.leverage,
             close_price=self.close_price,
             closed_at=self.closed_at,
-            created_at=self.created_at
+            created_at=self.created_at,
         )

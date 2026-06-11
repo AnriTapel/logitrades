@@ -6,6 +6,7 @@ from ...errors.trade_validators import (
     validate_take_profit,
     validate_closed_at, validate_close_trade,
 )
+from ...utils.datetime_utils import to_utc_iso_string
 
 class TradeDomain:
     def __init__(
@@ -44,15 +45,15 @@ class TradeDomain:
     def to_dict(self) -> dict:
         return {
             'id': self.id,
-            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'created_at': to_utc_iso_string(self.created_at) if self.created_at else None,
             'symbol': self.symbol,
             'type': self.type.value,
             'open_price': self.open_price,
             'quantity': self.quantity,
-            'opened_at': self.opened_at.isoformat(),
+            'opened_at': to_utc_iso_string(self.opened_at),
             'take_profit': self.take_profit,
             'stop_loss': self.stop_loss,
             'leverage': self.leverage,
             'close_price': self.close_price,
-            'closed_at': self.closed_at.isoformat() if self.closed_at else None,
+            'closed_at': to_utc_iso_string(self.closed_at) if self.closed_at else None,
         }

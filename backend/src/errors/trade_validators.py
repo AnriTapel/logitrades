@@ -34,7 +34,7 @@ def validate_closed_at(trade: "TradeDomain") -> None:
     closed_at = trade.closed_at
     if closed_at is None:
         return
-    if closed_at is not None and opened_at is not None and closed_at <= opened_at:
+    if closed_at is not None and closed_at <= opened_at:
         raise closed_at_before_opened_at_error()
 
 def validate_close_trade(trade: "TradeDomain") -> None:

@@ -1,3 +1,5 @@
+import type { UtcIsoDateTime } from '$lib/dates';
+
 export type TradeType = 'buy' | 'sell';
 export interface Trade {
 	id: number;
@@ -8,10 +10,10 @@ export interface Trade {
 	stopLoss?: number;
 	takeProfit?: number;
 	leverage?: number;
-	openedAt: string;
+	openedAt: UtcIsoDateTime;
 	closePrice?: number;
-	closedAt?: string;
-	createdAt: string;
+	closedAt?: UtcIsoDateTime;
+	createdAt: UtcIsoDateTime;
 }
 
 // Charts types/interfaces
@@ -19,7 +21,7 @@ export type BarChartData = {
 	labels: string[];
 	datasets: Array<{
 		label: string;
-		data: (number | null)[]; // null values are skipped by Chart.js (empty bar)
+		data: (number | null)[];
 		backgroundColor?: string | string[];
 		borderColor?: string | string[];
 		borderWidth?: number;
