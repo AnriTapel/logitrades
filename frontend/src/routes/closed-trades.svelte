@@ -16,7 +16,6 @@
 	let closedTrades = writable<Trade[]>([]);
 
 	const storeSubscription = tradesStore.subscribe((value) => {
-		// React to store updates if necessary
 		closedTrades.set(
 			value.filter((trade) => trade.closePrice && trade.closedAt),
 		);
@@ -27,8 +26,16 @@
 	});
 </script>
 
-<section class="mb-8">
-	<h1 class="text-xl sm:text-2xl font-bold mb-4">Closed trades</h1>
+<section class="flex flex-col gap-8">
+	<div class="flex flex-col gap-1">
+		<p class="text-[10px] font-bold uppercase tracking-[0.2em] text-[#4c6076]">
+			Historical records
+		</p>
+		<h2 class="text-2xl sm:text-[30px] font-extrabold tracking-tight text-[#1a1c1f]">
+			Closed trades
+		</h2>
+	</div>
+
 	<TradesDataTable
 		styling={{ maxBodyHeight: '60vh' }}
 		noTradesMessage="No closed trades found"

@@ -11,6 +11,7 @@ import TradeDatesDisplay from '$lib/components/custom/cells/trade-dates-display.
 import PnLDisplay from '$lib/components/custom/cells/pnl-display.svelte';
 import DataTableActions from './trades-table-actions.svelte';
 import LeverageDisplay from '$lib/components/custom/cells/leverage-display.svelte';
+import QuantityDisplay from '$lib/components/custom/cells/quantity-display.svelte';
 
 export function createColumns(
 	onEdit: (id: number) => void,
@@ -39,17 +40,17 @@ export function createColumns(
 			enableColumnFilter: true,
 		},
 
-		// Status column - badge display
-		{
-			accessorFn: (row) => (row.closePrice ? 'closed' : 'open'),
-			id: 'status',
-			header: 'Status',
-			cell: ({ row }) =>
-				renderComponent(StatusBadge, {
-					status: row.getValue('status') as 'open' | 'closed',
-				}),
-			enableSorting: false,
-		},
+		// // Status column - badge display
+		// {
+		// 	accessorFn: (row) => (row.closePrice ? 'closed' : 'open'),
+		// 	id: 'status',
+		// 	header: 'Status',
+		// 	cell: ({ row }) =>
+		// 		renderComponent(StatusBadge, {
+		// 			status: row.getValue('status') as 'open' | 'closed',
+		// 		}),
+		// 	enableSorting: false,
+		// },
 
 		// Type column - sortable, filterable
 		{
@@ -65,17 +66,20 @@ export function createColumns(
 
 		// Quantity column
 		{
-			accessorKey: 'quantity',
+			accessorFn: (row) => ({
+				quantity: row.quantity,
+				leverage: row.leverage,
+			}),
+			id: 'quantity',
 			header: 'Quantity',
 			cell: ({ row }) => {
-				const qtySnippet = createRawSnippet<[{ qty: number }]>((getQty) => {
-					const { qty } = getQty();
-					return {
-						render: () => `<span>${formatNumber(qty, 6)}</span>`,
-					};
-				});
-				return renderSnippet(qtySnippet, {
-					qty: row.original.quantity,
+				const { quantity, leverage } = row.getValue('quantity') as {
+					quantity: number;
+					leverage: number | null;
+				};
+				return renderComponent(QuantityDisplay, {
+					quantity,
+					leverage,
 				});
 			},
 			enableSorting: false,
@@ -103,19 +107,19 @@ export function createColumns(
 		},
 
 		// Leverage column
-		{
-			accessorKey: 'leverage',
-			header: 'Leverage',
-			cell: ({ row }) => {
-				return renderComponent(LeverageDisplay, {
-					leverage: row.original.leverage,
-				});
-			},
-			enableSorting: true,
-			sortUndefined: -1,
-			sortingFn: (rowA, rowB) =>
-				(rowA.original.leverage ?? 1) - (rowB.original.leverage ?? 1),
-		},
+		// {
+		// 	accessorKey: 'leverage',
+		// 	header: 'Leverage',
+		// 	cell: ({ row }) => {
+		// 		return renderComponent(LeverageDisplay, {
+		// 			leverage: row.original.leverage,
+		// 		});
+		// 	},
+		// 	enableSorting: true,
+		// 	sortUndefined: -1,
+		// 	sortingFn: (rowA, rowB) =>
+		// 		(rowA.original.leverage ?? 1) - (rowB.original.leverage ?? 1),
+		// },
 
 		// TP/SL column
 		{

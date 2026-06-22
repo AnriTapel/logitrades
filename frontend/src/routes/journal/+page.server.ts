@@ -22,6 +22,7 @@ export const load: PageServerLoad = async ({ url, parent }) => {
 	}
 
 	const tradeId = url.searchParams.get('edit');
+	const isAddMode = url.searchParams.get('add') === 'true';
 	let form;
 
 	if (tradeId) {
@@ -44,7 +45,7 @@ export const load: PageServerLoad = async ({ url, parent }) => {
 		});
 	}
 
-	return { form, isEditMode: tradeId !== null };
+	return { form, isEditMode: tradeId !== null, isAddMode };
 };
 
 export const actions = {
@@ -63,16 +64,18 @@ export const actions = {
 				fetch,
 			});
 
-			return {
-				success: true,
-				form,
-			};
+			// return {
+			// 	success: true,
+			// 	form,
+			// };
 		} catch (error) {
 			return fail(500, {
 				form,
 				error,
 			});
 		}
+
+		throw redirect(303, '?');
 	},
 
 	update: async ({ request, fetch }) => {

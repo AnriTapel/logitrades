@@ -38,7 +38,7 @@
 			<Button
 				{...props}
 				variant="outline"
-				class="w-[140px] justify-between"
+				class="grow justify-between"
 				role="combobox"
 				aria-expanded={open}
 			>

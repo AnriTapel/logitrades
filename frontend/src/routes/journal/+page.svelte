@@ -1,27 +1,30 @@
 <script lang="ts">
-	import { invalidateAll, goto } from "$app/navigation";
-	import type { PageData } from "./$types";
-	import TradeForm from "$lib/layouts/trade-form.svelte";
-	import ImportDialog from "$lib/layouts/import-dialog.svelte";
-	import OpenedTrades from "../opened-trades.svelte";
-	import ClosedTrades from "../closed-trades.svelte";
+	import { invalidateAll, goto } from '$app/navigation';
+	import type { PageData } from './$types';
+	import TradeForm from '$lib/layouts/trade-form.svelte';
+	import ImportDialog from '$lib/layouts/import-dialog.svelte';
+	import StatsSummary from '$lib/layouts/stats-summary.svelte';
+	import OpenedTrades from '../opened-trades.svelte';
+	import ClosedTrades from '../closed-trades.svelte';
 
 	let { data }: { data: PageData } = $props();
 	let isTradeFormOpen = $state(false);
 	let isImportDialogOpen = $state(false);
 
 	$effect(() => {
-		if (!data.isEditMode) {
+		if (data.isEditMode || data.isAddMode) {
+			isTradeFormOpen = true;
+		} else {
 			isTradeFormOpen = false;
 		}
 	});
 
 	async function handleTradeDelete(tradeId: number) {
 		const formData = new FormData();
-		formData.append("tradeId", tradeId.toString());
+		formData.append('tradeId', tradeId.toString());
 
-		await fetch("?/delete", {
-			method: "POST",
+		await fetch('?/delete', {
+			method: 'POST',
 			body: formData,
 		});
 
@@ -35,11 +38,12 @@
 
 	function handleOpenTradeForm() {
 		isTradeFormOpen = true;
+		goto('?add=true', { keepFocus: true });
 	}
 
 	function handleCloseTradeForm() {
 		isTradeFormOpen = false;
-		goto("?", { keepFocus: true });
+		goto('?', { keepFocus: true });
 	}
 
 	function handleOpenImportDialog() {
@@ -54,6 +58,8 @@
 <svelte:head>
 	<title>LogiTrades - Trading Journal & Analytics Platform | Track & Analyze Your Trades</title>
 </svelte:head>
+
+<StatsSummary />
 
 <OpenedTrades
 	{handleTradeDelete}

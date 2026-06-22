@@ -3,9 +3,9 @@
 	import ErrorDialog from '$lib/layouts/error-dialog.svelte';
 	import { setAuth, clearAuth } from '$lib/stores/auth';
 	import { tradesStore } from '$lib/stores/trades';
-	import TopBar from '$lib/layouts/top-bar.svelte';
+	import Sidebar from '$lib/layouts/sidebar.svelte';
+	import NavBar from '$lib/layouts/nav-bar.svelte';
 	import type { Trade } from '$lib/types';
-	import Footer from '$lib/layouts/footer.svelte';
 
 	let { children, data } = $props();
 
@@ -79,15 +79,37 @@
 	<meta name="language" content="English" />
 	<meta name="revisit-after" content="7 days" />
 	<link rel="canonical" href="https://logitrades.com/" />
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+	<link
+		href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@700;800&display=swap"
+		rel="stylesheet"
+	/>
 </svelte:head>
 
 {#if data.showAppChrome}
-	<main class="container mx-auto p-4 min-h-screen flex flex-col gap-12">
-		<TopBar userState={data.user} />
-		{@render children()}
-		<ErrorDialog />
-		<Footer isAuthenticated={data.isAuthenticated} />
-	</main>
+	{#if data.isAuthenticated && data.user}
+		<div class="flex min-h-screen bg-[#f9f9fd]">
+			<Sidebar />
+			<div class="flex flex-col flex-1 min-w-0">
+				<NavBar userState={data.user} />
+				<main class="flex-1">
+					<div class="mx-auto max-w-[1600px] p-4 sm:p-8 flex flex-col gap-8">
+						{@render children()}
+					</div>
+				</main>
+				<ErrorDialog />
+			</div>
+		</div>
+	{:else}
+		<div class="flex flex-col min-h-screen">
+			<NavBar userState={null} />
+			<main class="flex-1 container mx-auto p-4">
+				{@render children()}
+				<ErrorDialog />
+			</main>
+		</div>
+	{/if}
 {:else}
 	<main class="min-h-screen">
 		{@render children()}
