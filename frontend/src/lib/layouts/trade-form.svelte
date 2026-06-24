@@ -1,12 +1,12 @@
 <script lang="ts">
-	import CommonDialog from '$lib/components/ui/dialog/common-dialog.svelte';
+	import * as Dialog from '$lib/components/ui/dialog';
+	import Button from '$lib/components/ui/button/button.svelte';
 	import {
 		Field,
 		Control,
 		Label as FormLabel,
 		FieldErrors,
 	} from '$lib/components/ui/form';
-	import { Label } from '$lib/components/ui/label';
 	import { formSchema, type TradeFormData } from '$lib/schemas/tradeSchemas';
 	import { type SuperValidated, superForm } from 'sveltekit-superforms';
 	import { zodClient } from 'sveltekit-superforms/adapters';
@@ -17,6 +17,8 @@
 	import { showServerErrors } from '$lib/stores/error';
 	import type { HttpError } from '$lib/server/http-client/types';
 	import Slider from '$lib/components/ui/slider/slider.svelte';
+	import TrendingUp from '@lucide/svelte/icons/trending-up';
+	import TrendingDown from '@lucide/svelte/icons/trending-down';
 	import { cn } from '$lib/utils';
 
 	export const {
@@ -47,6 +49,16 @@
 		? `Edit Trade Note #${$formData.id}`
 		: 'Create Trade Note';
 
+	const fieldLabelClass =
+		'text-xs font-semibold uppercase tracking-[0.6px] text-[#4c6076]';
+	const cardFieldLabelClass =
+		'text-[10px] font-bold uppercase tracking-[1px] text-[#94a3b8]';
+	const filledInputClass = 'h-11 rounded border-transparent bg-[#f3f3f7]';
+	const cardInputClass =
+		'h-10 rounded border border-[rgba(194,199,207,0.2)] bg-white';
+	const datePickerFieldClass =
+		'[&_label]:text-[10px] [&_label]:font-bold [&_label]:uppercase [&_label]:tracking-[1px] [&_label]:text-[#94a3b8] [&_button]:h-10 [&_button]:rounded [&_button]:border [&_button]:border-[rgba(194,199,207,0.2)] [&_button]:bg-white [&_input]:h-10 [&_input]:rounded [&_input]:border [&_input]:border-[rgba(194,199,207,0.2)] [&_input]:bg-white';
+
 	const handleSubmit = async (): Promise<void> => {
 		const validatedForm = await form.validateForm();
 		if (validatedForm.valid) {
@@ -61,6 +73,12 @@
 		onCancel();
 	};
 
+	const handleOpenChange = (isOpen: boolean): void => {
+		if (!isOpen) {
+			handleCancel();
+		}
+	};
+
 	const setDecimalField = (
 		field: 'quantity' | 'openPrice',
 		raw: string,
@@ -69,310 +87,407 @@
 	};
 </script>
 
-<CommonDialog
-	open
-	title={modalTitle}
-	onSubmit={handleSubmit}
-	onCancel={handleCancel}
-	class="w-[960px]"
->
-	<form method="POST" use:enhance action={isEdit ? '?/update' : '?/create'}>
-		<!-- TODO: remove this inputs -->
-		{#if isEdit && $formData.id}
-			<input type="hidden" name="id" value={$formData.id} />
-		{/if}
+<Dialog.Root open onOpenChange={handleOpenChange}>
+	<Dialog.Content
+		class="h-auto max-h-[90vh] w-auto max-w-full rounded-lg min-h-0 flex flex-col sm:w-[680px]"
+	>
+		<Dialog.Header class="flex-shrink-0">
+			<Dialog.Title class="text-2xl font-bold text-[#003d6d]"
+				>{modalTitle}</Dialog.Title
+			>
+		</Dialog.Header>
 
-		{#if isEdit && $formData.id}
-			<input type="hidden" name="createdAt" value={$formData.createdAt} />
-		{/if}
+		<form
+			method="POST"
+			use:enhance
+			action={isEdit ? '?/update' : '?/create'}
+			class="flex flex-col gap-10 py-4 px-2 overflow-y-auto flex-grow"
+		>
+			{#if isEdit && $formData.id}
+				<input type="hidden" name="id" value={$formData.id} />
+			{/if}
 
-		<section>
-			<Label class="text-gray-500">Trade Setup</Label>
-			<Field {form} name="tradeType" class="mb-2">
-				<Control>
-					{#snippet children({ props })}
-						<FormLabel>Side *</FormLabel>
-						<ToggleGroup
-							{...props}
-							name="tradeType"
-							bind:value={$formData.tradeType}
-							options={[
-								{ label: 'Long', value: 'buy' },
-								{ label: 'Short', value: 'sell' },
-							]}
-						/>
-					{/snippet}
-				</Control>
-				<FieldErrors>
-					{#snippet children({ errors })}
-						<span class="text-destructive text-sm font-medium">
-							{errors[0]}
-						</span>
-					{/snippet}
-				</FieldErrors>
-			</Field>
+			{#if isEdit && $formData.id}
+				<input type="hidden" name="createdAt" value={$formData.createdAt} />
+			{/if}
 
-			<div class="flex gap-4">
-				<Field {form} name="symbol" class="flex-1">
-					<Control>
-						{#snippet children({ props })}
-							<FormLabel>Symbol *</FormLabel>
-							<Input
-								{...props}
-								class="uppercase"
-								required
-								placeholder="e.g. AAPL"
-								bind:value={$formData.symbol}
-							/>
-						{/snippet}
-					</Control>
-					<FieldErrors>
-						{#snippet children({ errors })}
-							<span class="text-destructive text-sm font-medium">
-								{errors[0]}
-							</span>
-						{/snippet}
-					</FieldErrors>
-				</Field>
-
-				<Field {form} name="quantity" class="flex-1">
-					<Control>
-						{#snippet children({ props })}
-							<FormLabel>Quantity *</FormLabel>
-							<Input
-								{...props}
-								type="number"
-								required
-								step="0.000000001"
-								min="0.000000001"
-								placeholder="0"
-								value={$formData.quantity ?? ''}
-								oninput={(e) =>
-									setDecimalField('quantity', e.currentTarget.value)}
-							/>
-						{/snippet}
-					</Control>
-					<FieldErrors>
-						{#snippet children({ errors })}
-							<div class="text-destructive text-sm font-medium">
-								{errors[0]}
-							</div>
-						{/snippet}
-					</FieldErrors>
-				</Field>
-			</div>
-		</section>
-
-		<section>
-			<Label class="text-gray-500">Risk Management</Label>
-			<div class="mb-4">
-				<Label for="leverage">Leverage</Label>
-				<div class="leverage-controls">
-					<Field {form} name="useLeverage">
-						<Control>
-							{#snippet children({ props })}
-								<div class="flex items-center gap-2">
-									<input
-										name="useLeverage"
-										type="checkbox"
-										value={$formData.useLeverage}
-										hidden
-									/>
-									<Checkbox {...props} bind:checked={$formData.useLeverage} />
-								</div>
-							{/snippet}
-						</Control>
-					</Field>
-
+			<section class="flex flex-col gap-6">
+				<div class="flex items-center gap-3">
+					<div class="h-4 w-1 rounded-full bg-[#003d6d]"></div>
 					<span
-						class={cn('text-sm font-medium block w-[30px]', {
-							'text-gray-500': !$formData.useLeverage,
-						})}
+						class="text-sm font-bold uppercase tracking-[1.4px] text-[#1a1c1f]"
 					>
-						{$formData.leverage}x
+						Trade Setup
 					</span>
+				</div>
 
-					<Field {form} name="leverage" class="grow ">
+				<div class="grid grid-cols-12 gap-6">
+					<Field
+						{form}
+						name="tradeType"
+						class="col-span-12 flex flex-col gap-2 sm:col-span-4"
+					>
 						<Control>
 							{#snippet children({ props })}
-								<input name="leverage" value={$formData.leverage} hidden />
-								<Slider
-									type="single"
+								<FormLabel class={fieldLabelClass}>Side *</FormLabel>
+								<ToggleGroup
 									{...props}
-									disabled={!$formData.useLeverage}
-									bind:value={$formData.leverage}
-									min={1}
-									max={50}
-									step={1}
+									name="tradeType"
+									bind:value={$formData.tradeType}
+									class="h-11 w-full gap-0 rounded bg-[#f3f3f7] p-1"
+									itemClass="h-full flex-1 rounded text-xs font-bold uppercase data-[state=on]:bg-white data-[state=on]:text-[#003d6d] data-[state=on]:shadow-sm data-[state=off]:text-[#64748b]"
+									options={[
+										{ label: 'LONG', value: 'buy', icon: TrendingUp },
+										{ label: 'SHORT', value: 'sell', icon: TrendingDown },
+									]}
 								/>
 							{/snippet}
 						</Control>
+						<FieldErrors>
+							{#snippet children({ errors })}
+								<span class="text-destructive text-sm font-medium">
+									{errors[0]}
+								</span>
+							{/snippet}
+						</FieldErrors>
+					</Field>
+
+					<Field
+						{form}
+						name="symbol"
+						class="col-span-6 flex flex-col gap-2 sm:col-span-4"
+					>
+						<Control>
+							{#snippet children({ props })}
+								<FormLabel class={fieldLabelClass}>Symbol *</FormLabel>
+								<Input
+									{...props}
+									class={cn(filledInputClass, 'uppercase')}
+									required
+									placeholder="e.g. AAPL"
+									bind:value={$formData.symbol}
+								/>
+							{/snippet}
+						</Control>
+						<FieldErrors>
+							{#snippet children({ errors })}
+								<span class="text-destructive text-sm font-medium">
+									{errors[0]}
+								</span>
+							{/snippet}
+						</FieldErrors>
+					</Field>
+
+					<Field
+						{form}
+						name="quantity"
+						class="col-span-6 flex flex-col gap-2 sm:col-span-4"
+					>
+						<Control>
+							{#snippet children({ props })}
+								<FormLabel class={fieldLabelClass}>Quantity *</FormLabel>
+								<Input
+									{...props}
+									type="number"
+									class={filledInputClass}
+									required
+									step="0.000000001"
+									min="0.000000001"
+									placeholder="0"
+									value={$formData.quantity ?? ''}
+									oninput={(e) =>
+										setDecimalField('quantity', e.currentTarget.value)}
+								/>
+							{/snippet}
+						</Control>
+						<FieldErrors>
+							{#snippet children({ errors })}
+								<div class="text-destructive text-sm font-medium">
+									{errors[0]}
+								</div>
+							{/snippet}
+						</FieldErrors>
 					</Field>
 				</div>
-			</div>
+			</section>
 
-			<div class="flex gap-4">
-				<Field {form} name="takeProfit" class="flex-1">
-					<Control>
-						{#snippet children({ props })}
-							<FormLabel>Take Profit</FormLabel>
-							<Input
-								{...props}
-								type="number"
-								step="0.000000001"
-								min="0.000000001"
-								placeholder="0"
-								bind:value={$formData.takeProfit}
-							/>
-						{/snippet}
-					</Control>
-					<FieldErrors>
-						{#snippet children({ errors })}
-							<span class="text-destructive text-sm font-medium">
-								{errors[0]}
-							</span>
-						{/snippet}
-					</FieldErrors>
-				</Field>
+			<section class="flex flex-col gap-6">
+				<div class="flex items-center gap-3">
+					<div class="h-4 w-1 rounded-full bg-[#003d6d]"></div>
+					<span
+						class="text-sm font-bold uppercase tracking-[1.4px] text-[#1a1c1f]"
+					>
+						Entry & Exit
+					</span>
+				</div>
 
-				<Field {form} name="stopLoss" class="flex-1">
-					<Control>
-						{#snippet children({ props })}
-							<FormLabel>Stop Loss</FormLabel>
-							<Input
-								{...props}
-								type="number"
-								step="0.000000001"
-								min="0.000000001"
-								placeholder="0"
-								bind:value={$formData.stopLoss}
-							/>
-						{/snippet}
-					</Control>
-					<FieldErrors>
-						{#snippet children({ errors })}
-							<span class="text-destructive text-sm font-medium">
-								{errors[0]}
-							</span>
-						{/snippet}
-					</FieldErrors>
-				</Field>
-			</div>
-		</section>
+				<div
+					class="rounded-lg border border-[rgba(194,199,207,0.1)] bg-[rgba(243,243,247,0.3)] p-[25px]"
+				>
+					<div class="grid grid-cols-12 gap-6">
+						<div class="col-span-12 flex flex-col gap-4 sm:col-span-6">
+							<Field {form} name="openPrice" class="flex flex-col gap-2">
+								<Control>
+									{#snippet children({ props })}
+										<FormLabel class={cardFieldLabelClass}
+											>Open Price *</FormLabel
+										>
+										<Input
+											{...props}
+											type="number"
+											class={cardInputClass}
+											required
+											step="0.000000001"
+											min="0.000000001"
+											placeholder="0.00"
+											value={$formData.openPrice ?? ''}
+											oninput={(e) =>
+												setDecimalField('openPrice', e.currentTarget.value)}
+										/>
+									{/snippet}
+								</Control>
+								<FieldErrors>
+									{#snippet children({ errors })}
+										<div class="text-destructive text-sm font-medium">
+											{errors[0]}
+										</div>
+									{/snippet}
+								</FieldErrors>
+							</Field>
 
-		<section>
-			<Label class="text-gray-500">Entry & Exit</Label>
-			<div class="flex gap-4 mb-8">
-				<Field {form} name="openPrice" class="flex-grow">
-					<Control>
-						{#snippet children({ props })}
-							<FormLabel>Open Price *</FormLabel>
-							<Input
-								{...props}
-								type="number"
-								required
-								step="0.000000001"
-								min="0.000000001"
-								placeholder="0"
-								value={$formData.openPrice ?? ''}
-								oninput={(e) =>
-									setDecimalField('openPrice', e.currentTarget.value)}
-							/>
-						{/snippet}
-					</Control>
-					<FieldErrors>
-						{#snippet children({ errors })}
-							<div class="text-destructive text-sm font-medium absolute">
-								{errors[0]}
-							</div>
-						{/snippet}
-					</FieldErrors>
-				</Field>
-
-				<Field {form} name="openedAt">
-					<Control>
-						{#snippet children({ props })}
-							<DatePicker
-								{...props}
+							<Field
+								{form}
 								name="openedAt"
-								bind:value={$formData.openedAt}
-								withTime
-								label="Opened at*"
-							/>
-						{/snippet}
-					</Control>
-					<FieldErrors>
-						{#snippet children({ errors })}
-							<span class="text-destructive text-sm font-medium">
-								{errors[0]}
-							</span>
-						{/snippet}
-					</FieldErrors>
-				</Field>
-			</div>
+								class={cn('flex flex-col gap-2', datePickerFieldClass)}
+							>
+								<Control>
+									{#snippet children({ props })}
+										<DatePicker
+											{...props}
+											name="openedAt"
+											bind:value={$formData.openedAt}
+											withTime
+											label="Opened At *"
+										/>
+									{/snippet}
+								</Control>
+								<FieldErrors>
+									{#snippet children({ errors })}
+										<span class="text-destructive text-sm font-medium">
+											{errors[0]}
+										</span>
+									{/snippet}
+								</FieldErrors>
+							</Field>
+						</div>
 
-			<div class="flex gap-4">
-				<Field {form} name="closePrice" class="flex-grow">
-					<Control>
-						{#snippet children({ props })}
-							<FormLabel>Close Price</FormLabel>
-							<Input
-								{...props}
-								type="number"
-								step="0.000000001"
-								min="0.000000001"
-								placeholder="0"
-								bind:value={$formData.closePrice}
-							/>
-						{/snippet}
-					</Control>
-					<FieldErrors>
-						{#snippet children({ errors })}
-							<span class="text-destructive text-sm font-medium">
-								{errors[0]}
-							</span>
-						{/snippet}
-					</FieldErrors>
-				</Field>
+						<div
+							class="col-span-12 flex flex-col gap-4 border-l border-[rgba(194,199,207,0.1)] sm:col-span-6"
+						>
+							<Field {form} name="closePrice" class="flex flex-col gap-2">
+								<Control>
+									{#snippet children({ props })}
+										<FormLabel class={cardFieldLabelClass}
+											>Close Price</FormLabel
+										>
+										<Input
+											{...props}
+											type="number"
+											class={cardInputClass}
+											step="0.000000001"
+											min="0.000000001"
+											placeholder="0.00"
+											bind:value={$formData.closePrice}
+										/>
+									{/snippet}
+								</Control>
+								<FieldErrors>
+									{#snippet children({ errors })}
+										<span class="text-destructive text-sm font-medium">
+											{errors[0]}
+										</span>
+									{/snippet}
+								</FieldErrors>
+							</Field>
 
-				<Field {form} name="closedAt">
-					<Control>
-						{#snippet children({ props })}
-							<DatePicker
-								{...props}
+							<Field
+								{form}
 								name="closedAt"
-								bind:value={$formData.closedAt}
-								withTime
-								label="Closed at"
-							/>
-						{/snippet}
-					</Control>
-					<FieldErrors>
-						{#snippet children({ errors })}
-							<span class="text-destructive text-sm font-medium">
-								{errors[0]}
+								class={cn('flex flex-col gap-2', datePickerFieldClass)}
+							>
+								<Control>
+									{#snippet children({ props })}
+										<DatePicker
+											{...props}
+											name="closedAt"
+											bind:value={$formData.closedAt}
+											withTime
+											label="Closed At"
+										/>
+									{/snippet}
+								</Control>
+								<FieldErrors>
+									{#snippet children({ errors })}
+										<span class="text-destructive text-sm font-medium">
+											{errors[0]}
+										</span>
+									{/snippet}
+								</FieldErrors>
+							</Field>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<section class="flex flex-col gap-6">
+				<div class="flex items-center gap-3">
+					<div class="h-4 w-1 rounded-full bg-[#003d6d]"></div>
+					<span
+						class="text-sm font-bold uppercase tracking-[1.4px] text-[#1a1c1f]"
+					>
+						Risk Management
+					</span>
+				</div>
+
+				<div
+					class="rounded-lg border border-[rgba(194,199,207,0.1)] bg-[rgba(243,243,247,0.3)] p-[25px] flex flex-col gap-6"
+				>
+					<div class="flex flex-col gap-4">
+						<div class="flex items-center justify-between">
+							<div class="flex items-center gap-2">
+								<Field {form} name="useLeverage">
+									<Control>
+										{#snippet children({ props })}
+											<input
+												name="useLeverage"
+												type="checkbox"
+												value={$formData.useLeverage}
+												hidden
+											/>
+											<Checkbox
+												{...props}
+												bind:checked={$formData.useLeverage}
+											/>
+										{/snippet}
+									</Control>
+								</Field>
+								<span class={fieldLabelClass}>Leverage</span>
+							</div>
+							<span
+								class={cn(
+									'rounded-[2px] bg-[#d2e4ff] px-2 py-0.5 text-[10px] font-bold text-[#001c37]',
+									{ 'opacity-50': !$formData.useLeverage },
+								)}
+							>
+								{$formData.leverage}x
 							</span>
-						{/snippet}
-					</FieldErrors>
-				</Field>
-			</div>
-		</section>
-	</form>
-</CommonDialog>
+						</div>
 
-<style>
-	form {
-		display: grid;
-		grid-template-columns: repeat(2, 1fr);
-		grid-template-rows: repeat(2, 200px);
-		column-gap: 8rem;
-	}
+						<Field {form} name="leverage" class="flex flex-col gap-2 px-1">
+							<Control>
+								{#snippet children({ props })}
+									<input name="leverage" value={$formData.leverage} hidden />
+									<Slider
+										type="single"
+										{...props}
+										disabled={!$formData.useLeverage}
+										bind:value={$formData.leverage}
+										min={1}
+										max={50}
+										step={1}
+									/>
+									<div
+										class="flex justify-between text-[10px] font-medium text-[#94a3b8]"
+									>
+										<span>1x</span>
+										<span>25x</span>
+										<span>50x</span>
+									</div>
+								{/snippet}
+							</Control>
+						</Field>
+					</div>
 
-	.leverage-controls {
-		width: 100%;
-		display: flex;
-		align-items: center;
-		gap: 1.5rem;
-		margin-top: 0.5rem;
-	}
-</style>
+					<div class="grid grid-cols-12 gap-6">
+						<Field
+							{form}
+							name="takeProfit"
+							class="col-span-12 flex flex-col gap-2 sm:col-span-6"
+						>
+							<Control>
+								{#snippet children({ props })}
+									<FormLabel class={fieldLabelClass}>Take Profit</FormLabel>
+									<Input
+										{...props}
+										type="number"
+										class={filledInputClass}
+										step="0.000000001"
+										min="0.000000001"
+										placeholder="Enter target price"
+										bind:value={$formData.takeProfit}
+									/>
+								{/snippet}
+							</Control>
+							<FieldErrors>
+								{#snippet children({ errors })}
+									<span class="text-destructive text-sm font-medium">
+										{errors[0]}
+									</span>
+								{/snippet}
+							</FieldErrors>
+						</Field>
+
+						<Field
+							{form}
+							name="stopLoss"
+							class="col-span-12 flex flex-col gap-2 sm:col-span-6"
+						>
+							<Control>
+								{#snippet children({ props })}
+									<FormLabel class={fieldLabelClass}>Stop Loss</FormLabel>
+									<Input
+										{...props}
+										type="number"
+										class={filledInputClass}
+										step="0.000000001"
+										min="0.000000001"
+										placeholder="Enter exit safety"
+										bind:value={$formData.stopLoss}
+									/>
+								{/snippet}
+							</Control>
+							<FieldErrors>
+								{#snippet children({ errors })}
+									<span class="text-destructive text-sm font-medium">
+										{errors[0]}
+									</span>
+								{/snippet}
+							</FieldErrors>
+						</Field>
+					</div>
+				</div>
+			</section>
+		</form>
+
+		<Dialog.Footer class="flex-shrink-0">
+			<Dialog.Close>
+				<Button
+					variant="ghost"
+					type="reset"
+					class="px-6 font-bold text-[#4c6076] hover:bg-transparent"
+					onclick={handleCancel}
+				>
+					Cancel
+				</Button>
+			</Dialog.Close>
+
+			<Button
+				type="submit"
+				class="bg-[#003d6d] hover:bg-[#003d6d]/90 text-white"
+				onclick={handleSubmit}
+			>
+				Submit Position
+			</Button>
+		</Dialog.Footer>
+	</Dialog.Content>
+</Dialog.Root>
