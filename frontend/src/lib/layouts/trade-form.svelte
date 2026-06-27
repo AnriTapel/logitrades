@@ -1,5 +1,8 @@
 <script lang="ts">
+	import { tick } from 'svelte';
 	import * as Dialog from '$lib/components/ui/dialog';
+	import * as Command from '$lib/components/ui/command';
+	import * as Popover from '$lib/components/ui/popover';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import {
 		Field,
@@ -17,17 +20,21 @@
 	import { showServerErrors } from '$lib/stores/error';
 	import type { HttpError } from '$lib/server/http-client/types';
 	import Slider from '$lib/components/ui/slider/slider.svelte';
+	import Check from '@lucide/svelte/icons/check';
+	import ChevronsUpDown from '@lucide/svelte/icons/chevrons-up-down';
 	import TrendingUp from '@lucide/svelte/icons/trending-up';
 	import TrendingDown from '@lucide/svelte/icons/trending-down';
 	import { cn } from '$lib/utils';
 
-	export const {
+	let {
 		data,
+		existingSymbols,
 		isEdit = false,
 		onCancel,
 	}: {
 		data: SuperValidated<TradeFormData>;
 		isEdit?: boolean;
+		existingSymbols: string[];
 		onCancel: () => void;
 	} = $props();
 
@@ -45,9 +52,13 @@
 
 	const { form: formData, enhance } = form;
 
-	const modalTitle = isEdit
-		? `Edit Trade Note #${$formData.id}`
-		: 'Create Trade Note';
+	let symbolOpen = $state(false);
+	let symbolSearch = $state($formData.symbol ?? '');
+	let symbolTriggerRef = $state<HTMLButtonElement | null>(null);
+
+	const modalTitle = $derived(
+		isEdit ? `Edit Trade Note #${$formData.id}` : 'Create Trade Note',
+	);
 
 	const fieldLabelClass =
 		'text-xs font-semibold uppercase tracking-[0.6px] text-[#4c6076]';
@@ -58,6 +69,37 @@
 		'h-10 rounded border border-[rgba(194,199,207,0.2)] bg-white';
 	const datePickerFieldClass =
 		'[&_label]:text-[10px] [&_label]:font-bold [&_label]:uppercase [&_label]:tracking-[1px] [&_label]:text-[#94a3b8] [&_button]:h-10 [&_button]:rounded [&_button]:border [&_button]:border-[rgba(194,199,207,0.2)] [&_button]:bg-white [&_input]:h-10 [&_input]:rounded [&_input]:border [&_input]:border-[rgba(194,199,207,0.2)] [&_input]:bg-white';
+
+	const filteredSymbolOptions = $derived.by(() => {
+		const query = symbolSearch.trim().toUpperCase();
+
+		if (!query) {
+			return existingSymbols;
+		}
+
+		return existingSymbols.filter((symbol) =>
+			symbol.includes(query.toUpperCase()),
+		);
+	});
+	const hasExactSymbolOption = $derived(existingSymbols.includes(symbolSearch));
+
+	const setSymbolValue = (value: string): void => {
+		const normalizedValue = value.trim().toUpperCase();
+		symbolSearch = normalizedValue;
+		$formData.symbol = normalizedValue;
+	};
+
+	const closeSymbolCombobox = (): void => {
+		symbolOpen = false;
+		tick().then(() => {
+			symbolTriggerRef?.focus();
+		});
+	};
+
+	const selectSymbol = (value: string): void => {
+		setSymbolValue(value);
+		closeSymbolCombobox();
+	};
 
 	const handleSubmit = async (): Promise<void> => {
 		const validatedForm = await form.validateForm();
@@ -160,13 +202,85 @@
 						<Control>
 							{#snippet children({ props })}
 								<FormLabel class={fieldLabelClass}>Symbol *</FormLabel>
-								<Input
-									{...props}
-									class={cn(filledInputClass, 'uppercase')}
-									required
-									placeholder="e.g. AAPL"
-									bind:value={$formData.symbol}
+								<input
+									type="hidden"
+									name={props.name}
+									value={$formData.symbol}
 								/>
+								<Popover.Root bind:open={symbolOpen}>
+									<Popover.Trigger bind:ref={symbolTriggerRef}>
+										{#snippet child({ props: triggerProps })}
+											<Button
+												{...triggerProps}
+												id={props.id}
+												variant="outline"
+												class={cn(
+													filledInputClass,
+													'w-full justify-between px-3 text-left font-normal uppercase hover:bg-[#f3f3f7]',
+													!$formData.symbol && 'text-muted-foreground',
+												)}
+												role="combobox"
+												aria-expanded={symbolOpen}
+												aria-invalid={props['aria-invalid']}
+												aria-describedby={props['aria-describedby']}
+											>
+												<span class="truncate">
+													{$formData.symbol || 'e.g. AAPL'}
+												</span>
+												<ChevronsUpDown
+													class="ml-2 size-4 shrink-0 opacity-50"
+												/>
+											</Button>
+										{/snippet}
+									</Popover.Trigger>
+									<Popover.Content class="w-[240px] p-0" align="start">
+										<Command.Root>
+											<Command.Input
+												class="h-9"
+												placeholder="Search or enter symbol..."
+												bind:value={symbolSearch}
+												oninput={() => setSymbolValue(symbolSearch)}
+												onkeydown={(event) => {
+													if (event.key === 'Enter' && symbolSearch) {
+														event.preventDefault();
+														selectSymbol(symbolSearch.trim().toUpperCase());
+													}
+												}}
+											/>
+											<Command.List class="max-h-[220px] overflow-y-auto">
+												{#if filteredSymbolOptions.length === 0 && !symbolSearch}
+													<Command.Empty>No symbols found.</Command.Empty>
+												{/if}
+												<Command.Group>
+													{#if symbolSearch && !hasExactSymbolOption}
+														<Command.Item
+															value={symbolSearch}
+															onSelect={() => selectSymbol(symbolSearch)}
+														>
+															Use "{symbolSearch}"
+														</Command.Item>
+													{/if}
+													{#each filteredSymbolOptions as symbol (symbol)}
+														<Command.Item
+															value={symbol}
+															onSelect={() => selectSymbol(symbol)}
+														>
+															<span>{symbol}</span>
+															<Check
+																class={cn(
+																	'ml-auto size-4 shrink-0',
+																	$formData.symbol === symbol
+																		? 'opacity-100'
+																		: 'opacity-0',
+																)}
+															/>
+														</Command.Item>
+													{/each}
+												</Command.Group>
+											</Command.List>
+										</Command.Root>
+									</Popover.Content>
+								</Popover.Root>
 							{/snippet}
 						</Control>
 						<FieldErrors>

@@ -19,6 +19,14 @@
 		}
 	});
 
+	const existingSymbols = $derived.by(() => {
+		const uniqueSymbols = new Set<string>();
+		data.trades.forEach((trade) => {
+			uniqueSymbols.add(trade.symbol.toUpperCase());
+		});
+		return Array.from(uniqueSymbols);
+	});
+
 	async function handleTradeDelete(tradeId: number) {
 		const formData = new FormData();
 		formData.append('tradeId', tradeId.toString());
@@ -56,7 +64,10 @@
 </script>
 
 <svelte:head>
-	<title>LogiTrades - Trading Journal & Analytics Platform | Track & Analyze Your Trades</title>
+	<title
+		>LogiTrades - Trading Journal & Analytics Platform | Track & Analyze Your
+		Trades</title
+	>
 </svelte:head>
 
 <StatsSummary />
@@ -75,5 +86,10 @@
 {/if}
 
 {#if isTradeFormOpen}
-	<TradeForm data={data.form} onCancel={handleCloseTradeForm} isEdit={data.isEditMode} />
+	<TradeForm
+		data={data.form}
+		onCancel={handleCloseTradeForm}
+		{existingSymbols}
+		isEdit={data.isEditMode}
+	/>
 {/if}
