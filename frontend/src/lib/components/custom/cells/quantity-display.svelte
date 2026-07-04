@@ -3,4 +3,7 @@
 		$props();
 </script>
 
-<span>{quantity} {leverage ? `(x${leverage})` : ''}</span>
+<div class="text-sm font-medium w-[100px]">
+	{quantity}
+	{leverage ? `(x${leverage})` : ''}
+</div>

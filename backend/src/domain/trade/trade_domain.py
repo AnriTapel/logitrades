@@ -23,6 +23,7 @@ class TradeDomain:
             closed_at: datetime | None = None,
             id: int | None = None,
             created_at: datetime | None = None,
+            comment: str | None = None,
     ):
         self.symbol = symbol
         self.type = type
@@ -36,6 +37,7 @@ class TradeDomain:
         self.closed_at = closed_at
         self.id = id
         self.created_at = created_at
+        self.comment = comment
 
         validate_stop_loss(self)
         validate_take_profit(self)
@@ -56,4 +58,5 @@ class TradeDomain:
             'leverage': self.leverage,
             'close_price': self.close_price,
             'closed_at': to_utc_iso_string(self.closed_at) if self.closed_at else None,
+            'comment': self.comment,
         }

@@ -12,6 +12,7 @@ import PnLDisplay from '$lib/components/custom/cells/pnl-display.svelte';
 import DataTableActions from './trades-table-actions.svelte';
 import LeverageDisplay from '$lib/components/custom/cells/leverage-display.svelte';
 import QuantityDisplay from '$lib/components/custom/cells/quantity-display.svelte';
+import CommentDisplay from '$lib/components/custom/cells/comment-display.svelte';
 
 export function createColumns(
 	onEdit: (id: number) => void,
@@ -95,7 +96,8 @@ export function createColumns(
 				>((getPrice) => {
 					const { price, currency: curr } = getPrice();
 					return {
-						render: () => `<span>${formatIntToCurrency(price, curr, 6)}</span>`,
+						render: () =>
+							`<div class="w-[100px]">${formatIntToCurrency(price, curr, 6)}</div>`,
 					};
 				});
 				return renderSnippet(priceSnippet, {
@@ -197,6 +199,18 @@ export function createColumns(
 				}),
 			enableSorting: true,
 			sortingFn: 'basic',
+		},
+
+		// Comment column
+		{
+			accessorKey: 'comment',
+			header: 'Comment',
+			cell: ({ row }) => {
+				return renderComponent(CommentDisplay, {
+					comment: row.original.comment,
+				});
+			},
+			enableSorting: false,
 		},
 
 		// Actions column

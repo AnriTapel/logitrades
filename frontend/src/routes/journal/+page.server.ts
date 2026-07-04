@@ -3,7 +3,6 @@ import { superValidate } from 'sveltekit-superforms';
 import {
 	createTradeFormDefaults,
 	formSchema,
-	type TradeFormData,
 	type TradeFormInput,
 } from '$lib/schemas/tradeSchemas';
 import { fail, redirect } from '@sveltejs/kit';

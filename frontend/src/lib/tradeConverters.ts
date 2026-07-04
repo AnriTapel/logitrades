@@ -17,6 +17,7 @@ export const convertApiTradeToUiTrade = (trade: any): Trade => {
 		closePrice: trade.close_price ?? undefined,
 		closedAt: trade.closed_at ? toUtcIso(trade.closed_at) : undefined,
 		createdAt: toUtcIso(trade.created_at),
+		comment: trade.comment ?? undefined,
 	};
 };
 

@@ -25,6 +25,7 @@
 	import TrendingUp from '@lucide/svelte/icons/trending-up';
 	import TrendingDown from '@lucide/svelte/icons/trending-down';
 	import { cn } from '$lib/utils';
+	import { Textarea } from '$lib/components/ui/textarea';
 
 	let {
 		data,
@@ -311,6 +312,28 @@
 									value={$formData.quantity ?? ''}
 									oninput={(e) =>
 										setDecimalField('quantity', e.currentTarget.value)}
+								/>
+							{/snippet}
+						</Control>
+						<FieldErrors>
+							{#snippet children({ errors })}
+								<div class="text-destructive text-sm font-medium">
+									{errors[0]}
+								</div>
+							{/snippet}
+						</FieldErrors>
+					</Field>
+
+					<Field {form} name="comment" class="col-span-12 flex flex-col gap-2">
+						<Control>
+							{#snippet children({ props })}
+								<FormLabel class={fieldLabelClass}>Comment</FormLabel>
+								<Textarea
+									{...props}
+									class={filledInputClass + " max-h-30"}
+									rows={3}
+									placeholder="Enter a comment for this trade"
+									bind:value={$formData.comment}
 								/>
 							{/snippet}
 						</Control>

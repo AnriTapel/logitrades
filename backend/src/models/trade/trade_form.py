@@ -18,6 +18,7 @@ class TradeForm(BaseModel):
     closedAt: Optional[datetime] = Field(None, json_schema_extra={"example": "2023-10-05T15:30:00Z"})
     id: Optional[int] = Field(None, json_schema_extra={"example": 1})
     createdAt: Optional[datetime] = Field(None, json_schema_extra={"example": "2023-10-01T10:00:00Z"})
+    comment: Optional[str] = Field(None, json_schema_extra={"example": "This is a comment"})
 
     def to_trade(self) -> "TradeDomain":
         return TradeDomain(
@@ -32,5 +33,6 @@ class TradeForm(BaseModel):
             leverage=self.useLeverage and self.leverage or None,
             close_price=self.closePrice,
             closed_at=self.closedAt,
-            created_at=self.createdAt
+            created_at=self.createdAt,
+            comment=self.comment
         )

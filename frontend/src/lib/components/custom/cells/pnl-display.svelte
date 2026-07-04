@@ -11,7 +11,7 @@
 	const pnlPercent = $derived(calcPnlPercentage(trade));
 </script>
 
-<div class="w-[100px] flex flex-col gap-1 items-end">
+<div class="w-[100px] flex flex-col gap-1 items-start">
 	{#if pnlAbsolute && pnlPercent}
 		<span class="font-medium {getFinancialColor(pnlAbsolute, 0)}">
 			{pnlAbsolute >= 0 ? '+' : ''}{formatIntToCurrency(

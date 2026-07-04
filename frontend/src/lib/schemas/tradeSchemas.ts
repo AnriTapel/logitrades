@@ -69,6 +69,14 @@ export const formSchema = z.object({
 		.nonempty({
 			message: 'Symbol is required',
 		}),
+	comment: z
+		.string()
+		.max(255, { message: 'Comment must be less than 255 characters' })
+		.regex(/^[A-Za-z0-9\s.'",!?-_]*$/, {
+			message:
+				'Comment can contain only letters, numbers, spaces, and punctuation',
+		})
+		.optional(),
 	tradeType: z.enum(['buy', 'sell'], {
 		required_error: 'Side is required',
 		invalid_type_error: 'Side must be either buy or sell',

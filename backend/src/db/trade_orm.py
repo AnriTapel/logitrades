@@ -20,6 +20,7 @@ class TradeORM(Base):
     close_price = Column(Float, nullable=True)
     closed_at = Column(String, nullable=True)
     created_at = Column(String, default=get_current_time)
+    comment = Column(String, nullable=True)
 
     def to_domain(self) -> "TradeDomain":
         return TradeDomain(
@@ -35,4 +36,5 @@ class TradeORM(Base):
             leverage=self.leverage,
             close_price=self.close_price,
             closed_at=datetime.fromisoformat(self.closed_at.replace('Z', '+00:00')) if self.closed_at else None,
+            comment=self.comment,
         )
