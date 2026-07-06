@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, Float, String
+from sqlalchemy import Column, Integer, Float, String, JSON
 
 from .base import Base
 from ..domain import TradeDomain
@@ -21,6 +21,7 @@ class TradeORM(Base):
     closed_at = Column(String, nullable=True)
     created_at = Column(String, default=get_current_time)
     comment = Column(String, nullable=True)
+    tags = Column(JSON, nullable=True)
 
     def to_domain(self) -> "TradeDomain":
         return TradeDomain(
@@ -37,4 +38,5 @@ class TradeORM(Base):
             close_price=self.close_price,
             closed_at=datetime.fromisoformat(self.closed_at.replace('Z', '+00:00')) if self.closed_at else None,
             comment=self.comment,
+            tags=self.tags,
         )

@@ -56,6 +56,23 @@ const optionalUtcIsoDateTimeSchema = z.preprocess(
 		.optional(),
 );
 
+export const MAX_TRADE_TAGS = 3;
+
+export const tagSchema = z
+	.string()
+	.trim()
+	.min(1)
+	.max(16, { message: 'Each tag must be at most 16 characters' })
+	.regex(/^[A-Za-z0-9_-]+$/, {
+		message: 'Tags can contain only letters, numbers, - and _',
+	});
+
+export const tagsSchema = z
+	.array(tagSchema)
+	.max(MAX_TRADE_TAGS, {
+		message: `Maximum ${MAX_TRADE_TAGS} tags per trade`,
+	});
+
 export const formSchema = z.object({
 	id: z.number().optional(),
 	createdAt: optionalUtcIsoDateTimeSchema,
@@ -77,6 +94,7 @@ export const formSchema = z.object({
 				'Comment can contain only letters, numbers, spaces, and punctuation',
 		})
 		.optional(),
+	tags: tagsSchema.optional(),
 	tradeType: z.enum(['buy', 'sell'], {
 		required_error: 'Side is required',
 		invalid_type_error: 'Side must be either buy or sell',

@@ -18,6 +18,7 @@ export const convertApiTradeToUiTrade = (trade: any): Trade => {
 		closedAt: trade.closed_at ? toUtcIso(trade.closed_at) : undefined,
 		createdAt: toUtcIso(trade.created_at),
 		comment: trade.comment ?? undefined,
+		tags: trade.tags?.length ? trade.tags : undefined,
 	};
 };
 
@@ -29,6 +30,7 @@ export const convertUiTradeToTradeFormInput = (
 		leverage: trade.leverage || 1,
 		useLeverage: Boolean(trade.leverage) && trade.leverage !== 1,
 		closePrice: trade.closePrice,
+		tags: trade.tags?.length ? trade.tags : undefined,
 	};
 };
 
@@ -38,5 +40,6 @@ export const normalizeTradeFormInputForApi = (
 	return {
 		...trade,
 		symbol: trade.symbol.toUpperCase(),
+		tags: trade.tags?.length ? trade.tags : undefined,
 	};
 };

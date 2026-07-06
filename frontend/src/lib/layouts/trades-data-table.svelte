@@ -15,6 +15,7 @@
 	import type { Writable } from 'svelte/store';
 	import ArrowUpDown from 'lucide-svelte/icons/arrow-up-down';
 	import { Button } from '$lib/components/ui/button';
+	import { TagsFilterPopover } from '$lib/components/custom';
 
 	const {
 		trades,
@@ -43,6 +44,17 @@
 	// Filter input values
 	let symbolFilter = $state('');
 	let typeFilter = $state<string>('');
+	let selectedTags = $state<string[]>([]);
+
+	const allTags = $derived(
+		[...new Set($trades.flatMap((t) => t.tags ?? []))].sort((a, b) =>
+			a.localeCompare(b),
+		),
+	);
+
+	const hasActiveFilters = $derived(
+		Boolean(symbolFilter || typeFilter || selectedTags.length),
+	);
 
 	// Update column filters when inputs change
 	$effect(() => {
@@ -53,12 +65,21 @@
 		if (typeFilter) {
 			filters.push({ id: 'tradeType', value: typeFilter });
 		}
+		if (selectedTags.length) {
+			filters.push({ id: 'tags', value: selectedTags });
+		}
 		columnFilters = filters;
 	});
 
+	function resetFilters() {
+		symbolFilter = '';
+		typeFilter = '';
+		selectedTags = [];
+	}
+
 	// Create columns with callbacks (derived so they react to currency changes)
 	const columns = $derived(
-		createColumns(onEdit, onDelete, $localeStore.currency)
+		createColumns(onEdit, onDelete, $localeStore.currency),
 	);
 
 	// Create table instance
@@ -97,8 +118,8 @@
 
 <div class="w-full space-y-3 md:space-y-4">
 	<!-- Filter controls -->
-	<div class="flex flex-row flex-wrap gap-2 items-center">
-		<div class="flex-1 min-w-[140px] max-w-xs">
+	<div class="flex flex-row flex-wrap gap-8 items-center">
+		<div class="w-42 shrink-0">
 			<Input
 				type="text"
 				placeholder="Filter by symbol..."
@@ -107,7 +128,9 @@
 			/>
 		</div>
 
-		<div class="flex gap-2 flex-wrap">
+		<div class="flex gap-2 items-center">
+			<span class="text-sm font-medium tracking-tight">Side:</span>
+
 			<Button
 				variant={typeFilter === '' ? 'default' : 'outline'}
 				size="sm"
@@ -128,6 +151,19 @@
 				onclick={() => (typeFilter = 'sell')}
 			>
 				Short
+			</Button>
+		</div>
+
+		<div class="flex items-center">
+			<TagsFilterPopover availableTags={allTags} bind:selectedTags />
+
+			<Button
+				variant="ghost"
+				size="sm"
+				disabled={!hasActiveFilters}
+				onclick={resetFilters}
+			>
+				Reset
 			</Button>
 		</div>
 	</div>

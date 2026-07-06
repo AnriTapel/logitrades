@@ -4,6 +4,7 @@ export { default as StatusBadge } from './status-badge.svelte';
 export { default as SymbolStatsTable } from './symbol-stats-table.svelte';
 export { default as TradeTypeStats } from './trade-type-stats.svelte';
 export { default as EmptyState } from './empty-state.svelte';
+export { default as TagsFilterPopover } from './tags-filter-popover.svelte';
 
 export { default as TradeTypeCell } from './cells/trade-type-cell.svelte';
 export { default as PnLDisplay } from './cells/pnl-display.svelte';

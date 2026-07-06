@@ -36,3 +36,17 @@ def valid_row() -> dict[str, str]:
         "Created At": "",
     }
 
+
+@pytest.fixture
+def valid_trade_form() -> dict:
+    """Payload matching frontend normalizeTradeFormInputForApi() output."""
+    return {
+        "symbol": "BTCUSDT",
+        "tradeType": "buy",
+        "openPrice": 100.0,
+        "quantity": 10.0,
+        "openedAt": "2025-01-01T10:00:00Z",
+        "useLeverage": False,
+        "leverage": 1,
+    }
+

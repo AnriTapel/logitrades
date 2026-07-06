@@ -1,8 +1,14 @@
-from pydantic import BaseModel, Field
+import re
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional
 from datetime import datetime
 
 from ...domain import TradeType, TradeDomain
+
+TAG_PATTERN = re.compile(r'^[A-Za-z0-9_-]+$')
+MAX_TAGS = 3
+MAX_TAG_LENGTH = 16
+
 
 class TradeForm(BaseModel):
     symbol: str = Field(..., min_length=1, max_length=16, json_schema_extra={"example": "AAPL"})
@@ -19,6 +25,35 @@ class TradeForm(BaseModel):
     id: Optional[int] = Field(None, json_schema_extra={"example": 1})
     createdAt: Optional[datetime] = Field(None, json_schema_extra={"example": "2023-10-01T10:00:00Z"})
     comment: Optional[str] = Field(None, json_schema_extra={"example": "This is a comment"})
+    tags: Optional[list[str]] = Field(None, json_schema_extra={"example": ["breakout"]})
+
+    @field_validator('tags')
+    @classmethod
+    def validate_tags(cls, tags: list[str] | None) -> list[str] | None:
+        if tags is None or len(tags) == 0:
+            return None
+
+        if len(tags) > MAX_TAGS:
+            raise ValueError(f'Maximum {MAX_TAGS} tags per trade')
+
+        normalized: list[str] = []
+        seen_lower: set[str] = set()
+
+        for tag in tags:
+            trimmed = tag.strip()
+            if not trimmed:
+                continue
+            if len(trimmed) > MAX_TAG_LENGTH:
+                raise ValueError(f'Each tag must be at most {MAX_TAG_LENGTH} characters')
+            if not TAG_PATTERN.match(trimmed):
+                raise ValueError('Tags can contain only letters, numbers, - and _')
+            lower = trimmed.lower()
+            if lower in seen_lower:
+                continue
+            seen_lower.add(lower)
+            normalized.append(trimmed)
+
+        return normalized or None
 
     def to_trade(self) -> "TradeDomain":
         return TradeDomain(
@@ -34,5 +69,6 @@ class TradeForm(BaseModel):
             close_price=self.closePrice,
             closed_at=self.closedAt,
             created_at=self.createdAt,
-            comment=self.comment
+            comment=self.comment,
+            tags=self.tags,
         )

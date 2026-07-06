@@ -13,6 +13,7 @@ import DataTableActions from './trades-table-actions.svelte';
 import LeverageDisplay from '$lib/components/custom/cells/leverage-display.svelte';
 import QuantityDisplay from '$lib/components/custom/cells/quantity-display.svelte';
 import CommentDisplay from '$lib/components/custom/cells/comment-display.svelte';
+import TagsDisplay from '$lib/components/custom/cells/tags-display.svelte';
 
 export function createColumns(
 	onEdit: (id: number) => void,
@@ -199,6 +200,25 @@ export function createColumns(
 				}),
 			enableSorting: true,
 			sortingFn: 'basic',
+		},
+
+		// Tags column
+		{
+			accessorFn: (row) => row.tags,
+			id: 'tags',
+			header: 'Tags',
+			cell: ({ row }) =>
+				renderComponent(TagsDisplay, {
+					tags: row.original.tags,
+				}),
+			enableSorting: false,
+			enableColumnFilter: true,
+			filterFn: (row, _columnId, filterValue: string[]) => {
+				if (!filterValue?.length) return true;
+				const rowTags = row.original.tags;
+				if (!rowTags?.length) return false;
+				return filterValue.some((tag) => rowTags.includes(tag));
+			},
 		},
 
 		// Comment column

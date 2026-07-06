@@ -27,6 +27,14 @@
 		return Array.from(uniqueSymbols);
 	});
 
+	const existingTags = $derived.by(() => {
+		const uniqueTags = new Set<string>();
+		data.trades.forEach((trade) => {
+			trade.tags?.forEach((tag) => uniqueTags.add(tag));
+		});
+		return Array.from(uniqueTags).sort((a, b) => a.localeCompare(b));
+	});
+
 	async function handleTradeDelete(tradeId: number) {
 		const formData = new FormData();
 		formData.append('tradeId', tradeId.toString());
@@ -90,6 +98,7 @@
 		data={data.form}
 		onCancel={handleCloseTradeForm}
 		{existingSymbols}
+		{existingTags}
 		isEdit={data.isEditMode}
 	/>
 {/if}

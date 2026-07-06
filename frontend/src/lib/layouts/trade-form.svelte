@@ -10,7 +10,13 @@
 		Label as FormLabel,
 		FieldErrors,
 	} from '$lib/components/ui/form';
-	import { formSchema, type TradeFormData } from '$lib/schemas/tradeSchemas';
+	import {
+		formSchema,
+		type TradeFormData,
+		tagSchema,
+		tagsSchema,
+		MAX_TRADE_TAGS,
+	} from '$lib/schemas/tradeSchemas';
 	import { type SuperValidated, superForm } from 'sveltekit-superforms';
 	import { zodClient } from 'sveltekit-superforms/adapters';
 	import { Input } from '$lib/components/ui/input';
@@ -26,16 +32,20 @@
 	import TrendingDown from '@lucide/svelte/icons/trending-down';
 	import { cn } from '$lib/utils';
 	import { Textarea } from '$lib/components/ui/textarea';
+	import { Badge } from '$lib/components/ui/badge';
+	import X from '@lucide/svelte/icons/x';
 
 	let {
 		data,
 		existingSymbols,
+		existingTags,
 		isEdit = false,
 		onCancel,
 	}: {
 		data: SuperValidated<TradeFormData>;
 		isEdit?: boolean;
 		existingSymbols: string[];
+		existingTags: string[];
 		onCancel: () => void;
 	} = $props();
 
@@ -100,6 +110,84 @@
 	const selectSymbol = (value: string): void => {
 		setSymbolValue(value);
 		closeSymbolCombobox();
+	};
+
+	let tagOpen = $state(false);
+	let tagSearch = $state('');
+	let tagTriggerRef = $state<HTMLButtonElement | null>(null);
+
+	const tradeTags = $derived($formData.tags ?? []);
+
+	const filteredTagOptions = $derived.by(() => {
+		const query = tagSearch.trim().toLowerCase();
+		const available = existingTags.filter(
+			(tag) => !tradeTags.some((t) => t.toLowerCase() === tag.toLowerCase()),
+		);
+
+		if (!query) {
+			return available;
+		}
+
+		return available.filter((tag) => tag.toLowerCase().includes(query));
+	});
+
+	const hasExactTagOption = $derived(
+		existingTags.some(
+			(tag) => tag.toLowerCase() === tagSearch.trim().toLowerCase(),
+		),
+	);
+
+	const canAddMoreTags = $derived(tradeTags.length < MAX_TRADE_TAGS);
+
+	let tagInputError = $state<string | null>(null);
+
+	const hasTag = (value: string): boolean =>
+		tradeTags.some((tag) => tag.toLowerCase() === value.toLowerCase());
+
+	const addTag = (value: string): boolean => {
+		tagInputError = null;
+		const normalizedValue = value.trim();
+
+		if (!normalizedValue || hasTag(normalizedValue)) {
+			return false;
+		}
+
+		const parsedTag = tagSchema.safeParse(normalizedValue);
+
+		if (!parsedTag.success) {
+			tagInputError = parsedTag.error.issues[0]?.message ?? 'Invalid tag';
+			return false;
+		}
+
+		const parsedTags = tagsSchema.safeParse([...tradeTags, parsedTag.data]);
+		if (!parsedTags.success) {
+			tagInputError = parsedTags.error.issues[0]?.message ?? 'Invalid tags';
+			return false;
+		}
+
+		$formData.tags = parsedTags.data;
+		tagSearch = '';
+		return true;
+	};
+
+	const removeTag = (index: number): void => {
+		const next = tradeTags.filter((_, i) => i !== index);
+		$formData.tags = next.length > 0 ? next : undefined;
+		tagInputError = null;
+	};
+
+	const closeTagCombobox = (): void => {
+		tagOpen = false;
+		tagInputError = null;
+		tick().then(() => {
+			tagTriggerRef?.focus();
+		});
+	};
+
+	const selectTag = (value: string): void => {
+		if (addTag(value)) {
+			closeTagCombobox();
+		}
 	};
 
 	const handleSubmit = async (): Promise<void> => {
@@ -324,13 +412,134 @@
 						</FieldErrors>
 					</Field>
 
+					<Field {form} name="tags" class="col-span-12 flex flex-col gap-2">
+						<Control>
+							{#snippet children({ props })}
+								<FormLabel class={fieldLabelClass}>Tags</FormLabel>
+								{#each tradeTags as tag}
+									<input type="hidden" name="tags" value={tag} />
+								{/each}
+								<div class="grid grid-cols-12 gap-4">
+									<div class="col-span-12 sm:col-span-4">
+										<Popover.Root bind:open={tagOpen}>
+											<Popover.Trigger bind:ref={tagTriggerRef}>
+												{#snippet child({ props: triggerProps })}
+													<Button
+														{...triggerProps}
+														id={props.id}
+														variant="outline"
+														disabled={!canAddMoreTags}
+														class={cn(
+															filledInputClass,
+															'w-full justify-between px-3 text-left font-normal hover:bg-[#f3f3f7]',
+															!canAddMoreTags && 'opacity-50',
+														)}
+														role="combobox"
+														aria-expanded={tagOpen}
+													>
+														<span class="truncate text-muted-foreground">
+															{canAddMoreTags
+																? 'Add tag...'
+																: 'Max tags reached'}
+														</span>
+														<ChevronsUpDown
+															class="ml-2 size-4 shrink-0 opacity-50"
+														/>
+													</Button>
+												{/snippet}
+											</Popover.Trigger>
+											<Popover.Content
+												class="w-[240px] p-0"
+												align="start"
+												onCloseAutoFocus={(e) => e.preventDefault()}
+											>
+												<Command.Root shouldFilter={false}>
+													<Command.Input
+														class="h-9"
+														placeholder="Search or enter tag..."
+														bind:value={tagSearch}
+														onkeydown={(event) => {
+															if (event.key === 'Enter' && tagSearch.trim()) {
+																event.preventDefault();
+																event.stopPropagation();
+																selectTag(tagSearch);
+															}
+														}}
+													/>
+													<Command.List class="max-h-[220px] overflow-y-auto">
+														{#if filteredTagOptions.length === 0 && !tagSearch.trim()}
+															<Command.Empty>No tags found.</Command.Empty>
+														{/if}
+														<Command.Group>
+															{#if tagSearch.trim() && !hasExactTagOption && !hasTag(tagSearch.trim())}
+																{@const pendingTag = tagSearch.trim()}
+																<Command.Item
+																	value={pendingTag}
+																	onSelect={() => selectTag(pendingTag)}
+																	onpointerdown={(e) => e.preventDefault()}
+																>
+																	Use "{pendingTag}"
+																</Command.Item>
+															{/if}
+															{#each filteredTagOptions as tag (tag)}
+																<Command.Item
+																	value={tag}
+																	onSelect={() => selectTag(tag)}
+																	onpointerdown={(e) => e.preventDefault()}
+																>
+																	<span>{tag}</span>
+																</Command.Item>
+															{/each}
+														</Command.Group>
+													</Command.List>
+												</Command.Root>
+											</Popover.Content>
+										</Popover.Root>
+									</div>
+									<div
+										class="col-span-12 sm:col-span-8 flex flex-wrap items-center gap-2 min-h-11"
+									>
+										{#each tradeTags as tag, index (tag)}
+											<Badge variant="outline" class="gap-1 pr-1">
+												{tag}
+												<button
+													type="button"
+													class="rounded-sm p-0.5 hover:bg-muted"
+													aria-label="Remove tag {tag}"
+													onclick={() => removeTag(index)}
+												>
+													<X class="size-3" />
+												</button>
+											</Badge>
+										{/each}
+										{#if tradeTags.length === 0}
+											<span class="text-sm text-muted-foreground">-</span>
+										{/if}
+									</div>
+								</div>
+								{#if tagInputError}
+									<p class="text-destructive text-sm font-medium">
+										{tagInputError}
+									</p>
+								{/if}
+							{/snippet}
+						</Control>
+						<FieldErrors>
+							{#snippet children({ errors })}
+								<div class="text-destructive text-sm font-medium">
+									{errors[0]}
+								</div>
+							{/snippet}
+						</FieldErrors>
+					</Field>
+
 					<Field {form} name="comment" class="col-span-12 flex flex-col gap-2">
 						<Control>
 							{#snippet children({ props })}
 								<FormLabel class={fieldLabelClass}>Comment</FormLabel>
 								<Textarea
 									{...props}
-									class={filledInputClass + " max-h-30"}
+									class={filledInputClass + ' max-h-30'}
 									rows={3}
 									placeholder="Enter a comment for this trade"
 									bind:value={$formData.comment}

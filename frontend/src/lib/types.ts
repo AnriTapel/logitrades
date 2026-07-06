@@ -15,6 +15,7 @@ export interface Trade {
 	closedAt?: UtcIsoDateTime;
 	createdAt: UtcIsoDateTime;
 	comment?: string;
+	tags?: string[];
 }
 
 // Charts types/interfaces

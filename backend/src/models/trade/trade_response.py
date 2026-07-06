@@ -17,6 +17,7 @@ class TradeResponse(BaseModel):
     close_price: Optional[float]
     closed_at: Optional[datetime]
     comment: Optional[str]
+    tags: Optional[list[str]] = None
 
     class Config:
         from_attributes = True  # чтобы можно было конвертить из ORM/объектов
