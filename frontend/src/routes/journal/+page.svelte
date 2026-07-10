@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { invalidateAll, goto } from '$app/navigation';
+	import { invalidate, goto } from '$app/navigation';
 	import type { PageData } from './$types';
 	import TradeForm from '$lib/layouts/trade-form.svelte';
 	import ImportDialog from '$lib/layouts/import-dialog.svelte';
@@ -19,21 +19,11 @@
 		}
 	});
 
-	const existingSymbols = $derived.by(() => {
-		const uniqueSymbols = new Set<string>();
-		data.trades.forEach((trade) => {
-			uniqueSymbols.add(trade.symbol.toUpperCase());
-		});
-		return Array.from(uniqueSymbols);
-	});
-
-	const existingTags = $derived.by(() => {
-		const uniqueTags = new Set<string>();
-		data.trades.forEach((trade) => {
-			trade.tags?.forEach((tag) => uniqueTags.add(tag));
-		});
-		return Array.from(uniqueTags).sort((a, b) => a.localeCompare(b));
-	});
+	async function refreshJournalData(): Promise<void> {
+		await invalidate('journal:trades');
+		await invalidate('journal:facets');
+		await invalidate('journal:summary');
+	}
 
 	async function handleTradeDelete(tradeId: number) {
 		const formData = new FormData();
@@ -44,7 +34,7 @@
 			body: formData,
 		});
 
-		await invalidateAll();
+		await refreshJournalData();
 	}
 
 	async function handleTradeEdit(tradeId: number) {
@@ -66,8 +56,11 @@
 		isImportDialogOpen = true;
 	}
 
-	function handleCloseImportDialog() {
+	async function handleCloseImportDialog() {
 		isImportDialogOpen = false;
+		await refreshJournalData();
+		await invalidate('dashboard:trades');
+		await invalidate('dashboard:facets');
 	}
 </script>
 
@@ -78,16 +71,25 @@
 	>
 </svelte:head>
 
-<StatsSummary />
+<StatsSummary summary={data.summary} />
 
 <OpenedTrades
+	initialTrades={data.openedTrades.items}
+	initialTotal={data.openedTrades.total}
+	facets={data.facets}
 	{handleTradeDelete}
 	{handleTradeEdit}
 	{handleOpenTradeForm}
 	{handleOpenImportDialog}
 />
 
-<ClosedTrades {handleTradeDelete} {handleTradeEdit} />
+<ClosedTrades
+	initialTrades={data.closedTrades.items}
+	initialTotal={data.closedTrades.total}
+	facets={data.facets}
+	{handleTradeDelete}
+	{handleTradeEdit}
+/>
 
 {#if isImportDialogOpen}
 	<ImportDialog onCancel={handleCloseImportDialog} />
@@ -97,8 +99,8 @@
 	<TradeForm
 		data={data.form}
 		onCancel={handleCloseTradeForm}
-		{existingSymbols}
-		{existingTags}
+		existingSymbols={data.facets.symbols}
+		existingTags={data.facets.tags}
 		isEdit={data.isEditMode}
 	/>
 {/if}

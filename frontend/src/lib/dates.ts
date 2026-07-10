@@ -29,3 +29,13 @@ export function formatTradeDateLocal(iso: UtcIsoDateTime): string {
 export function compareUtcIso(a: UtcIsoDateTime, b: UtcIsoDateTime): number {
 	return a.localeCompare(b);
 }
+
+/** YYYY-MM-DD → UTC start of day ISO string. */
+export function toUtcStartOfDay(dateStr: string): UtcIsoDateTime {
+	return `${dateStr}T00:00:00.000Z`;
+}
+
+/** YYYY-MM-DD → UTC end of day ISO string. */
+export function toUtcEndOfDay(dateStr: string): UtcIsoDateTime {
+	return `${dateStr}T23:59:59.999Z`;
+}

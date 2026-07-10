@@ -1,9 +1,14 @@
 import { toUtcIso } from '$lib/dates';
 import type { TradeFormInput } from './schemas/tradeSchemas';
-import type { Trade } from './types';
+import type {
+	ApiTrade,
+	ApiTradeListResponse,
+	Trade,
+	TradeListResult,
+} from './types';
 
 // TODO: resolve any type
-export const convertApiTradeToUiTrade = (trade: any): Trade => {
+export const convertApiTradeToUiTrade = (trade: ApiTrade): Trade => {
 	return {
 		id: trade.id,
 		symbol: trade.symbol,
@@ -43,3 +48,12 @@ export const normalizeTradeFormInputForApi = (
 		tags: trade.tags?.length ? trade.tags : undefined,
 	};
 };
+
+export const convertApiTradeListToUi = (
+	response: ApiTradeListResponse,
+): TradeListResult => ({
+	items: response.items.map(convertApiTradeToUiTrade),
+	total: response.total,
+	limit: response.limit,
+	offset: response.offset,
+});

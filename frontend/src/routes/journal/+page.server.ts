@@ -7,27 +7,101 @@ import {
 } from '$lib/schemas/tradeSchemas';
 import { fail, redirect } from '@sveltejs/kit';
 import { zod } from 'sveltekit-superforms/adapters';
-import type { Trade } from '$lib/types';
 import {
+	convertApiTradeListToUi,
+	convertApiTradeToUiTrade,
 	convertUiTradeToTradeFormInput,
 	normalizeTradeFormInputForApi,
 } from '$lib/tradeConverters';
 import { httpClient } from '$lib/server/http-client/http-client';
+import {
+	tradeFiltersFromFormData,
+	tradeFiltersToSearchParams,
+} from '$lib/filters/tradeFilters';
+import type {
+	TradeFacets,
+	TradeListResult,
+	TradeSummary,
+	TradeFilters,
+	ApiTrade,
+	Trade,
+	ApiTradeListResponse,
+} from '$lib/types';
+import { TRADES_PAGE_SIZE } from '$lib/constants/trades';
 
-export const load: PageServerLoad = async ({ url, parent }) => {
-	const { isAuthenticated, trades } = await parent();
+async function fetchTradeList(
+	fetch: typeof globalThis.fetch,
+	searchParams: URLSearchParams,
+): Promise<TradeListResult> {
+	const response = await httpClient.get<ApiTradeListResponse>('/trades', {
+		fetch,
+		searchParams,
+	});
+
+	if (!response) {
+		return { items: [], total: 0, limit: TRADES_PAGE_SIZE, offset: 0 };
+	}
+
+	return convertApiTradeListToUi(response);
+}
+
+async function fetchFacets(
+	fetch: typeof globalThis.fetch,
+): Promise<TradeFacets> {
+	const response = await httpClient.get<TradeFacets>('/trades/facets', {
+		fetch,
+	});
+	return response;
+}
+
+async function fetchSummary(
+	fetch: typeof globalThis.fetch,
+): Promise<TradeSummary> {
+	const response = await httpClient.get<TradeSummary>('/trades/summary', {
+		fetch,
+	});
+	return response;
+}
+
+export const load: PageServerLoad = async ({ url, fetch, depends, parent }) => {
+	depends('journal:trades');
+	depends('journal:facets');
+	depends('journal:summary');
+
+	const { isAuthenticated } = await parent();
 	if (!isAuthenticated) {
 		throw redirect(303, '/login');
 	}
 
 	const tradeId = url.searchParams.get('edit');
 	const isAddMode = url.searchParams.get('add') === 'true';
+
+	const [openedTrades, closedTrades, facets, summary] = await Promise.all([
+		fetchTradeList(
+			fetch,
+			tradeFiltersToSearchParams(
+				{ symbol: '', tradeType: 'all', tags: [] },
+				{ status: 'open', limit: TRADES_PAGE_SIZE, offset: 0 },
+			),
+		),
+		fetchTradeList(
+			fetch,
+			tradeFiltersToSearchParams(
+				{ symbol: '', tradeType: 'all', tags: [] },
+				{ status: 'closed', limit: TRADES_PAGE_SIZE, offset: 0 },
+			),
+		),
+		fetchFacets(fetch),
+		fetchSummary(fetch),
+	]);
+
 	let form;
 
 	if (tradeId) {
-		const tradeToEdit = trades.find(
-			(trade: Trade) => trade.id === Number(tradeId),
-		);
+		const apiTrade = await httpClient.get<ApiTrade>(`/trades/${tradeId}`, {
+			fetch,
+		});
+		const tradeToEdit = apiTrade ? convertApiTradeToUiTrade(apiTrade) : null;
 		form = tradeToEdit
 			? await superValidate(
 					convertUiTradeToTradeFormInput(tradeToEdit),
@@ -44,8 +118,42 @@ export const load: PageServerLoad = async ({ url, parent }) => {
 		});
 	}
 
-	return { form, isEditMode: tradeId !== null, isAddMode };
+	return {
+		openedTrades,
+		closedTrades,
+		facets,
+		summary,
+		form,
+		isEditMode: tradeId !== null,
+		isAddMode,
+	};
 };
+
+async function handleFilterAction(
+	fetch: typeof globalThis.fetch,
+	request: Request,
+	status: 'open' | 'closed',
+): Promise<{
+	items: Trade[];
+	total: number;
+	limit: number | null;
+	offset: number;
+}> {
+	const formData = await request.formData();
+	const filters = tradeFiltersFromFormData(formData);
+	const offset = Number(formData.get('offset') ?? 0);
+
+	const result = await fetchTradeList(
+		fetch,
+		tradeFiltersToSearchParams(filters, {
+			status,
+			limit: TRADES_PAGE_SIZE,
+			offset,
+		}),
+	);
+
+	return result;
+}
 
 export const actions = {
 	create: async ({ request, fetch }) => {
@@ -62,11 +170,6 @@ export const actions = {
 				payload: normalizeTradeFormInputForApi(form.data),
 				fetch,
 			});
-
-			// return {
-			// 	success: true,
-			// 	form,
-			// };
 		} catch (error) {
 			return fail(500, {
 				form,
@@ -123,6 +226,24 @@ export const actions = {
 		try {
 			await httpClient.sendFormData('/trades/import', formData, { fetch });
 			return { success: true };
+		} catch (error) {
+			return fail(500, { error });
+		}
+	},
+
+	filterOpened: async ({ request, fetch }) => {
+		try {
+			const result = await handleFilterAction(fetch, request, 'open');
+			return { success: true, ...result };
+		} catch (error) {
+			return fail(500, { error });
+		}
+	},
+
+	filterClosed: async ({ request, fetch }) => {
+		try {
+			const result = await handleFilterAction(fetch, request, 'closed');
+			return { success: true, ...result };
 		} catch (error) {
 			return fail(500, { error });
 		}

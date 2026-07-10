@@ -2,7 +2,9 @@ import { BACKEND_API_URL } from '$env/static/private';
 import type { Cookies } from '@sveltejs/kit';
 import { forwardCookies } from './cookie-utils';
 
-type ResponseType<T = null> = T | null | void;
+type ResponseType<T = null> = T;
+
+type SearchParamValue = string | string[];
 
 type HttpRequestOptions<T = undefined> = {
 	disableErrorModal?: boolean;
@@ -10,6 +12,7 @@ type HttpRequestOptions<T = undefined> = {
 	headers?: HeadersInit;
 	fetch?: typeof fetch; // Optional fetch function for server-side cookie forwarding
 	credentials?: RequestCredentials;
+	searchParams?: URLSearchParams | Record<string, SearchParamValue>;
 };
 
 type AuthRequestResult<T = unknown> =
@@ -27,28 +30,28 @@ export class HttpClient {
 
 	public async get<K>(
 		url: string,
-		options?: HttpRequestOptions
+		options?: HttpRequestOptions,
 	): Promise<ResponseType<K>> {
 		return this.request<undefined, K>(url, 'GET', options);
 	}
 
 	public async post<T, K = null>(
 		url: string,
-		options: HttpRequestOptions<T>
+		options: HttpRequestOptions<T>,
 	): Promise<ResponseType<K>> {
 		return this.request<T, K>(url, 'POST', options);
 	}
 
 	public async put<T, K = null>(
 		url: string,
-		options?: HttpRequestOptions<T>
+		options?: HttpRequestOptions<T>,
 	): Promise<ResponseType<K>> {
 		return this.request<T, K>(url, 'PUT', options);
 	}
 
 	public async delete<K>(
 		url: string,
-		options?: HttpRequestOptions
+		options?: HttpRequestOptions,
 	): Promise<ResponseType<K>> {
 		return this.request<undefined, K>(url, 'DELETE', options);
 	}
@@ -56,7 +59,7 @@ export class HttpClient {
 	public async sendFormData<K = unknown>(
 		url: string,
 		formData: FormData,
-		options: HttpRequestOptions = {}
+		options: HttpRequestOptions = {},
 	): Promise<ResponseType<K>> {
 		const fetchFn = options.fetch || this.customFetch || fetch;
 		const response = await fetchFn(this.buildRequestUrl(url), {
@@ -82,7 +85,7 @@ export class HttpClient {
 		url: string,
 		payload: Record<string, unknown>,
 		fetchFn: typeof fetch,
-		cookies: Cookies
+		cookies: Cookies,
 	): Promise<AuthRequestResult<T>> {
 		const res = await fetchFn(this.buildRequestUrl(url), {
 			method: 'POST',
@@ -107,9 +110,30 @@ export class HttpClient {
 		return { success: true, data };
 	}
 
-	private buildRequestUrl(pathname: string): string {
+	private buildRequestUrl(
+		pathname: string,
+		searchParams?: URLSearchParams | Record<string, SearchParamValue>,
+	): string {
 		const urlStr = `${this.baseUrl}/api/v1${pathname}`;
 		const url = new URL(urlStr);
+
+		if (searchParams) {
+			if (searchParams instanceof URLSearchParams) {
+				searchParams.forEach((value, key) => {
+					url.searchParams.append(key, value);
+				});
+			} else {
+				for (const [key, value] of Object.entries(searchParams)) {
+					if (Array.isArray(value)) {
+						for (const item of value) {
+							url.searchParams.append(key, item);
+						}
+					} else {
+						url.searchParams.set(key, value);
+					}
+				}
+			}
+		}
 
 		return url.toString();
 	}
@@ -117,16 +141,19 @@ export class HttpClient {
 	private async request<T, K = null>(
 		url: string,
 		method: string,
-		options: HttpRequestOptions<T> = {}
+		options: HttpRequestOptions<T> = {},
 	): Promise<ResponseType<K>> {
 		const { payload, headers = {} } = options;
 		const fetchFn = options.fetch || this.customFetch || fetch;
-		const response = await fetchFn(this.buildRequestUrl(url), {
-			method,
-			headers: { 'Content-Type': 'application/json', ...headers },
-			body: payload ? JSON.stringify(payload) : undefined,
-			credentials: 'include',
-		});
+		const response = await fetchFn(
+			this.buildRequestUrl(url, options.searchParams),
+			{
+				method,
+				headers: { 'Content-Type': 'application/json', ...headers },
+				body: payload ? JSON.stringify(payload) : undefined,
+				credentials: 'include',
+			},
+		);
 
 		if (!response.ok) {
 			throw await response.json().catch(() => null);

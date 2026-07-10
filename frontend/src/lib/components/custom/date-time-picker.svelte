@@ -21,8 +21,9 @@
 
 	let {
 		value = $bindable<string | undefined>(),
-		label = 'Date',
+		label,
 		name = '',
+		placeholder = 'Select date',
 		withTime = false,
 	}: {
 		value?: string | null;
@@ -79,7 +80,9 @@
 </script>
 
 <input type="hidden" {name} value={value ?? ''} />
-<Label for="{name}-date">{label}</Label>
+{#if label}
+	<Label for="{name}-date">{label}</Label>
+{/if}
 <div class="flex gap-2 w-auto">
 	<div class="flex flex-col gap-4">
 		<Popover.Root bind:open>
@@ -90,7 +93,7 @@
 						variant="outline"
 						class="w-40 justify-between font-normal"
 					>
-						{value ? formatTradeDateLocal(value) : 'Select date'}
+						{value ? formatTradeDateLocal(value) : placeholder}
 						<ChevronDownIcon />
 					</Button>
 				{/snippet}

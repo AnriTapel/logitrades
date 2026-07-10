@@ -1,64 +1,31 @@
 <script lang="ts">
-	import {
-		pnlForPeriod,
-		totalTradedVolumeForPeriod,
-		totalEquityInOpenedTrades,
-		calcAbsolutePnl,
-	} from '$lib/calcFunctions';
 	import { formatIntToCurrency } from '$lib/formatters';
-	import { tradesStore } from '$lib/stores/trades';
 	import { localeStore } from '$lib/stores/locale';
 	import { getFinancialColor, cn } from '$lib/utils';
-	import { onDestroy } from 'svelte';
+	import type { TradeSummary } from '$lib/types';
 
-	let pnlLast7Days = $state(0);
-	let volumeLast7Days = $state(0);
-	let equityInOpenTrades = $state(0);
-	let totalPnL = $state(0);
-
-	const unsubscribeTrades = tradesStore.subscribe((trades) => {
-		const pivotDate = new Date();
-		pivotDate.setDate(pivotDate.getDate() - 7);
-
-		const last7DaysTrades = trades.filter(
-			(trade) => new Date(trade.openedAt) >= pivotDate,
-		);
-
-		totalPnL = trades.reduce((acc, trade) => {
-			return acc + (calcAbsolutePnl(trade) ?? 0);
-		}, 0);
-
-		pnlLast7Days = pnlForPeriod(last7DaysTrades);
-		volumeLast7Days = totalTradedVolumeForPeriod(last7DaysTrades);
-
-		const openTrades = trades.filter((trade) => !trade.closePrice);
-		equityInOpenTrades = totalEquityInOpenedTrades(openTrades);
-	});
-
-	onDestroy(() => {
-		unsubscribeTrades();
-	});
+	let { summary }: { summary: TradeSummary } = $props();
 
 	const stats = $derived([
 		{
 			label: 'Open Equity',
-			value: formatIntToCurrency(equityInOpenTrades, $localeStore.currency),
+			value: formatIntToCurrency(summary.open_equity, $localeStore.currency),
 			colorClass: 'text-[#003d6d]',
 		},
 		{
 			label: '7-Day Volume',
-			value: formatIntToCurrency(volumeLast7Days, $localeStore.currency),
+			value: formatIntToCurrency(summary.volume_last_7_days, $localeStore.currency),
 			colorClass: 'text-[#1a1c1f]',
 		},
 		{
 			label: '7-Day PnL',
-			value: formatIntToCurrency(pnlLast7Days, $localeStore.currency),
-			colorClass: getFinancialColor(pnlLast7Days, 0),
+			value: formatIntToCurrency(summary.pnl_last_7_days, $localeStore.currency),
+			colorClass: getFinancialColor(summary.pnl_last_7_days, 0),
 		},
 		{
 			label: 'Total PnL',
-			value: formatIntToCurrency(totalPnL, $localeStore.currency),
-			colorClass: getFinancialColor(totalPnL, 0),
+			value: formatIntToCurrency(summary.total_pnl, $localeStore.currency),
+			colorClass: getFinancialColor(summary.total_pnl, 0),
 		},
 	]);
 </script>

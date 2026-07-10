@@ -27,7 +27,7 @@ class TradeDomain:
             tags: list[str] | None = None,
     ):
         self.symbol = symbol
-        self.type = type
+        self.type = TradeType(type) if isinstance(type, str) else type
         self.open_price = open_price
         self.quantity = quantity
         self.opened_at = opened_at

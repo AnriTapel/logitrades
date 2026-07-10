@@ -2,7 +2,6 @@
 	import CommonDialog from '$lib/components/ui/dialog/common-dialog.svelte';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
-	import { invalidateAll } from '$app/navigation';
 	import { showServerErrors } from '$lib/stores/error';
 	import type { HttpError } from '$lib/server/http-client/types';
 	import { Root, Trigger, Item, Content } from '$lib/components/ui/select';
@@ -109,7 +108,6 @@
 			const result = deserialize(await response.text());
 
 			if (result.type === 'success') {
-				await invalidateAll();
 				onCancel();
 			} else if (result.type === 'failure') {
 				showServerErrors(result.data?.error as HttpError);

@@ -1,4 +1,10 @@
+import os
+
 import pytest
+
+os.environ.setdefault("JWT_SECRET_KEY", "test-secret-key-for-pytest")
+os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
+os.environ.setdefault("ALLOWED_ORIGINS", "http://localhost:5173")
 
 
 @pytest.fixture

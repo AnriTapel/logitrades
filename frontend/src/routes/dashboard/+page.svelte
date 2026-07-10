@@ -5,16 +5,12 @@
 		SymbolStatsTable,
 		TradeTypeStats,
 		EmptyState,
-		TagsFilterPopover,
+		TradeFiltersToolbar,
 	} from '$lib/components/custom';
-
-	import { tradesStore } from '$lib/stores/trades';
+	import type { PageData } from './$types';
 	import {
 		dashboardFiltersStore,
-		applyDashboardFilters,
-		resetDashboardFilters,
 		hasActiveDashboardFilters,
-		setDashboardTags,
 	} from '$lib/stores/dashboard-filters';
 	import {
 		calcAverageLoss,
@@ -39,22 +35,23 @@
 		getSymbolStats,
 	} from '$lib/chartsHelpers';
 	import RiskRewardChart from '$lib/layouts/risk-reward-chart.svelte';
-	import { Button } from '$lib/components/ui/button';
 	import Info from 'lucide-svelte/icons/info';
+	import Loader2 from 'lucide-svelte/icons/loader-2';
+	import { submitTradeFilterAction } from '$lib/tradeListClient';
+	import { debounce } from '$lib/inputDebounce';
+	import type { Trade, TradeFilters } from '$lib/types';
+	import { onDestroy } from 'svelte';
 
-	let closedTrades = $derived(
-		$tradesStore.filter((it) => it.closePrice && it.closedAt),
-	);
+	let { data }: { data: PageData } = $props();
 
-	let filteredClosedTrades = $derived(
-		applyDashboardFilters(closedTrades, $dashboardFiltersStore),
-	);
+	let closedTrades = $state<Trade[]>([...data.closedTrades.items]);
+	let loading = $state(false);
 
-	const allTags = $derived(
-		[...new Set($tradesStore.flatMap((t) => t.tags ?? []))].sort((a, b) =>
-			a.localeCompare(b),
-		),
-	);
+	$effect(() => {
+		closedTrades = [...data.closedTrades.items];
+	});
+
+	const filteredClosedTrades = $derived(closedTrades);
 
 	let hasActiveFilters = $derived(
 		hasActiveDashboardFilters($dashboardFiltersStore),
@@ -62,6 +59,37 @@
 
 	let maxDrawdown = $derived(calcMaxDrawdown(filteredClosedTrades));
 	let avgRiskReward = $derived(calcAverageRiskReward(filteredClosedTrades));
+
+	async function fetchDashboardTrades(filters: TradeFilters): Promise<void> {
+		loading = true;
+		try {
+			const result = await submitTradeFilterAction('filterDashboard', filters);
+			closedTrades = result.items;
+		} finally {
+			loading = false;
+		}
+	}
+
+	const debouncedFetch = debounce((filters: TradeFilters) => {
+		void fetchDashboardTrades(filters);
+	}, 300);
+
+	let initialFiltersChange: boolean = true;
+	let storeSubscription = dashboardFiltersStore.subscribe((filters) => {
+		if (initialFiltersChange) {
+			initialFiltersChange = false;
+			return;
+		}
+		if (filters.symbol?.trim()) {
+			debouncedFetch(filters);
+		} else {
+			void fetchDashboardTrades(filters);
+		}
+	});
+
+	onDestroy(() => {
+		storeSubscription();
+	});
 </script>
 
 <svelte:head>
@@ -77,19 +105,21 @@
 		>
 	</div>
 
-	{#if $tradesStore.length}
-		<div class="flex flex-wrap items-center gap-2 mb-8">
-			<p class="text-sm font-medium text-muted-foreground mr-2">Filters</p>
-			<TagsFilterPopover
-				availableTags={allTags}
-				selectedTags={$dashboardFiltersStore.tags}
-				onSelectedTagsChange={setDashboardTags}
-			/>
-			{#if hasActiveFilters}
-				<Button variant="ghost" size="sm" onclick={resetDashboardFilters}>
-					Reset
-				</Button>
+	{#if data.closedTrades.total > 0 || hasActiveFilters}
+		<div class="mb-8">
+			{#if loading}
+				<div class="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
+					<Loader2 class="size-4 animate-spin" />
+					<span>Updating dashboard...</span>
+				</div>
 			{/if}
+			<TradeFiltersToolbar
+				filters={dashboardFiltersStore}
+				showSymbolFilter={false}
+				availableTags={data.facets.tags}
+				dateFieldHint="Filter by closed date"
+				disabled={loading}
+			/>
 		</div>
 
 		{#if hasActiveFilters && filteredClosedTrades.length === 0}

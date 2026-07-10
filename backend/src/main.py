@@ -4,7 +4,7 @@ import os
 
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "..", "..", ".env"), override=False)
 
-from fastapi import FastAPI, APIRouter, Depends, Form, HTTPException, UploadFile
+from fastapi import FastAPI, APIRouter, Depends, Form, HTTPException, UploadFile, Query
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from typing import Annotated
@@ -14,6 +14,17 @@ from .utils import _get_env_var
 from .services import ErrorsHandlerService
 from .models import TradeForm, TradeImportModel
 from .models.trade.trade_response import TradeResponse
+from .models.trade.trade_list_query import TradeListQuery
+from .models.trade.trade_list_response import TradeListResponse
+from .models.trade.trade_facets_response import TradeFacetsResponse
+from .models.trade.trade_summary_response import TradeSummaryResponse
+from .domain.trade.enums import TradeType
+from .services.trade_query_service import (
+    get_facets,
+    get_summary,
+    get_trade_by_id,
+    list_trades,
+)
 from .utils.normalize_csv_row import normalize_csv_row
 from .db import TradeORM
 from . import database
@@ -39,6 +50,36 @@ app.add_middleware(
 router = APIRouter()
 
 db_dependency = Annotated[Session, Depends(database.get_db)]
+
+def parse_trade_list_query(
+    status: str | None = Query(None, pattern="^(open|closed)$"),
+    symbol: str | None = None,
+    type: str | None = Query(None, pattern="^(buy|sell)$"),
+    tags: list[str] | None = Query(None),
+    date_from: str | None = None,
+    date_to: str | None = None,
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+    paginate: bool = Query(True),
+    sort_by: str = Query("opened_at", pattern="^(opened_at|closed_at|created_at)$"),
+    sort_order: str = Query("desc", pattern="^(asc|desc)$"),
+) -> TradeListQuery:
+    trade_type = TradeType(type) if type else None
+    return TradeListQuery(
+        status=status,  # type: ignore[arg-type]
+        symbol=symbol,
+        type=trade_type,
+        tags=tags,
+        date_from=date_from,
+        date_to=date_to,
+        limit=limit,
+        offset=offset,
+        paginate=paginate,
+        sort_by=sort_by,  # type: ignore[arg-type]
+        sort_order=sort_order,  # type: ignore[arg-type]
+    )
+
+trade_list_query_dependency = Annotated[TradeListQuery, Depends(parse_trade_list_query)]
 
 @router.post("/trades/import")
 def import_trades_from_csv(file: Annotated[UploadFile, Form()], mapping: Annotated[str, Form()], db: db_dependency, user_id: int = Depends(current_user_id)):
@@ -92,7 +133,7 @@ def create_trade(trade_form: TradeForm, db: db_dependency, user_id: int = Depend
 
 @router.put("/trades/{trade_id}", response_model=TradeResponse)
 def update_trade(trade_id: int, trade_form: TradeForm, db: db_dependency, user_id: int = Depends(current_user_id)):
-    db_trade = db.query(TradeORM).filter(TradeORM.id == trade_id and TradeORM.user_id == user_id).first()
+    db_trade = db.query(TradeORM).filter(TradeORM.id == trade_id, TradeORM.user_id == user_id).first()
     if db_trade is None:
         raise HTTPException(status_code=404, detail="Trade not found")
     try:
@@ -117,14 +158,36 @@ def update_trade(trade_id: int, trade_form: TradeForm, db: db_dependency, user_i
             detail={"msg": "Failed to save trade"}
         )
 
-@router.get("/trades", response_model=list[TradeResponse])
-def read_trades(db: db_dependency, user_id: int = Depends(current_user_id)):
-    trades = db.query(TradeORM).filter(TradeORM.user_id == user_id).all()
-    return [t.to_domain().__dict__ for t in trades]
+@router.get("/trades/summary", response_model=TradeSummaryResponse)
+def read_trades_summary(db: db_dependency, user_id: int = Depends(current_user_id)):
+    return get_summary(db, user_id)
+
+
+@router.get("/trades/facets", response_model=TradeFacetsResponse)
+def read_trades_facets(db: db_dependency, user_id: int = Depends(current_user_id)):
+    return get_facets(db, user_id)
+
+
+@router.get("/trades", response_model=TradeListResponse)
+def read_trades(
+    db: db_dependency,
+    query: trade_list_query_dependency,
+    user_id: int = Depends(current_user_id),
+):
+    return list_trades(db, user_id, query)
+
+
+@router.get("/trades/{trade_id}", response_model=TradeResponse)
+def read_trade(trade_id: int, db: db_dependency, user_id: int = Depends(current_user_id)):
+    db_trade = get_trade_by_id(db, user_id, trade_id)
+    if db_trade is None:
+        raise HTTPException(status_code=404, detail="Trade not found")
+    return db_trade.to_domain().__dict__
+
 
 @router.delete("/trades/{trade_id}")
 def delete_trade(trade_id: int, db: db_dependency, user_id: int = Depends(current_user_id)):
-    trade = db.query(TradeORM).filter(TradeORM.id == trade_id and TradeORM.user_id == user_id).first()
+    trade = db.query(TradeORM).filter(TradeORM.id == trade_id, TradeORM.user_id == user_id).first()
     if trade is None:
         raise HTTPException(status_code=404, detail="Trade not found")
     db.delete(trade)

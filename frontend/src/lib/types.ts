@@ -1,6 +1,8 @@
 import type { UtcIsoDateTime } from '$lib/dates';
 
 export type TradeType = 'buy' | 'sell';
+/** Filter-only side value; domain trades use TradeType only. */
+export type TradeFilterType = TradeType | 'all';
 export interface Trade {
 	id: number;
 	symbol: string;
@@ -17,6 +19,65 @@ export interface Trade {
 	comment?: string;
 	tags?: string[];
 }
+
+export type ApiTrade = {
+	id: number;
+	symbol: string;
+	type: TradeType;
+	open_price: number;
+	quantity: number;
+	stop_loss?: number | null;
+	take_profit?: number | null;
+	leverage?: number | null;
+	opened_at: string;
+	close_price?: number | null;
+	closed_at?: string | null;
+	created_at: string;
+	comment?: string | null;
+	tags?: string[] | null;
+};
+
+export type ApiTradeListResponse = {
+	items: ApiTrade[];
+	total: number;
+	limit: number | null;
+	offset: number;
+};
+
+export type FilterActionResult = {
+	success?: boolean;
+	items?: Trade[];
+	total?: number;
+	limit?: number | null;
+	offset?: number;
+};
+
+export type TradeFacets = {
+	symbols: string[];
+	tags: string[];
+};
+
+export type TradeSummary = {
+	open_equity: number;
+	pnl_last_7_days: number;
+	volume_last_7_days: number;
+	total_pnl: number;
+};
+
+export type TradeListResult = {
+	items: Trade[];
+	total: number;
+	limit: number | null;
+	offset: number;
+};
+
+export type TradeFilters = {
+	symbol?: string;
+	tradeType: TradeFilterType;
+	tags?: string[];
+	dateFrom?: string;
+	dateTo?: string;
+};
 
 // Charts types/interfaces
 export type BarChartData = {

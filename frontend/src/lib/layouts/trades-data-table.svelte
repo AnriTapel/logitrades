@@ -1,95 +1,64 @@
 <script lang="ts">
 	import {
-		type ColumnFiltersState,
 		type SortingState,
 		getCoreRowModel,
-		getFilteredRowModel,
 		getSortedRowModel,
 	} from '@tanstack/table-core';
 	import { createSvelteTable, FlexRender } from '$lib/components/ui/data-table';
 	import * as Table from '$lib/components/ui/table';
-	import { Input } from '$lib/components/ui/input';
 	import { createColumns } from './trades-table-columns';
 	import { localeStore } from '$lib/stores/locale';
 	import type { Trade } from '$lib/types';
-	import type { Writable } from 'svelte/store';
 	import ArrowUpDown from 'lucide-svelte/icons/arrow-up-down';
 	import { Button } from '$lib/components/ui/button';
-	import { TagsFilterPopover } from '$lib/components/custom';
+	import Loader2 from 'lucide-svelte/icons/loader-2';
 
 	const {
 		trades,
+		total,
+		pageIndex = 0,
+		pageSize = 50,
+		loading = false,
 		styling,
 		noTradesMessage = 'No trades found',
 		onDelete,
 		onEdit,
+		onPageChange,
 	}: {
-		trades: Writable<Trade[]>;
+		trades: Trade[];
+		total: number;
+		pageIndex?: number;
+		pageSize?: number;
+		loading?: boolean;
 		styling?: {
 			maxBodyHeight?: string;
 		};
 		noTradesMessage?: string;
 		onDelete: (tradeId: number) => void;
 		onEdit: (tradeId: number) => void;
+		onPageChange?: (pageIndex: number) => void;
 	} = $props();
 
-	// State for sorting
 	let sorting = $state<SortingState>([
-		{ id: 'tradeDates', desc: true }, // Default sort by most recent
+		{ id: 'tradeDates', desc: true },
 	]);
 
-	// State for filtering
-	let columnFilters = $state<ColumnFiltersState>([]);
+	const pageCount = $derived(Math.max(1, Math.ceil(total / pageSize)));
+	const canPreviousPage = $derived(pageIndex > 0);
+	const canNextPage = $derived(pageIndex < pageCount - 1);
 
-	// Filter input values
-	let symbolFilter = $state('');
-	let typeFilter = $state<string>('');
-	let selectedTags = $state<string[]>([]);
-
-	const allTags = $derived(
-		[...new Set($trades.flatMap((t) => t.tags ?? []))].sort((a, b) =>
-			a.localeCompare(b),
-		),
-	);
-
-	const hasActiveFilters = $derived(
-		Boolean(symbolFilter || typeFilter || selectedTags.length),
-	);
-
-	// Update column filters when inputs change
-	$effect(() => {
-		const filters: ColumnFiltersState = [];
-		if (symbolFilter) {
-			filters.push({ id: 'symbol', value: symbolFilter });
-		}
-		if (typeFilter) {
-			filters.push({ id: 'tradeType', value: typeFilter });
-		}
-		if (selectedTags.length) {
-			filters.push({ id: 'tags', value: selectedTags });
-		}
-		columnFilters = filters;
-	});
-
-	function resetFilters() {
-		symbolFilter = '';
-		typeFilter = '';
-		selectedTags = [];
-	}
-
-	// Create columns with callbacks (derived so they react to currency changes)
 	const columns = $derived(
 		createColumns(onEdit, onDelete, $localeStore.currency),
 	);
 
-	// Create table instance
 	const table = $derived(
 		createSvelteTable({
-			data: $trades,
+			data: trades,
 			columns,
+			pageCount,
+			manualPagination: true,
 			getCoreRowModel: getCoreRowModel(),
 			getSortedRowModel: getSortedRowModel(),
-			getFilteredRowModel: getFilteredRowModel(),
 			onSortingChange: (updater) => {
 				if (typeof updater === 'function') {
 					sorting = updater(sorting);
@@ -97,19 +66,17 @@
 					sorting = updater;
 				}
 			},
-			onColumnFiltersChange: (updater) => {
-				if (typeof updater === 'function') {
-					columnFilters = updater(columnFilters);
-				} else {
-					columnFilters = updater;
-				}
+			onPaginationChange: (updater) => {
+				const current = { pageIndex, pageSize };
+				const next = typeof updater === 'function' ? updater(current) : updater;
+				onPageChange?.(next.pageIndex);
 			},
 			state: {
 				get sorting() {
 					return sorting;
 				},
-				get columnFilters() {
-					return columnFilters;
+				get pagination() {
+					return { pageIndex, pageSize };
 				},
 			},
 		}),
@@ -117,58 +84,13 @@
 </script>
 
 <div class="w-full space-y-3 md:space-y-4">
-	<!-- Filter controls -->
-	<div class="flex flex-row flex-wrap gap-8 items-center">
-		<div class="w-42 shrink-0">
-			<Input
-				type="text"
-				placeholder="Filter by symbol..."
-				bind:value={symbolFilter}
-				class="h-9"
-			/>
+	{#if loading}
+		<div class="flex items-center gap-2 text-sm text-muted-foreground">
+			<Loader2 class="size-4 animate-spin" />
+			<span>Loading trades...</span>
 		</div>
+	{/if}
 
-		<div class="flex gap-2 items-center">
-			<span class="text-sm font-medium tracking-tight">Side:</span>
-
-			<Button
-				variant={typeFilter === '' ? 'default' : 'outline'}
-				size="sm"
-				onclick={() => (typeFilter = '')}
-			>
-				All
-			</Button>
-			<Button
-				variant={typeFilter === 'buy' ? 'default' : 'outline'}
-				size="sm"
-				onclick={() => (typeFilter = 'buy')}
-			>
-				Long
-			</Button>
-			<Button
-				variant={typeFilter === 'sell' ? 'default' : 'outline'}
-				size="sm"
-				onclick={() => (typeFilter = 'sell')}
-			>
-				Short
-			</Button>
-		</div>
-
-		<div class="flex items-center">
-			<TagsFilterPopover availableTags={allTags} bind:selectedTags />
-
-			<Button
-				variant="ghost"
-				size="sm"
-				disabled={!hasActiveFilters}
-				onclick={resetFilters}
-			>
-				Reset
-			</Button>
-		</div>
-	</div>
-
-	<!-- Table with virtual scrolling and horizontal scroll on mobile -->
 	<div
 		class="rounded-md border relative overflow-x-auto overflow-y-auto"
 		style={styling?.maxBodyHeight ? `max-height: ${styling.maxBodyHeight}` : ''}
@@ -238,10 +160,35 @@
 			{/if}
 		</Table.Root>
 	</div>
+
+	{#if total > pageSize}
+		<div class="flex items-center justify-between gap-4">
+			<p class="text-sm text-muted-foreground">
+				Page {pageIndex + 1} of {pageCount} ({total} trades)
+			</p>
+			<div class="flex gap-2">
+				<Button
+					variant="outline"
+					size="sm"
+					disabled={!canPreviousPage || loading}
+					onclick={() => onPageChange?.(pageIndex - 1)}
+				>
+					Previous
+				</Button>
+				<Button
+					variant="outline"
+					size="sm"
+					disabled={!canNextPage || loading}
+					onclick={() => onPageChange?.(pageIndex + 1)}
+				>
+					Next
+				</Button>
+			</div>
+		</div>
+	{/if}
 </div>
 
 <style>
-	/* Ensure scrolling works properly */
 	:global(.overflow-y-auto) {
 		scrollbar-width: thin;
 	}

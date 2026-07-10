@@ -2,10 +2,8 @@
 	import '../app.css';
 	import ErrorDialog from '$lib/layouts/error-dialog.svelte';
 	import { setAuth, clearAuth } from '$lib/stores/auth';
-	import { tradesStore } from '$lib/stores/trades';
 	import Sidebar from '$lib/layouts/sidebar.svelte';
 	import NavBar from '$lib/layouts/nav-bar.svelte';
-	import type { Trade } from '$lib/types';
 
 	let { children, data } = $props();
 
@@ -14,13 +12,6 @@
 			setAuth(data.user);
 		} else {
 			clearAuth();
-		}
-	});
-
-	$effect(() => {
-		const trades = (data as typeof data & { trades?: Trade[] }).trades;
-		if (trades) {
-			tradesStore.set(trades);
 		}
 	});
 </script>

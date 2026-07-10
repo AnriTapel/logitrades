@@ -2,7 +2,7 @@ from datetime import datetime
 from sqlalchemy import Column, Integer, Float, String, JSON
 
 from .base import Base
-from ..domain import TradeDomain
+from ..domain import TradeDomain, TradeType
 from ..utils import get_current_time
 
 class TradeORM(Base):
@@ -28,7 +28,7 @@ class TradeORM(Base):
             id=self.id,
             created_at=datetime.fromisoformat(self.created_at.replace('Z', '+00:00')) if self.created_at else None,
             symbol=self.symbol,
-            type=self.type,
+            type=TradeType(self.type),
             open_price=self.open_price,
             quantity=self.quantity,
             opened_at=datetime.fromisoformat(self.opened_at.replace('Z', '+00:00')),
