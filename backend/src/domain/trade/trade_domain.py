@@ -25,6 +25,7 @@ class TradeDomain:
             created_at: datetime | None = None,
             comment: str | None = None,
             tags: list[str] | None = None,
+            fee: float | None = None,
     ):
         self.symbol = symbol
         self.type = TradeType(type) if isinstance(type, str) else type
@@ -40,6 +41,7 @@ class TradeDomain:
         self.created_at = created_at
         self.comment = comment
         self.tags = tags if tags else None
+        self.fee = fee
 
         validate_stop_loss(self)
         validate_take_profit(self)
@@ -62,4 +64,5 @@ class TradeDomain:
             'closed_at': to_utc_iso_string(self.closed_at) if self.closed_at else None,
             'comment': self.comment,
             'tags': self.tags,
+            'fee': self.fee,
         }

@@ -18,6 +18,7 @@ export interface Trade {
 	createdAt: UtcIsoDateTime;
 	comment?: string;
 	tags?: string[];
+	fee?: number;
 }
 
 export type ApiTrade = {
@@ -35,6 +36,7 @@ export type ApiTrade = {
 	created_at: string;
 	comment?: string | null;
 	tags?: string[] | null;
+	fee?: number | null;
 };
 
 export type ApiTradeListResponse = {
@@ -58,7 +60,7 @@ export type TradeFacets = {
 };
 
 export type TradeSummary = {
-	open_equity: number;
+	open_notional: number;
 	pnl_last_7_days: number;
 	volume_last_7_days: number;
 	total_pnl: number;

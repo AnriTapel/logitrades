@@ -17,6 +17,7 @@ def normalize_csv_row(row: dict, fields_mapping: dict) -> dict:
         "close_price": float(row[fields_mapping["close_price"]]) if fields_mapping.get("close_price") and row[fields_mapping["close_price"]] else None,
         "closed_at": _get_optional_datetime_str(row, fields_mapping, "closed_at"),
         "created_at": _get_optional_datetime_str(row, fields_mapping, "created_at"),
+        "fee": float(row[fields_mapping["fee"]]) if fields_mapping.get("fee") and row[fields_mapping["fee"]] else None,
     }
 
 

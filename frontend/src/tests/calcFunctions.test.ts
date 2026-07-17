@@ -58,6 +58,7 @@ function makeTrade(params: {
 	leverage?: number;
 	stopLoss?: number;
 	takeProfit?: number;
+	fee?: number;
 }): Trade {
 	const base: Trade = {
 		id: ++_id,
@@ -73,6 +74,7 @@ function makeTrade(params: {
 	if (params.leverage !== undefined) base.leverage = params.leverage;
 	if (params.stopLoss !== undefined) base.stopLoss = params.stopLoss;
 	if (params.takeProfit !== undefined) base.takeProfit = params.takeProfit;
+	if (params.fee !== undefined) base.fee = params.fee;
 	return base;
 }
 
@@ -92,6 +94,38 @@ describe('calcAbsolutePnl', () => {
 	it('returns null for an open trade (no closePrice)', () => {
 		const trade = makeTrade({ tradeType: 'buy', openPrice: 100, quantity: 5 });
 		expect(calcAbsolutePnl(trade)).toBeNull();
+	});
+
+	it('returns null for an open trade even when fee is set', () => {
+		const trade = makeTrade({
+			tradeType: 'buy',
+			openPrice: 100,
+			quantity: 5,
+			fee: 10,
+		});
+		expect(calcAbsolutePnl(trade)).toBeNull();
+	});
+
+	it('subtracts fee from realized PnL on closed trades', () => {
+		// gross (120 - 100) × 5 = 100; fee = 12 → net 88
+		const trade = closed({
+			tradeType: 'buy',
+			openPrice: 100,
+			quantity: 5,
+			closePrice: 120,
+			fee: 12,
+		});
+		expect(calcAbsolutePnl(trade)).toBe(88);
+	});
+
+	it('treats missing fee as zero', () => {
+		const trade = closed({
+			tradeType: 'buy',
+			openPrice: 100,
+			quantity: 5,
+			closePrice: 120,
+		});
+		expect(calcAbsolutePnl(trade)).toBe(100);
 	});
 
 	it('long win: PnL = (closePrice - openPrice) × quantity', () => {

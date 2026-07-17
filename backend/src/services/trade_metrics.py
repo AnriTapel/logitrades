@@ -19,19 +19,20 @@ def calc_absolute_pnl(trade: TradeDomain) -> float | None:
     close_price = trade.close_price
     quantity = trade.quantity
     trade_type = trade.type
+    fee = trade.fee or 0
 
     if leverage > 1:
         liquidation_price_long = open_price * (1 - 1 / leverage)
         liquidation_price_short = open_price * (1 + 1 / leverage)
 
         if trade_type == TradeType.buy and close_price <= liquidation_price_long:
-            return (-open_price * quantity) / leverage
+            return ((-open_price * quantity) / leverage) - fee
 
         if trade_type == TradeType.sell and close_price >= liquidation_price_short:
-            return (-open_price * quantity) / leverage
+            return ((-open_price * quantity) / leverage) - fee
 
     direction = 1 if trade_type == TradeType.buy else -1
-    return (close_price - open_price) * quantity * direction
+    return (close_price - open_price) * quantity * direction - fee
 
 
 def calc_closed_pnl(trade: TradeDomain) -> float:
@@ -94,7 +95,7 @@ def matches_tags(trade_tags: list[str] | None, filter_tags: list[str] | None) ->
 def compute_summary(trades: list[TradeDomain]) -> dict[str, float]:
     pivot = datetime.now(timezone.utc) - timedelta(days=7)
 
-    open_equity = sum(
+    open_notional = sum(
         t.open_price * t.quantity for t in trades if is_open_trade(t)
     )
 
@@ -111,7 +112,7 @@ def compute_summary(trades: list[TradeDomain]) -> dict[str, float]:
     total_pnl = sum(calc_absolute_pnl(t) or 0 for t in trades)
 
     return {
-        "open_equity": open_equity,
+        "open_notional": open_notional,
         "pnl_last_7_days": pnl_last_7_days,
         "volume_last_7_days": volume_last_7_days,
         "total_pnl": total_pnl,

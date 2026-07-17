@@ -1,7 +1,8 @@
 import type { Trade } from '$lib/types';
 
 export function calcAbsolutePnl(trade: Trade): number | null {
-	const { openPrice, closePrice, quantity, leverage = 1, tradeType } = trade;
+	const { openPrice, closePrice, quantity, leverage = 1, tradeType, fee = 0 } =
+		trade;
 	if (closePrice == null || closePrice === undefined) {
 		return null;
 	}
@@ -11,15 +12,18 @@ export function calcAbsolutePnl(trade: Trade): number | null {
 		const liquidationPriceShort = openPrice * (1 + 1 / leverage);
 
 		if (tradeType === 'buy' && closePrice <= liquidationPriceLong) {
-			return (-openPrice * quantity) / leverage;
+			return (-openPrice * quantity) / leverage - fee;
 		}
 
 		if (tradeType === 'sell' && closePrice >= liquidationPriceShort) {
-			return (-openPrice * quantity) / leverage;
+			return (-openPrice * quantity) / leverage - fee;
 		}
 	}
 
-	return (closePrice - openPrice) * quantity * (tradeType === 'buy' ? 1 : -1);
+	return (
+		(closePrice - openPrice) * quantity * (tradeType === 'buy' ? 1 : -1) -
+		fee
+	);
 }
 
 export function calcWinrate(trades: Trade[]): number {

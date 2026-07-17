@@ -201,5 +201,5 @@ class TestFacetsAndSummary:
 
     def test_summary_for_user(self, db_session):
         summary = get_summary(db_session, 1)
-        assert summary.open_equity == 1000
+        assert summary.open_notional == 1000
         assert summary.total_pnl == 100.0

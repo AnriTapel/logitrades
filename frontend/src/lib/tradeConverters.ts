@@ -24,6 +24,7 @@ export const convertApiTradeToUiTrade = (trade: ApiTrade): Trade => {
 		createdAt: toUtcIso(trade.created_at),
 		comment: trade.comment ?? undefined,
 		tags: trade.tags?.length ? trade.tags : undefined,
+		fee: trade.fee ?? undefined,
 	};
 };
 

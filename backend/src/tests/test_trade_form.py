@@ -49,6 +49,7 @@ class TestValidTradeForm:
             "closedAt": "2025-01-05T15:00:00Z",
             "comment": "Breakout entry",
             "tags": ["breakout", "scalp"],
+            "fee": 2.5,
         }
 
         trade_form = TradeForm(**payload)
@@ -60,6 +61,15 @@ class TestValidTradeForm:
         assert trade.close_price == 120
         assert trade.comment == "Breakout entry"
         assert trade.tags == ["breakout", "scalp"]
+        assert trade.fee == 2.5
+
+    def test_fee_zero_allowed(self, valid_trade_form: dict):
+        trade = TradeForm(**{**valid_trade_form, "fee": 0}).to_trade()
+        assert trade.fee == 0
+
+    def test_fee_negative_rejected(self, valid_trade_form: dict):
+        with pytest.raises(ValidationError):
+            TradeForm(**{**valid_trade_form, "fee": -1})
 
     def test_leverage_ignored_when_use_leverage_false(self, valid_trade_form: dict):
         """Frontend sends leverage=1 with useLeverage=false; backend stores None."""

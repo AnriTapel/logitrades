@@ -8,8 +8,8 @@
 
 	const stats = $derived([
 		{
-			label: 'Open Equity',
-			value: formatIntToCurrency(summary.open_equity, $localeStore.currency),
+			label: 'Open notional',
+			value: formatIntToCurrency(summary.open_notional, $localeStore.currency),
 			colorClass: 'text-[#003d6d]',
 		},
 		{
@@ -39,7 +39,7 @@
 	</div>
 
 	<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
-		{#each stats as stat}
+		{#each stats as stat (stat.label)}
 			<div
 				class="flex flex-col gap-2 rounded-lg border border-white bg-[#f3f3f7] p-6"
 			>

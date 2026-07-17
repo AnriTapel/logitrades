@@ -41,6 +41,21 @@ const optionalDecimal = (label: string) =>
 			.nullable(),
 	);
 
+const optionalNonNegativeDecimal = (label: string) =>
+	z.preprocess(
+		coerceFormNumber,
+		z
+			.number({
+				invalid_type_error: `${label} must be a number`,
+			})
+			.min(0, { message: `${label} must be greater than or equal to 0` })
+			.refine((value) => DECIMAL_PLACES_REGEX.test(value.toString()), {
+				message: `${label} cannot have more than 9 decimal places`,
+			})
+			.optional()
+			.nullable(),
+	);
+
 const utcIsoDateTimeSchema = z
 	.string()
 	.datetime({ offset: true })
@@ -113,6 +128,7 @@ export const formSchema = z.object({
 	stopLoss: optionalDecimal('Stop Loss'),
 	closePrice: optionalDecimal('Close Price'),
 	closedAt: optionalUtcIsoDateTimeSchema,
+	fee: optionalNonNegativeDecimal('Fee'),
 });
 
 /** Validated form output (after Zod parse). */

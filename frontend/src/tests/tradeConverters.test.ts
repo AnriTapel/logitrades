@@ -33,6 +33,7 @@ const apiTradeFull: ApiTrade = {
 	created_at: '2025-01-01T09:00:00Z',
 	comment: 'Breakout entry',
 	tags: ['breakout', 'scalp'],
+	fee: 2.5,
 };
 
 const apiTradeMinimal: ApiTrade = {
@@ -73,6 +74,7 @@ const uiTradeFull: Trade = {
 	createdAt: '2025-01-01T09:00:00.000Z',
 	comment: 'Breakout entry',
 	tags: ['breakout', 'scalp'],
+	fee: 2.5,
 };
 
 const uiTradeNoLeverage: Trade = {
@@ -137,6 +139,7 @@ describe('convertApiTradeToUiTrade', () => {
 			createdAt: '2025-01-01T09:00:00.000Z',
 			comment: 'Breakout entry',
 			tags: ['breakout', 'scalp'],
+			fee: 2.5,
 		});
 	});
 
@@ -150,6 +153,7 @@ describe('convertApiTradeToUiTrade', () => {
 		expect(result.closedAt).toBeUndefined();
 		expect(result.comment).toBeUndefined();
 		expect(result.tags).toBeUndefined();
+		expect(result.fee).toBeUndefined();
 		expect(result.tradeType).toBe('sell');
 		expect(result.openedAt).toBe('2025-02-01T12:00:00.000Z');
 		expect(result.createdAt).toBe('2025-02-01T11:00:00.000Z');
@@ -187,6 +191,7 @@ describe('convertUiTradeToTradeFormInput', () => {
 		expect(result.tradeType).toBe('buy');
 		expect(result.closePrice).toBe(120);
 		expect(result.tags).toEqual(['breakout', 'scalp']);
+		expect(result.fee).toBe(2.5);
 	});
 
 	it('defaults missing leverage to 1 and useLeverage to false', () => {

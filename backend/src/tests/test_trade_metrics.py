@@ -16,6 +16,7 @@ def _trade(
     opened_at: datetime | None = None,
     closed_at: datetime | None = None,
     tags: list[str] | None = None,
+    fee: float | None = None,
 ) -> TradeDomain:
     now = datetime.now(timezone.utc)
     resolved_opened_at = opened_at or (now - timedelta(days=1))
@@ -31,6 +32,7 @@ def _trade(
         close_price=close_price,
         closed_at=resolved_closed_at,
         tags=tags,
+        fee=fee,
     )
 
 
@@ -61,14 +63,41 @@ class TestComputeSummary:
         result = compute_summary([trade])
         assert result["total_pnl"] == 100.0
 
-    def test_open_equity_excludes_closed(self):
+    def test_open_notional_excludes_closed(self):
         open_trade = _trade(close_price=None, closed_at=None)
         closed_trade = _trade(
             close_price=110,
             closed_at=datetime.now(timezone.utc),
         )
         result = compute_summary([open_trade, closed_trade])
-        assert result["open_equity"] == 100 * 10
+        assert result["open_notional"] == 100 * 10
+
+    def test_total_pnl_subtracts_fee_on_closed_trades(self):
+        winner = _trade(
+            close_price=110,
+            closed_at=datetime.now(timezone.utc),
+            fee=15,
+        )
+        result = compute_summary([winner])
+        assert result["total_pnl"] == 85.0
+
+    def test_open_trade_fee_does_not_affect_total_pnl(self):
+        open_trade = TradeDomain(
+            symbol="BTCUSDT",
+            type=TradeType.buy,
+            open_price=100,
+            quantity=10,
+            opened_at=datetime.now(timezone.utc) - timedelta(days=1),
+            fee=25,
+        )
+        result = compute_summary([open_trade])
+        assert result["total_pnl"] == 0.0
+        assert result["open_notional"] == 1000
+
+    def test_null_fee_treated_as_zero(self):
+        winner = _trade(close_price=110, closed_at=datetime.now(timezone.utc))
+        result = compute_summary([winner])
+        assert result["total_pnl"] == 100.0
 
     def test_total_pnl_buy_trade_from_orm_style_type(self):
         """Buy trades must not be treated as sells when type is coerced from DB string."""

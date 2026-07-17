@@ -21,6 +21,7 @@ class TradeImport(BaseModel):
     close_price: Optional[float] = Field(None, json_schema_extra={"example": 155.0})
     closed_at: Optional[datetime] = Field(None, json_schema_extra={"example": "2023-10-05T15:30:00Z"})
     created_at: Optional[datetime] = Field(None, json_schema_extra={"example": "2023-10-01T10:00:00Z"})
+    fee: Optional[float] = Field(None, json_schema_extra={"example": 1.5})
 
     @field_validator('symbol')
     @classmethod
@@ -50,6 +51,13 @@ class TradeImport(BaseModel):
     def validate_leverage(cls, v: Optional[int]) -> Optional[int]:
         if v is not None and v <= 0:
             raise PydanticCustomError('leverage.not_positive', 'Leverage must be greater than 0.')
+        return v
+
+    @field_validator('fee')
+    @classmethod
+    def validate_fee(cls, v: Optional[float]) -> Optional[float]:
+        if v is not None and v < 0:
+            raise PydanticCustomError('fee.negative', 'Fee must be greater than or equal to 0.')
         return v
 
     @field_validator('opened_at')
@@ -96,4 +104,5 @@ class TradeImport(BaseModel):
             close_price=self.close_price,
             closed_at=self.closed_at,
             created_at=self.created_at,
+            fee=self.fee,
         )

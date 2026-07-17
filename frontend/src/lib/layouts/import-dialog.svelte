@@ -26,6 +26,7 @@
 		take_profit: { label: 'Take Profit', value: null, required: false },
 		stop_loss: { label: 'Stop Loss', value: null, required: false },
 		leverage: { label: 'Leverage', value: null, required: false },
+		fee: { label: 'Fee', value: null, required: false },
 		created_at: { label: 'Created at', value: null, required: false },
 	});
 

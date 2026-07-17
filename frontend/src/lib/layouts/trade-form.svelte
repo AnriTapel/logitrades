@@ -681,6 +681,34 @@
 								</FieldErrors>
 							</Field>
 						</div>
+
+						<Field
+							{form}
+							name="fee"
+							class="col-span-12 flex flex-col gap-2 sm:col-span-6"
+						>
+							<Control>
+								{#snippet children({ props })}
+									<FormLabel class={fieldLabelClass}>Fee</FormLabel>
+									<Input
+										{...props}
+										type="number"
+										class={cardInputClass}
+										step="0.000000001"
+										min="0"
+										placeholder="Total fees (optional)"
+										bind:value={$formData.fee}
+									/>
+								{/snippet}
+							</Control>
+							<FieldErrors>
+								{#snippet children({ errors })}
+									<span class="text-destructive text-sm font-medium">
+										{errors[0]}
+									</span>
+								{/snippet}
+							</FieldErrors>
+						</Field>
 					</div>
 				</div>
 			</section>

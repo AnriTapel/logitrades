@@ -26,6 +26,7 @@ class TradeForm(BaseModel):
     createdAt: Optional[datetime] = Field(None, json_schema_extra={"example": "2023-10-01T10:00:00Z"})
     comment: Optional[str] = Field(None, json_schema_extra={"example": "This is a comment"})
     tags: Optional[list[str]] = Field(None, json_schema_extra={"example": ["breakout"]})
+    fee: Optional[float] = Field(None, ge=0, json_schema_extra={"example": 1.5})
 
     @field_validator('tags')
     @classmethod
@@ -71,4 +72,5 @@ class TradeForm(BaseModel):
             created_at=self.createdAt,
             comment=self.comment,
             tags=self.tags,
+            fee=self.fee,
         )
