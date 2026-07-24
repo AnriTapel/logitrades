@@ -1,39 +1,58 @@
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+import httpx
 
 from ..utils import _get_env_var
 
 
 class EmailService:
     def __init__(self):
-        self._smtp_host: str | None = None
-        self._smtp_port: int | None = None
-        self._smtp_user: str | None = None
-        self._smtp_password: str | None = None
+        self._api_token: str | None = None
+        self._account_id: str | None = None
         self._from_email: str | None = None
         self._frontend_url: str | None = None
 
     def _load_config(self):
         """Lazy load configuration to avoid errors during import if env vars aren't set"""
-        if self._smtp_host is None:
-            self._smtp_host = _get_env_var("SMTP_HOST")
-            self._smtp_port = int(_get_env_var("SMTP_PORT"))
-            self._smtp_user = _get_env_var("SMTP_USER")
-            self._smtp_password = _get_env_var("SMTP_PASSWORD")
+        if self._api_token is None:
+            self._api_token = _get_env_var("CLOUDFLARE_API_TOKEN")
+            self._account_id = _get_env_var("CLOUDFLARE_ACCOUNT_ID")
             self._from_email = _get_env_var("FROM_EMAIL")
             self._frontend_url = _get_env_var("FRONTEND_URL")
+
+    def _send_email(self, to_email: str, subject: str, text: str, html: str):
+        self._load_config()
+
+        url = (
+            f"https://api.cloudflare.com/client/v4/accounts/"
+            f"{self._account_id}/email/sending/send"
+        )
+        payload = {
+            "to": to_email,
+            "from": {"address": self._from_email, "name": "LogiTrades"},
+            "subject": subject,
+            "text": text,
+            "html": html,
+        }
+
+        with httpx.Client(timeout=30.0) as client:
+            response = client.post(
+                url,
+                headers={
+                    "Authorization": f"Bearer {self._api_token}",
+                    "Content-Type": "application/json",
+                },
+                json=payload,
+            )
+            response.raise_for_status()
+            body = response.json()
+            if not body.get("success", False):
+                errors = body.get("errors", [])
+                raise RuntimeError(f"Cloudflare email send failed: {errors}")
 
     def send_verification_email(self, to_email: str, token: str, username: str):
         """Send email verification link to user"""
         self._load_config()
 
         verification_url = f"{self._frontend_url}/verify-email?token={token}"
-
-        message = MIMEMultipart("alternative")
-        message["Subject"] = "Verify your email - LogiTrades"
-        message["From"] = f"LogiTrades <{self._from_email}>"
-        message["To"] = to_email
 
         text_content = f"""\
 Welcome to LogiTrades, {username}!
@@ -70,24 +89,18 @@ If you didn't create this account, please ignore this email."""
 </body>
 </html>"""
 
-        message.attach(MIMEText(text_content, "plain"))
-        message.attach(MIMEText(html_content, "html"))
-
-        with smtplib.SMTP(self._smtp_host, self._smtp_port) as server:
-            server.starttls()
-            server.login(self._smtp_user, self._smtp_password)
-            server.sendmail(self._from_email, to_email, message.as_string())
+        self._send_email(
+            to_email=to_email,
+            subject="Verify your email - LogiTrades",
+            text=text_content,
+            html=html_content,
+        )
 
     def send_password_reset_email(self, to_email: str, token: str, username: str):
         """Send password reset link to user"""
         self._load_config()
 
         reset_url = f"{self._frontend_url}/reset-password?token={token}"
-
-        message = MIMEMultipart("alternative")
-        message["Subject"] = "Reset your password - LogiTrades"
-        message["From"] = f"LogiTrades <{self._from_email}>"
-        message["To"] = to_email
 
         text_content = f"""\
 Hi {username},
@@ -124,13 +137,12 @@ If you didn't request this, please ignore this email."""
 </body>
 </html>"""
 
-        message.attach(MIMEText(text_content, "plain"))
-        message.attach(MIMEText(html_content, "html"))
-
-        with smtplib.SMTP(self._smtp_host, self._smtp_port) as server:
-            server.starttls()
-            server.login(self._smtp_user, self._smtp_password)
-            server.sendmail(self._from_email, to_email, message.as_string())
+        self._send_email(
+            to_email=to_email,
+            subject="Reset your password - LogiTrades",
+            text=text_content,
+            html=html_content,
+        )
 
 
 email_service = EmailService()
