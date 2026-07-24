@@ -18,6 +18,14 @@ export function formatTradeDateTimeLocal(iso: UtcIsoDateTime): string {
 	}).format(new Date(iso));
 }
 
+export function formatPortfolioDateLocal(iso: UtcIsoDateTime): string {
+	return new Intl.DateTimeFormat('en-US', {
+		year: 'numeric',
+		month: 'short',
+		day: 'numeric',
+	}).format(new Date(iso));
+}
+
 /** Short date-only label for calendar picker button. */
 export function formatTradeDateLocal(iso: UtcIsoDateTime): string {
 	return new Intl.DateTimeFormat('en-US', {

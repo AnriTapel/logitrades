@@ -4,7 +4,7 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
-	import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
+	import { ChevronDownIcon } from 'lucide-svelte/icons';
 	import {
 		CalendarDate,
 		CalendarDateTime,
@@ -91,7 +91,7 @@
 					<Button
 						{...props}
 						variant="outline"
-						class="w-40 justify-between font-normal"
+						class="w-40 h-9 justify-between font-normal"
 					>
 						{value ? formatTradeDateLocal(value) : placeholder}
 						<ChevronDownIcon />

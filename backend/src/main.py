@@ -25,10 +25,16 @@ from .services.trade_query_service import (
     get_trade_by_id,
     list_trades,
 )
+from .services.portfolio_service import (
+    ensure_portfolio_writable,
+    get_default_portfolio,
+    list_portfolios,
+)
 from .utils.normalize_csv_row import normalize_csv_row
 from .db import TradeORM
 from . import database
 from .routes import auth as auth_routes
+from .routes import portfolios as portfolios_routes
 from .errors import format_import_error
 
 from pydantic import ValidationError
@@ -43,7 +49,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
     allow_credentials=True,
-    allow_methods=["POST", "GET", "PUT", "DELETE", "OPTIONS"],
+    allow_methods=["POST", "GET", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -51,11 +57,37 @@ router = APIRouter()
 
 db_dependency = Annotated[Session, Depends(database.get_db)]
 
+
+def resolve_trade_portfolio_id(
+    db: Session,
+    user_id: int,
+    portfolio_id: int | None,
+) -> int:
+    if portfolio_id is not None:
+        portfolio = ensure_portfolio_writable(db, user_id, portfolio_id)
+        return portfolio.id
+
+    default = get_default_portfolio(db, user_id)
+    if default is not None and default.status != "archived":
+        return default.id
+
+    # Default missing/archived: use any other writable portfolio
+    for portfolio in list_portfolios(db, user_id):
+        if portfolio.status != "archived":
+            return portfolio.id
+
+    raise HTTPException(
+        status_code=403,
+        detail="No writable portfolio available",
+    )
+
+
 def parse_trade_list_query(
     status: str | None = Query(None, pattern="^(open|closed)$"),
     symbol: str | None = None,
     type: str | None = Query(None, pattern="^(buy|sell)$"),
     tags: list[str] | None = Query(None),
+    portfolio_id: int | None = Query(None),
     date_from: str | None = None,
     date_to: str | None = None,
     limit: int = Query(50, ge=1, le=200),
@@ -70,6 +102,7 @@ def parse_trade_list_query(
         symbol=symbol,
         type=trade_type,
         tags=tags,
+        portfolio_id=portfolio_id,
         date_from=date_from,
         date_to=date_to,
         limit=limit,
@@ -82,7 +115,13 @@ def parse_trade_list_query(
 trade_list_query_dependency = Annotated[TradeListQuery, Depends(parse_trade_list_query)]
 
 @router.post("/trades/import")
-def import_trades_from_csv(file: Annotated[UploadFile, Form()], mapping: Annotated[str, Form()], db: db_dependency, user_id: int = Depends(current_user_id)):
+def import_trades_from_csv(
+    file: Annotated[UploadFile, Form()],
+    mapping: Annotated[str, Form()],
+    db: db_dependency,
+    user_id: int = Depends(current_user_id),
+    portfolio_id: Annotated[int | None, Form()] = None,
+):
     content = file.file.read().decode('utf-8')
     fields_mapping = json.loads(mapping)
     csv_reader = csv.DictReader(io.StringIO(content))
@@ -90,8 +129,13 @@ def import_trades_from_csv(file: Annotated[UploadFile, Form()], mapping: Annotat
         try:
             trade_import = TradeImportModel(**normalize_csv_row(row, fields_mapping))
             trade = trade_import.to_trade()
+            # Prefer CSV portfolio_id, else form-selected active portfolio, else default
+            resolved_portfolio_id = resolve_trade_portfolio_id(
+                db, user_id, trade.portfolio_id if trade.portfolio_id is not None else portfolio_id
+            )
             db_trade = TradeORM(**trade.to_dict())
             db_trade.user_id = user_id
+            db_trade.portfolio_id = resolved_portfolio_id
             db.add(db_trade)
         except ValidationError as e:
             db.rollback()
@@ -105,6 +149,9 @@ def import_trades_from_csv(file: Annotated[UploadFile, Form()], mapping: Annotat
         except ValueError as e:
             db.rollback()
             raise HTTPException(status_code=400, detail=f"Row {index}: Invalid value - {str(e)}")
+        except HTTPException:
+            db.rollback()
+            raise
     db.commit()
     return {"message": "Trades imported successfully"}
 
@@ -112,8 +159,12 @@ def import_trades_from_csv(file: Annotated[UploadFile, Form()], mapping: Annotat
 def create_trade(trade_form: TradeForm, db: db_dependency, user_id: int = Depends(current_user_id)):
     try:
         trade = trade_form.to_trade()
+        resolved_portfolio_id = resolve_trade_portfolio_id(
+            db, user_id, trade.portfolio_id
+        )
         db_trade = TradeORM(**trade.to_dict())
         db_trade.user_id = user_id
+        db_trade.portfolio_id = resolved_portfolio_id
         db.add(db_trade)
         db.commit()
         db.refresh(db_trade)
@@ -126,6 +177,8 @@ def create_trade(trade_form: TradeForm, db: db_dependency, user_id: int = Depend
     except ValueError as e:
         raise HTTPException(status_code=400, detail=e.message_template)
     except Exception as e:
+        if isinstance(e, HTTPException):
+            raise e
         raise HTTPException(
             status_code=500,
             detail={"msg": "Failed to save trade"}
@@ -137,10 +190,16 @@ def update_trade(trade_id: int, trade_form: TradeForm, db: db_dependency, user_i
     if db_trade is None:
         raise HTTPException(status_code=404, detail="Trade not found")
     try:
+        # Archived portfolios are readonly — block any trade mutation
+        ensure_portfolio_writable(db, user_id, db_trade.portfolio_id)
         trade = trade_form.to_trade()
         for key, value in trade.to_dict().items():
             if key == 'created_at' or key == 'id':
                 continue
+            if key == 'portfolio_id':
+                if value is None:
+                    continue
+                ensure_portfolio_writable(db, user_id, value)
             setattr(db_trade, key, value)
         db.commit()
         db.refresh(db_trade)
@@ -153,19 +212,29 @@ def update_trade(trade_id: int, trade_form: TradeForm, db: db_dependency, user_i
     except ValueError as e:
         raise HTTPException(status_code=400, detail=e.message_template)
     except Exception as e:
+        if isinstance(e, HTTPException):
+            raise e
         raise HTTPException(
             status_code=500,
             detail={"msg": "Failed to save trade"}
         )
 
 @router.get("/trades/summary", response_model=TradeSummaryResponse)
-def read_trades_summary(db: db_dependency, user_id: int = Depends(current_user_id)):
-    return get_summary(db, user_id)
+def read_trades_summary(
+    db: db_dependency,
+    user_id: int = Depends(current_user_id),
+    portfolio_id: int | None = Query(None),
+):
+    return get_summary(db, user_id, portfolio_id)
 
 
 @router.get("/trades/facets", response_model=TradeFacetsResponse)
-def read_trades_facets(db: db_dependency, user_id: int = Depends(current_user_id)):
-    return get_facets(db, user_id)
+def read_trades_facets(
+    db: db_dependency,
+    user_id: int = Depends(current_user_id),
+    portfolio_id: int | None = Query(None),
+):
+    return get_facets(db, user_id, portfolio_id)
 
 
 @router.get("/trades", response_model=TradeListResponse)
@@ -190,11 +259,13 @@ def delete_trade(trade_id: int, db: db_dependency, user_id: int = Depends(curren
     trade = db.query(TradeORM).filter(TradeORM.id == trade_id, TradeORM.user_id == user_id).first()
     if trade is None:
         raise HTTPException(status_code=404, detail="Trade not found")
+    ensure_portfolio_writable(db, user_id, trade.portfolio_id)
     db.delete(trade)
     db.commit()
     return {"message": "Trade deleted successfully"}
 
 app.include_router(auth_routes.router, prefix="/api/v1")
+app.include_router(portfolios_routes.router, prefix="/api/v1")
 app.include_router(router, prefix="/api/v1")
 
 ErrorsHandlerService.register_exception_handlers(app)

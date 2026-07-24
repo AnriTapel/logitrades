@@ -11,10 +11,18 @@
 	import Menu from 'lucide-svelte/icons/menu';
 	import type { User } from '$lib/stores/auth';
 	import SidebarNavContent from './sidebar-nav-content.svelte';
+	import { page } from '$app/state';
+	import { activePortfolioId } from '$lib/stores/active-portfolio';
 
 	let mobileMenuOpen = $state(false);
 
 	const { userState } = $props<{ userState: User | null }>();
+
+	const portfolios = $derived(page.data.portfolios ?? []);
+	const plan = $derived(page.data.user?.plan ?? 'free');
+	const resolvedActiveId = $derived(
+		$activePortfolioId ?? page.data.activePortfolioId ?? null,
+	);
 
 	function closeMobileMenu() {
 		mobileMenuOpen = false;
@@ -62,6 +70,9 @@
 							showLogout
 							onNavigate={closeMobileMenu}
 							class="flex-1"
+							{portfolios}
+							activePortfolioId={resolvedActiveId}
+							{plan}
 						/>
 					</SheetContent>
 				</Sheet>

@@ -2,35 +2,80 @@
 	import { formatIntToCurrency } from '$lib/formatters';
 	import { localeStore } from '$lib/stores/locale';
 	import { getFinancialColor, cn } from '$lib/utils';
-	import type { TradeSummary } from '$lib/types';
+	import type { PortfolioSummary, TradeSummary } from '$lib/types';
 
-	let { summary }: { summary: TradeSummary } = $props();
+	let {
+		summary,
+		portfolioSummary = null,
+		plan = 'free',
+		isArchived = false,
+	}: {
+		summary: TradeSummary;
+		portfolioSummary?: PortfolioSummary | null;
+		plan?: string;
+		isArchived?: boolean;
+	} = $props();
 
-	const stats = $derived([
-		{
-			label: 'Open notional',
-			value: formatIntToCurrency(summary.open_notional, $localeStore.currency),
-			colorClass: 'text-[#003d6d]',
-		},
-		{
-			label: '7-Day Volume',
-			value: formatIntToCurrency(summary.volume_last_7_days, $localeStore.currency),
-			colorClass: 'text-[#1a1c1f]',
-		},
-		{
-			label: '7-Day PnL',
-			value: formatIntToCurrency(summary.pnl_last_7_days, $localeStore.currency),
-			colorClass: getFinancialColor(summary.pnl_last_7_days, 0),
-		},
-		{
-			label: 'Total PnL',
-			value: formatIntToCurrency(summary.total_pnl, $localeStore.currency),
-			colorClass: getFinancialColor(summary.total_pnl, 0),
-		},
-	]);
+	const isPro = $derived(plan === 'pro' || plan === 'max');
+
+	const stats = $derived(() => {
+		if (isPro && portfolioSummary) {
+			return [
+				{
+					label: 'Account Equity',
+					value: formatIntToCurrency(portfolioSummary.equity, $localeStore.currency),
+					colorClass: 'text-[#003d6d]',
+				},
+				{
+					label: 'Realized PnL',
+					value: formatIntToCurrency(portfolioSummary.realized_pnl, $localeStore.currency),
+					colorClass: getFinancialColor(portfolioSummary.realized_pnl, 0),
+				},
+				{
+					label: 'Open Notional',
+					value: formatIntToCurrency(portfolioSummary.open_notional, $localeStore.currency),
+					colorClass: 'text-[#003d6d]',
+				},
+				{
+					label: 'Total PnL',
+					value: formatIntToCurrency(summary.total_pnl, $localeStore.currency),
+					colorClass: getFinancialColor(summary.total_pnl, 0),
+				},
+			];
+		}
+		return [
+			{
+				label: 'Open notional',
+				value: formatIntToCurrency(summary.open_notional, $localeStore.currency),
+				colorClass: 'text-[#003d6d]',
+			},
+			{
+				label: '7-Day Volume',
+				value: formatIntToCurrency(summary.volume_last_7_days, $localeStore.currency),
+				colorClass: 'text-[#1a1c1f]',
+			},
+			{
+				label: '7-Day PnL',
+				value: formatIntToCurrency(summary.pnl_last_7_days, $localeStore.currency),
+				colorClass: getFinancialColor(summary.pnl_last_7_days, 0),
+			},
+			{
+				label: 'Total PnL',
+				value: formatIntToCurrency(summary.total_pnl, $localeStore.currency),
+				colorClass: getFinancialColor(summary.total_pnl, 0),
+			},
+		];
+	});
 </script>
 
 <section class="flex flex-col gap-8">
+	{#if isArchived}
+		<div class="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-800">
+			<span class="font-semibold">Archived portfolio</span>
+			<span class="text-amber-600">— view only. No new trades or capital changes.</span>
+		</div>
+	{/if}
+
 	<div class="flex flex-col gap-1">
 		<p class="text-[10px] font-bold uppercase tracking-[0.2em] text-[#4c6076]">
 			Your trading stats
@@ -39,7 +84,7 @@
 	</div>
 
 	<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
-		{#each stats as stat (stat.label)}
+		{#each stats() as stat (stat.label)}
 			<div
 				class="flex flex-col gap-2 rounded-lg border border-white bg-[#f3f3f7] p-6"
 			>

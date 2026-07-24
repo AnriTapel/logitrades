@@ -3,6 +3,7 @@ from sqlalchemy import Column, Integer, String, Boolean
 
 from .base import Base
 from ..domain import UserDomain
+from ..domain.portfolio.enums import SubscriptionPlan
 from ..utils import get_current_time
 
 class UserORM(Base):
@@ -15,6 +16,7 @@ class UserORM(Base):
     is_verified = Column(Boolean, default=False)
     is_active = Column(Boolean, default=True)
     created_at = Column(String, default=get_current_time)
+    plan = Column(String, nullable=False, default=SubscriptionPlan.free.value)
 
     provider = Column(String, nullable=False, default="local")
     provider_id = Column(String, nullable=True)
@@ -29,4 +31,5 @@ class UserORM(Base):
             is_verified=self.is_verified,
             is_active=self.is_active,
             created_at=datetime.fromisoformat(self.created_at.replace('Z', '+00:00')) if self.created_at else None,
+            plan=self.plan or SubscriptionPlan.free.value,
         )

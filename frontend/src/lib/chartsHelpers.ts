@@ -5,7 +5,7 @@ import {
 	totalTradedVolumeForPeriod,
 } from './calcFunctions';
 import { chartTheme } from './chart-theme';
-import type { BarChartData, LineChartData, PieChartData, Trade } from './types';
+import type { BalanceTransaction, BarChartData, LineChartData, PieChartData, Trade } from './types';
 
 /**
  *
@@ -268,6 +268,117 @@ export function createEquityCurveData(
 							backgroundColor: 'hsl(0 40% 48% / 0.22)',
 							tension: 0.4,
 							fill: '+1', // Fill to the previous dataset
+							borderWidth: 2,
+							pointRadius: 0,
+							pointHoverRadius: 4,
+						},
+					]
+				: []),
+		],
+	};
+}
+
+/**
+ * Builds a portfolio equity curve incorporating:
+ * - A starting capital deposit at startedAt (or the earliest event date)
+ * - Cash-flow events (deposits +, withdrawals -)
+ * - Closed trade PnL deltas
+ *
+ * Each unique calendar day becomes a label; equity is the running total of all
+ * events up to and including that day.  Reuses the same drawdown styling as
+ * createEquityCurveData.
+ */
+export function createPortfolioEquityCurveData(
+	trades: Trade[],
+	transactions: BalanceTransaction[],
+	startingCapital: number,
+	startedAt?: string | null,
+	timeframe: 'daily' | 'weekly' | 'monthly' = 'daily',
+): LineChartData {
+	type Event = { date: string; delta: number };
+	const events: Event[] = [];
+
+	// Closed-trade PnL events
+	for (const trade of trades) {
+		if (!trade.closedAt) continue;
+		const pnl = calcAbsolutePnl(trade);
+		if (pnl == null) continue;
+		events.push({ date: trade.closedAt.split('T')[0], delta: pnl });
+	}
+
+	// Deposit / withdrawal events
+	for (const tx of transactions) {
+		const date = tx.occurred_at.split('T')[0];
+		const delta = tx.type === 'deposit' ? tx.amount : -tx.amount;
+		events.push({ date, delta });
+	}
+
+	// Determine origin date for starting capital, then sort all events chronologically
+	const originDate =
+		startedAt
+			? startedAt.split('T')[0]
+			: events[0]?.date ?? new Date().toISOString().split('T')[0];
+	events.push({ date: originDate, delta: startingCapital });
+	events.sort((a, b) => a.date.localeCompare(b.date));
+
+	// Bucket by timeframe key
+	function toKey(dateStr: string): string {
+		const d = new Date(dateStr);
+		switch (timeframe) {
+			case 'monthly':
+				return toMonthKey(d);
+			case 'weekly': {
+				const ws = new Date(d);
+				ws.setDate(d.getDate() - d.getDay());
+				return ws.toISOString().split('T')[0];
+			}
+			default:
+				return dateStr;
+		}
+	}
+
+	const buckets = new Map<string, number>();
+	for (const ev of events) {
+		const key = toKey(ev.date);
+		buckets.set(key, (buckets.get(key) ?? 0) + ev.delta);
+	}
+
+	// Build cumulative equity
+	const sorted = Array.from(buckets.entries()).sort(([a], [b]) => a.localeCompare(b));
+	let cumulative = 0;
+	const equityData: number[] = [];
+	const labels: string[] = [];
+	for (const [key, delta] of sorted) {
+		cumulative += delta;
+		equityData.push(cumulative);
+		labels.push(timeframe === 'monthly' ? formatDateMMMYY(key) : formatDateDDMMMYY(key));
+	}
+
+	const drawdownData = calculateDrawdown(equityData);
+
+	return {
+		labels,
+		datasets: [
+			{
+				label: 'Account Equity',
+				data: equityData,
+				borderColor: financialColors.primary,
+				backgroundColor: 'hsl(209.1 65.4% 40.8% / 0.15)',
+				tension: 0.4,
+				fill: false,
+				borderWidth: 3,
+				pointRadius: 0,
+				pointHoverRadius: 6,
+			},
+			...(drawdownData.length > 0
+				? [
+						{
+							label: 'Drawdown',
+							data: drawdownData,
+							borderColor: financialColors.loss,
+							backgroundColor: 'hsl(0 40% 48% / 0.22)',
+							tension: 0.4,
+							fill: '+1',
 							borderWidth: 2,
 							pointRadius: 0,
 							pointHoverRadius: 4,

@@ -23,6 +23,7 @@ class TradeORM(Base):
     comment = Column(String, nullable=True)
     tags = Column(JSON, nullable=True)
     fee = Column(Float, nullable=True)
+    portfolio_id = Column(Integer, nullable=False, index=True)
 
     def to_domain(self) -> "TradeDomain":
         return TradeDomain(
@@ -41,4 +42,5 @@ class TradeORM(Base):
             comment=self.comment,
             tags=self.tags,
             fee=self.fee,
+            portfolio_id=self.portfolio_id,
         )

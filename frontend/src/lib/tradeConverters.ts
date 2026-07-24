@@ -25,6 +25,7 @@ export const convertApiTradeToUiTrade = (trade: ApiTrade): Trade => {
 		comment: trade.comment ?? undefined,
 		tags: trade.tags?.length ? trade.tags : undefined,
 		fee: trade.fee ?? undefined,
+		portfolioId: trade.portfolio_id ?? undefined,
 	};
 };
 

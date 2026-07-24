@@ -49,6 +49,13 @@ export class HttpClient {
 		return this.request<T, K>(url, 'PUT', options);
 	}
 
+	public async patch<T, K = null>(
+		url: string,
+		options?: HttpRequestOptions<T>,
+	): Promise<ResponseType<K>> {
+		return this.request<T, K>(url, 'PATCH', options);
+	}
+
 	public async delete<K>(
 		url: string,
 		options?: HttpRequestOptions,

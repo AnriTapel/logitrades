@@ -10,7 +10,7 @@
 	import { debounce } from '$lib/inputDebounce';
 	import { TRADES_PAGE_SIZE } from '$lib/constants/trades';
 	import { onDestroy } from 'svelte';
-	import type { Unsubscriber } from 'svelte/store';
+	import { get, type Unsubscriber } from 'svelte/store';
 
 	let {
 		initialTrades,
@@ -20,6 +20,8 @@
 		handleOpenImportDialog,
 		handleTradeDelete,
 		handleTradeEdit,
+		isArchived = false,
+		portfolioId,
 	}: {
 		initialTrades: Trade[];
 		initialTotal: number;
@@ -28,6 +30,8 @@
 		handleOpenImportDialog: () => void;
 		handleTradeDelete: (tradeId: number) => void;
 		handleTradeEdit: (tradeId: number) => void;
+		isArchived?: boolean;
+		portfolioId?: number;
 	} = $props();
 
 	let trades = $state<Trade[]>([...initialTrades]);
@@ -41,6 +45,17 @@
 		pageIndex = 0;
 	});
 
+	// Keep filter store scoped to the active portfolio across resets/refetches
+	$effect(() => {
+		openedTradeFiltersStore.update((prev) =>
+			prev.portfolioId === portfolioId ? prev : { ...prev, portfolioId },
+		);
+	});
+
+	function withPortfolio(filters: TradeFilters): TradeFilters {
+		return portfolioId != null ? { ...filters, portfolioId } : filters;
+	}
+
 	async function fetchTrades(
 		filters: TradeFilters,
 		offset: number,
@@ -49,7 +64,7 @@
 		try {
 			const result = await submitTradeFilterAction(
 				'filterOpened',
-				filters,
+				withPortfolio(filters),
 				offset,
 			);
 			trades = result.items;
@@ -87,16 +102,7 @@
 
 	function handlePageChange(nextPageIndex: number): void {
 		pageIndex = nextPageIndex;
-		let currentFilters: TradeFilters = {
-			symbol: '',
-			tradeType: 'all',
-			tags: [],
-		};
-		const unsub = openedTradeFiltersStore.subscribe((f) => {
-			currentFilters = f;
-		});
-		unsub();
-		void fetchTrades(currentFilters, nextPageIndex * TRADES_PAGE_SIZE);
+		void fetchTrades(get(openedTradeFiltersStore), nextPageIndex * TRADES_PAGE_SIZE);
 	}
 </script>
 
@@ -114,29 +120,30 @@
 				Opened trades
 			</h2>
 		</div>
-		<div class="flex flex-col sm:flex-row gap-3 shrink-0">
-			<Button
-				onclick={handleOpenImportDialog}
-				class="w-full sm:w-auto bg-[#e2e2e6] hover:bg-[#e2e2e6]/80 text-[#1a1c1f] border-0"
-			>
-				<FileUp class="size-4" />
-				Import from CSV
-			</Button>
-			<Button
-				onclick={handleOpenTradeForm}
-				class="w-full sm:w-auto bg-[#003d6d] hover:bg-[#003d6d]/90 text-white"
-			>
-				<Plus class="size-4" />
-				Add Trade
-			</Button>
-		</div>
+		{#if !isArchived}
+			<div class="flex flex-col sm:flex-row gap-3 shrink-0">
+				<Button
+					onclick={handleOpenImportDialog}
+					class="w-full sm:w-auto bg-[#e2e2e6] hover:bg-[#e2e2e6]/80 text-[#1a1c1f] border-0"
+				>
+					<FileUp class="size-4" />
+					Import from CSV
+				</Button>
+				<Button
+					onclick={handleOpenTradeForm}
+					class="w-full sm:w-auto bg-[#003d6d] hover:bg-[#003d6d]/90 text-white"
+				>
+					<Plus class="size-4" />
+					Add Trade
+				</Button>
+			</div>
+		{/if}
 	</div>
 
 	<TradeFiltersToolbar
 		filters={openedTradeFiltersStore}
 		availableTags={facets.tags}
 		dateFieldHint="Filter by opened date"
-		disabled={loading}
 	/>
 
 	<TradesDataTable

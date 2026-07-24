@@ -3,6 +3,43 @@ import type { UtcIsoDateTime } from '$lib/dates';
 export type TradeType = 'buy' | 'sell';
 /** Filter-only side value; domain trades use TradeType only. */
 export type TradeFilterType = TradeType | 'all';
+
+export type SubscriptionPlan = 'free' | 'pro' | 'max';
+
+export type PortfolioStatus = 'active' | 'archived';
+
+export interface Portfolio {
+	id: number;
+	user_id: number;
+	name: string;
+	is_default: boolean;
+	status: PortfolioStatus;
+	starting_capital: number;
+	started_at: string | null;
+	created_at: string | null;
+}
+
+export type BalanceTransaction = {
+	id: number;
+	portfolio_id: number;
+	user_id: number;
+	type: 'deposit' | 'withdrawal';
+	amount: number;
+	note: string | null;
+	occurred_at: string;
+	created_at: string | null;
+};
+
+export type PortfolioSummary = {
+	starting_capital: number;
+	started_at: string | null;
+	cash: number;
+	realized_pnl: number;
+	equity: number;
+	return_pct: number;
+	open_notional: number;
+};
+
 export interface Trade {
 	id: number;
 	symbol: string;
@@ -19,6 +56,7 @@ export interface Trade {
 	comment?: string;
 	tags?: string[];
 	fee?: number;
+	portfolioId?: number;
 }
 
 export type ApiTrade = {
@@ -37,6 +75,7 @@ export type ApiTrade = {
 	comment?: string | null;
 	tags?: string[] | null;
 	fee?: number | null;
+	portfolio_id?: number | null;
 };
 
 export type ApiTradeListResponse = {
@@ -79,6 +118,7 @@ export type TradeFilters = {
 	tags?: string[];
 	dateFrom?: string;
 	dateTo?: string;
+	portfolioId?: number;
 };
 
 // Charts types/interfaces

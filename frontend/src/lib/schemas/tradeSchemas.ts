@@ -90,6 +90,7 @@ export const tagsSchema = z
 
 export const formSchema = z.object({
 	id: z.number().optional(),
+	portfolioId: z.number().optional(),
 	createdAt: optionalUtcIsoDateTimeSchema,
 	symbol: z
 		.string()
@@ -147,5 +148,6 @@ export function createTradeFormDefaults(): TradeFormData {
 		useLeverage: false,
 		leverage: 1,
 		openedAt: toUtcIso(new Date()),
+		portfolioId: undefined,
 	};
 }

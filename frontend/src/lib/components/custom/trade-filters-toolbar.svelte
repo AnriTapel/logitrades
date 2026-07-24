@@ -34,7 +34,10 @@
 	}
 
 	function resetFilters(): void {
-		filters.set({ ...EMPTY_TRADE_FILTERS });
+		filters.update((prev) => ({
+			...EMPTY_TRADE_FILTERS,
+			portfolioId: prev.portfolioId,
+		}));
 	}
 </script>
 

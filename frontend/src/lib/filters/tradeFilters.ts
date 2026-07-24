@@ -6,6 +6,7 @@ export const EMPTY_TRADE_FILTERS: TradeFilters = {
 	tags: [],
 	dateFrom: undefined,
 	dateTo: undefined,
+	portfolioId: undefined,
 };
 
 export function normalizeTradeFilterType(
@@ -60,6 +61,9 @@ export function tradeFiltersToSearchParams(
 	if (filters.dateTo) {
 		params.set('date_to', filters.dateTo);
 	}
+	if (filters.portfolioId != null) {
+		params.set('portfolio_id', String(filters.portfolioId));
+	}
 	if (ctx.paginate === false) {
 		params.set('paginate', 'false');
 	} else {
@@ -74,12 +78,16 @@ export function searchParamsToTradeFilters(
 ): TradeFilters {
 	const tags = params.getAll('tags');
 	const typeParam = params.get('type');
+	const portfolioIdRaw = params.get('portfolio_id');
+	const portfolioId =
+		portfolioIdRaw !== null ? parseInt(portfolioIdRaw, 10) : undefined;
 	return {
 		symbol: params.get('symbol') ?? '',
 		tradeType: typeParam ? normalizeTradeFilterType(typeParam) : 'all',
 		tags: tags.length ? tags : [],
 		dateFrom: params.get('date_from') ?? undefined,
 		dateTo: params.get('date_to') ?? undefined,
+		portfolioId: portfolioId != null && !isNaN(portfolioId) ? portfolioId : undefined,
 	};
 }
 
@@ -93,6 +101,11 @@ export function tradeFiltersFromFormData(formData: FormData): TradeFilters {
 			tags = [];
 		}
 	}
+	const portfolioIdRaw = formData.get('portfolioId');
+	const portfolioId =
+		portfolioIdRaw !== null && portfolioIdRaw !== ''
+			? parseInt(String(portfolioIdRaw), 10)
+			: undefined;
 	return {
 		symbol: String(formData.get('symbol') ?? ''),
 		tradeType: normalizeTradeFilterType(
@@ -101,5 +114,6 @@ export function tradeFiltersFromFormData(formData: FormData): TradeFilters {
 		tags,
 		dateFrom: String(formData.get('dateFrom') ?? '') || undefined,
 		dateTo: String(formData.get('dateTo') ?? '') || undefined,
+		portfolioId: portfolioId != null && !isNaN(portfolioId) ? portfolioId : undefined,
 	};
 }

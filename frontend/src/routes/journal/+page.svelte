@@ -71,7 +71,12 @@
 	>
 </svelte:head>
 
-<StatsSummary summary={data.summary} />
+<StatsSummary
+	summary={data.summary}
+	portfolioSummary={data.portfolioSummary ?? null}
+	plan={data.plan ?? 'free'}
+	isArchived={data.isArchived ?? false}
+/>
 
 <OpenedTrades
 	initialTrades={data.openedTrades.items}
@@ -81,6 +86,8 @@
 	{handleTradeEdit}
 	{handleOpenTradeForm}
 	{handleOpenImportDialog}
+	isArchived={data.isArchived ?? false}
+	portfolioId={data.portfolioId}
 />
 
 <ClosedTrades
@@ -89,10 +96,16 @@
 	facets={data.facets}
 	{handleTradeDelete}
 	{handleTradeEdit}
+	isArchived={data.isArchived ?? false}
+	portfolioId={data.portfolioId}
 />
 
 {#if isImportDialogOpen}
-	<ImportDialog onCancel={handleCloseImportDialog} />
+	<ImportDialog
+		onCancel={handleCloseImportDialog}
+		portfolioId={data.portfolioId}
+		isArchived={data.isArchived ?? false}
+	/>
 {/if}
 
 {#if isTradeFormOpen}
@@ -102,5 +115,8 @@
 		existingSymbols={data.facets.symbols}
 		existingTags={data.facets.tags}
 		isEdit={data.isEditMode}
+		portfolios={data.portfolios ?? []}
+		activePortfolioId={data.portfolioId}
+		plan={data.plan ?? 'free'}
 	/>
 {/if}

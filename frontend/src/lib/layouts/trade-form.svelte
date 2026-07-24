@@ -26,14 +26,24 @@
 	import { showServerErrors } from '$lib/stores/error';
 	import type { HttpError } from '$lib/server/http-client/types';
 	import Slider from '$lib/components/ui/slider/slider.svelte';
-	import Check from '@lucide/svelte/icons/check';
-	import ChevronsUpDown from '@lucide/svelte/icons/chevrons-up-down';
-	import TrendingUp from '@lucide/svelte/icons/trending-up';
-	import TrendingDown from '@lucide/svelte/icons/trending-down';
+	import {
+		Check,
+		ChevronsUpDown,
+		TrendingDown,
+		TrendingUp,
+		X,
+	} from 'lucide-svelte/icons';
 	import { cn } from '$lib/utils';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { Badge } from '$lib/components/ui/badge';
-	import X from '@lucide/svelte/icons/x';
+
+	import type { Portfolio } from '$lib/types';
+	import {
+		Content as SelectContent,
+		Root as SelectRoot,
+		Trigger as SelectTrigger,
+		Item as SelectItem,
+	} from '$lib/components/ui/select';
 
 	let {
 		data,
@@ -41,13 +51,31 @@
 		existingTags,
 		isEdit = false,
 		onCancel,
+		portfolios = [],
+		activePortfolioId = undefined,
+		plan = 'free',
 	}: {
 		data: SuperValidated<TradeFormData>;
 		isEdit?: boolean;
 		existingSymbols: string[];
 		existingTags: string[];
 		onCancel: () => void;
+		portfolios?: Portfolio[];
+		activePortfolioId?: number;
+		plan?: string;
 	} = $props();
+
+	// Non-archived portfolios that can receive new trades
+	const selectablePortfolios = $derived(
+		portfolios.filter((p) => p.status !== 'archived'),
+	);
+	// Check if the currently active portfolio is archived
+	const activePortfolio = $derived(
+		portfolios.find(
+			(p) => p.id === ($formData.portfolioId ?? activePortfolioId),
+		) ?? null,
+	);
+	const isArchivedPortfolio = $derived(activePortfolio?.status === 'archived');
 
 	const form = superForm(data, {
 		validators: zodClient(formSchema),
@@ -242,6 +270,12 @@
 				<input type="hidden" name="createdAt" value={$formData.createdAt} />
 			{/if}
 
+			<input
+				type="hidden"
+				name="portfolioId"
+				value={$formData.portfolioId ?? activePortfolioId ?? ''}
+			/>
+
 			<section class="flex flex-col gap-6">
 				<div class="flex items-center gap-3">
 					<div class="h-4 w-1 rounded-full bg-[#003d6d]"></div>
@@ -251,6 +285,66 @@
 						Trade Setup
 					</span>
 				</div>
+
+				<!-- Portfolio selector: shown for Max plan with multiple selectable portfolios -->
+				{#if plan === 'max' && selectablePortfolios.length > 1}
+					<div class="flex flex-col gap-2">
+						<Field {form} name="portfolioId">
+							<Control>
+								<SelectRoot
+									type="single"
+									value={$formData.portfolioId?.toString()}
+									onValueChange={(value) =>
+										($formData.portfolioId = parseInt(value))}
+								>
+									<SelectTrigger
+										class="w-full border-[#e2e8f0] bg-white px-2 py-1.5 text-sm text-[#1a1c1f] shadow-none"
+										placeholder="Select a portfolio"
+									>
+										<span>{activePortfolio?.name ?? 'Select a portfolio'}</span>
+									</SelectTrigger>
+									<SelectContent>
+										{#each portfolios as portfolio (portfolio.id)}
+											{@const label =
+												portfolio.status === 'archived'
+													? `${portfolio.name} [Archived]`
+													: portfolio.name}
+											<SelectItem value={String(portfolio.id)} {label}>
+												{label}
+											</SelectItem>
+										{/each}
+									</SelectContent>
+								</SelectRoot>
+							</Control>
+
+							{#if isArchivedPortfolio}
+								<p
+									class="text-sm text-amber-600 font-medium rounded bg-amber-50 border border-amber-200 px-3 py-2"
+								>
+									This portfolio is archived. No trades can be added.
+								</p>
+							{/if}
+						</Field>
+						<!-- <label for="portfolio-select" class={fieldLabelClass}>
+							Portfolio
+						</label>
+						<select
+							id="portfolio-select"
+							class="h-11 w-full rounded border-transparent bg-[#f3f3f7] px-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#0369a1]"
+							value={$formData.portfolioId ?? activePortfolioId ?? ''}
+							onchange={(e) => {
+								const id = parseInt((e.target as HTMLSelectElement).value, 10);
+								if (!isNaN(id)) $formData.portfolioId = id;
+							}}
+						>
+							{#each selectablePortfolios as p (p.id)}
+								<option value={p.id}
+									>{p.name}{p.is_default ? ' (default)' : ''}</option
+								>
+							{/each}
+						</select> -->
+					</div>
+				{/if}
 
 				<div class="grid grid-cols-12 gap-6">
 					<Field
@@ -689,7 +783,7 @@
 						>
 							<Control>
 								{#snippet children({ props })}
-									<FormLabel class={fieldLabelClass}>Fee</FormLabel>
+									<FormLabel class={cardFieldLabelClass}>Fee</FormLabel>
 									<Input
 										{...props}
 										type="number"
@@ -859,6 +953,7 @@
 				type="submit"
 				class="bg-[#003d6d] hover:bg-[#003d6d]/90 text-white"
 				onclick={handleSubmit}
+				disabled={isArchivedPortfolio}
 			>
 				Submit Position
 			</Button>

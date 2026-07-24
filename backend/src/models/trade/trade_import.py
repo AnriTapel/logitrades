@@ -22,6 +22,7 @@ class TradeImport(BaseModel):
     closed_at: Optional[datetime] = Field(None, json_schema_extra={"example": "2023-10-05T15:30:00Z"})
     created_at: Optional[datetime] = Field(None, json_schema_extra={"example": "2023-10-01T10:00:00Z"})
     fee: Optional[float] = Field(None, json_schema_extra={"example": 1.5})
+    portfolio_id: Optional[int] = Field(None, json_schema_extra={"example": 1})
 
     @field_validator('symbol')
     @classmethod
@@ -105,4 +106,5 @@ class TradeImport(BaseModel):
             closed_at=self.closed_at,
             created_at=self.created_at,
             fee=self.fee,
+            portfolio_id=self.portfolio_id,
         )

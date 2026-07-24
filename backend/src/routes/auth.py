@@ -19,6 +19,7 @@ from ..domain import UserDomain
 from ..models import UserCreate, UserLogin, UserResponse, VerifyEmailRequest, ForgotPasswordRequest, ResetPasswordRequest
 from ..db import UserORM, RefreshTokenORM, EmailVerificationTokenORM, PasswordResetTokenORM
 from ..services import email_service
+from ..services.portfolio_service import create_default_portfolio
 from .. import database
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -49,6 +50,8 @@ async def signup(
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
+
+    create_default_portfolio(db, db_user.id)
 
     access_token, refresh_token = get_jwt_tokens_for_user(db_user.id)
 
@@ -222,7 +225,8 @@ def get_current_user_info(
         username=db_user.username,
         email=db_user.email,
         is_active=db_user.is_active,
-        is_verified=db_user.is_verified
+        is_verified=db_user.is_verified,
+        plan=db_user.plan or "free",
     )
 
 

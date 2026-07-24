@@ -2,6 +2,13 @@
 	import '../app.css';
 	import ErrorDialog from '$lib/layouts/error-dialog.svelte';
 	import { setAuth, clearAuth } from '$lib/stores/auth';
+	import {
+		resolveActivePortfolioId,
+		setActivePortfolioId,
+		syncActivePortfolioFromServer,
+	} from '$lib/stores/active-portfolio';
+	import { invalidateAll } from '$app/navigation';
+	import { browser } from '$app/environment';
 	import Sidebar from '$lib/layouts/sidebar.svelte';
 	import NavBar from '$lib/layouts/nav-bar.svelte';
 
@@ -12,6 +19,23 @@
 			setAuth(data.user);
 		} else {
 			clearAuth();
+		}
+	});
+
+	// Keep client store aligned with SSR cookie resolution. If only localStorage
+	// has a portfolio (cookie missing), promote it and refresh server loads.
+	$effect(() => {
+		if (!browser || !data.portfolios?.length) return;
+
+		if (data.activePortfolioId != null) {
+			syncActivePortfolioFromServer(data.activePortfolioId);
+			return;
+		}
+
+		const fromStorage = resolveActivePortfolioId(data.portfolios);
+		if (fromStorage != null) {
+			setActivePortfolioId(fromStorage);
+			void invalidateAll();
 		}
 	});
 </script>

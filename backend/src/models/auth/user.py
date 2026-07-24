@@ -15,3 +15,4 @@ class UserResponse(BaseModel):
     email: EmailStr
     is_active: bool
     is_verified: bool
+    plan: str = "free"

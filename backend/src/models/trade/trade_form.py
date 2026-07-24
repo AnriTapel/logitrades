@@ -27,6 +27,7 @@ class TradeForm(BaseModel):
     comment: Optional[str] = Field(None, json_schema_extra={"example": "This is a comment"})
     tags: Optional[list[str]] = Field(None, json_schema_extra={"example": ["breakout"]})
     fee: Optional[float] = Field(None, ge=0, json_schema_extra={"example": 1.5})
+    portfolioId: Optional[int] = Field(None, json_schema_extra={"example": 1})
 
     @field_validator('tags')
     @classmethod
@@ -73,4 +74,5 @@ class TradeForm(BaseModel):
             comment=self.comment,
             tags=self.tags,
             fee=self.fee,
+            portfolio_id=self.portfolioId,
         )

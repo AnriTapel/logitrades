@@ -34,6 +34,7 @@ const apiTradeFull: ApiTrade = {
 	comment: 'Breakout entry',
 	tags: ['breakout', 'scalp'],
 	fee: 2.5,
+	portfolio_id: 3,
 };
 
 const apiTradeMinimal: ApiTrade = {
@@ -75,6 +76,7 @@ const uiTradeFull: Trade = {
 	comment: 'Breakout entry',
 	tags: ['breakout', 'scalp'],
 	fee: 2.5,
+	portfolioId: 3,
 };
 
 const uiTradeNoLeverage: Trade = {
@@ -140,7 +142,24 @@ describe('convertApiTradeToUiTrade', () => {
 			comment: 'Breakout entry',
 			tags: ['breakout', 'scalp'],
 			fee: 2.5,
+			portfolioId: 3,
 		});
+	});
+
+	it('maps portfolio_id to portfolioId', () => {
+		const result = convertApiTradeToUiTrade({ ...apiTradeFull, portfolio_id: 7 });
+		expect(result.portfolioId).toBe(7);
+	});
+
+	it('returns undefined portfolioId when portfolio_id is null', () => {
+		const result = convertApiTradeToUiTrade({ ...apiTradeFull, portfolio_id: null });
+		expect(result.portfolioId).toBeUndefined();
+	});
+
+	it('returns undefined portfolioId when portfolio_id is absent', () => {
+		const { portfolio_id: _, ...rest } = apiTradeFull;
+		const result = convertApiTradeToUiTrade(rest as ApiTrade);
+		expect(result.portfolioId).toBeUndefined();
 	});
 
 	it('converts null optional fields to undefined', () => {

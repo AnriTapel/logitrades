@@ -30,6 +30,7 @@
 	import LineChart from '$lib/components/custom/charts/line-chart.svelte';
 	import {
 		createEquityCurveData,
+		createPortfolioEquityCurveData,
 		createMonthlyPnLData,
 		createTradeTypeStats,
 		getSymbolStats,
@@ -51,6 +52,14 @@
 		closedTrades = [...data.closedTrades.items];
 	});
 
+	$effect(() => {
+		dashboardFiltersStore.update((prev) =>
+			prev.portfolioId === data.portfolioId
+				? prev
+				: { ...prev, portfolioId: data.portfolioId },
+		);
+	});
+
 	const filteredClosedTrades = $derived(closedTrades);
 
 	let hasActiveFilters = $derived(
@@ -60,10 +69,36 @@
 	let maxDrawdown = $derived(calcMaxDrawdown(filteredClosedTrades));
 	let avgRiskReward = $derived(calcAverageRiskReward(filteredClosedTrades));
 
+	const isPro = $derived(data.plan === 'pro' || data.plan === 'max');
+
+	const equityCurveData = $derived.by(() => {
+		// Portfolio equity needs the full closed-trade set + full ledger.
+		// When filters are active, fall back to trade-only equity so cashflows
+		// are not mixed with a filtered PnL subset.
+		if (isPro && data.portfolioSummary && !hasActiveFilters) {
+			return createPortfolioEquityCurveData(
+				filteredClosedTrades,
+				data.transactions ?? [],
+				data.portfolioSummary.starting_capital ?? 0,
+				data.portfolioSummary.started_at ?? null,
+			);
+		}
+		return createEquityCurveData(filteredClosedTrades);
+	});
+
+	function withPortfolio(filters: TradeFilters): TradeFilters {
+		return data.portfolioId != null
+			? { ...filters, portfolioId: data.portfolioId }
+			: filters;
+	}
+
 	async function fetchDashboardTrades(filters: TradeFilters): Promise<void> {
 		loading = true;
 		try {
-			const result = await submitTradeFilterAction('filterDashboard', filters);
+			const result = await submitTradeFilterAction(
+				'filterDashboard',
+				withPortfolio(filters),
+			);
 			closedTrades = result.items;
 		} finally {
 			loading = false;
@@ -118,7 +153,6 @@
 				showSymbolFilter={false}
 				availableTags={data.facets.tags}
 				dateFieldHint="Filter by closed date"
-				disabled={loading}
 			/>
 		</div>
 
@@ -173,7 +207,7 @@
 					<p class="text-l font-bold">Equity Curve & Drawdown</p>
 					{#if filteredClosedTrades.length}
 						<LineChart
-							data={createEquityCurveData(filteredClosedTrades)}
+							data={equityCurveData}
 							showLegend={false}
 						/>
 					{:else}

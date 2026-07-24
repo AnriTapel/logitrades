@@ -11,6 +11,7 @@ class TradeListQuery(BaseModel):
     symbol: str | None = None
     type: TradeType | None = None
     tags: list[str] | None = None
+    portfolio_id: int | None = None
     # Accept YYYY-MM-DD or full ISO datetime; normalized in trade_query_service
     date_from: str | date | None = None
     date_to: str | date | None = None

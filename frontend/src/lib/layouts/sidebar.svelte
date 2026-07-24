@@ -1,5 +1,13 @@
 <script lang="ts">
 	import SidebarNavContent from './sidebar-nav-content.svelte';
+	import { page } from '$app/state';
+	import { activePortfolioId } from '$lib/stores/active-portfolio';
+
+	const portfolios = $derived(page.data.portfolios ?? []);
+	const plan = $derived(page.data.user?.plan ?? 'free');
+	const resolvedActiveId = $derived(
+		$activePortfolioId ?? page.data.activePortfolioId ?? null,
+	);
 </script>
 
 <aside
@@ -10,5 +18,9 @@
 		<span class="font-bold text-[#24567f] text-2xl tracking-tight">LogiTrades</span>
 	</a>
 
-	<SidebarNavContent />
+	<SidebarNavContent
+		{portfolios}
+		activePortfolioId={resolvedActiveId}
+		{plan}
+	/>
 </aside>

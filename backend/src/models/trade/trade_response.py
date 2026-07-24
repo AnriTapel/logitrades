@@ -19,6 +19,7 @@ class TradeResponse(BaseModel):
     comment: Optional[str]
     tags: Optional[list[str]] = None
     fee: Optional[float] = None
+    portfolio_id: Optional[int] = None
 
     class Config:
         from_attributes = True  # чтобы можно было конвертить из ORM/объектов

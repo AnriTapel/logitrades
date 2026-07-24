@@ -112,6 +112,12 @@ def _apply_type_filter(query: Query, trade_type: TradeType | None) -> Query:
     return query.filter(TradeORM.type == trade_type.value)
 
 
+def _apply_portfolio_filter(query: Query, portfolio_id: int | None) -> Query:
+    if portfolio_id is None:
+        return query
+    return query.filter(TradeORM.portfolio_id == portfolio_id)
+
+
 def _apply_tags_filter(query: Query, tags: list[str] | None) -> Query:
     if not tags:
         return query
@@ -170,6 +176,7 @@ def build_filtered_query(
     query = _apply_status_filter(query, query_params.status)
     query = _apply_symbol_filter(query, query_params.symbol)
     query = _apply_type_filter(query, query_params.type)
+    query = _apply_portfolio_filter(query, query_params.portfolio_id)
     query = _apply_tags_filter(query, query_params.tags)
     query = _apply_date_filters(
         query,
@@ -217,12 +224,16 @@ def get_trade_by_id(db: Session, user_id: int, trade_id: int) -> TradeORM | None
     )
 
 
-def get_facets(db: Session, user_id: int) -> TradeFacetsResponse:
-    rows = (
-        db.query(TradeORM.symbol, TradeORM.tags)
-        .filter(TradeORM.user_id == user_id)
-        .all()
+def get_facets(
+    db: Session,
+    user_id: int,
+    portfolio_id: int | None = None,
+) -> TradeFacetsResponse:
+    query = db.query(TradeORM.symbol, TradeORM.tags).filter(
+        TradeORM.user_id == user_id
     )
+    query = _apply_portfolio_filter(query, portfolio_id)
+    rows = query.all()
 
     symbols: set[str] = set()
     tags: set[str] = set()
@@ -240,8 +251,14 @@ def get_facets(db: Session, user_id: int) -> TradeFacetsResponse:
     )
 
 
-def get_summary(db: Session, user_id: int) -> TradeSummaryResponse:
-    rows = db.query(TradeORM).filter(TradeORM.user_id == user_id).all()
+def get_summary(
+    db: Session,
+    user_id: int,
+    portfolio_id: int | None = None,
+) -> TradeSummaryResponse:
+    query = db.query(TradeORM).filter(TradeORM.user_id == user_id)
+    query = _apply_portfolio_filter(query, portfolio_id)
+    rows = query.all()
     domains = [t.to_domain() for t in rows]
     metrics = compute_summary(domains)
     return TradeSummaryResponse(**metrics)

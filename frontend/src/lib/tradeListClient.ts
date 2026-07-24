@@ -13,6 +13,7 @@ export function filtersToFormData(filters: TradeFilters, offset = 0): FormData {
 	formData.set('tags', JSON.stringify(filters.tags ?? []));
 	if (filters.dateFrom) formData.set('dateFrom', filters.dateFrom);
 	if (filters.dateTo) formData.set('dateTo', filters.dateTo);
+	if (filters.portfolioId != null) formData.set('portfolioId', String(filters.portfolioId));
 	formData.set('offset', String(offset));
 	return formData;
 }

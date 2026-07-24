@@ -37,6 +37,7 @@ def db_session():
             closed_at=None,
             created_at="2025-06-01T10:00:00Z",
             tags=["breakout"],
+            portfolio_id=1,
         )
     )
     session.add(
@@ -51,6 +52,7 @@ def db_session():
             closed_at="2025-05-10T10:00:00Z",
             created_at="2025-05-01T10:00:00Z",
             tags=["scalp", "eth"],
+            portfolio_id=1,
         )
     )
     session.add(
@@ -64,6 +66,7 @@ def db_session():
             close_price=None,
             closed_at=None,
             created_at="2025-01-01T10:00:00Z",
+            portfolio_id=2,
         )
     )
     session.commit()
@@ -192,6 +195,7 @@ class TestFacetsAndSummary:
                 close_price=120,
                 closed_at="2025-06-02T10:00:00Z",
                 created_at="2025-06-01T10:00:00Z",
+                portfolio_id=1,
             )
         )
         db_session.commit()

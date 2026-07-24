@@ -1,6 +1,8 @@
 from .base import Base
 from .trade_orm import TradeORM
 from .user_orm import UserORM
+from .portfolio_orm import PortfolioORM
+from .balance_transaction_orm import BalanceTransactionORM
 from .refresh_token_orm import RefreshTokenORM
 from .email_verification_token_orm import EmailVerificationTokenORM, EMAIL_VERIFICATION_TOKEN_EXPIRE_SEC
 from .password_reset_token_orm import PasswordResetTokenORM, PASSWORD_RESET_TOKEN_EXPIRE_SEC

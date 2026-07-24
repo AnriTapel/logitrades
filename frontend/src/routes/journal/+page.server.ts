@@ -26,8 +26,13 @@ import type {
 	ApiTrade,
 	Trade,
 	ApiTradeListResponse,
+	PortfolioSummary,
 } from '$lib/types';
 import { TRADES_PAGE_SIZE } from '$lib/constants/trades';
+import {
+	ACTIVE_PORTFOLIO_COOKIE,
+	resolvePortfolioIdFromCookie,
+} from '$lib/portfolio/resolvePortfolioId';
 
 async function fetchTradeList(
 	fetch: typeof globalThis.fetch,
@@ -47,31 +52,59 @@ async function fetchTradeList(
 
 async function fetchFacets(
 	fetch: typeof globalThis.fetch,
+	portfolioId?: number,
 ): Promise<TradeFacets> {
+	const searchParams = portfolioId != null
+		? new URLSearchParams({ portfolio_id: String(portfolioId) })
+		: undefined;
 	const response = await httpClient.get<TradeFacets>('/trades/facets', {
 		fetch,
+		searchParams,
 	});
 	return response;
 }
 
 async function fetchSummary(
 	fetch: typeof globalThis.fetch,
+	portfolioId?: number,
 ): Promise<TradeSummary> {
+	const searchParams = portfolioId != null
+		? new URLSearchParams({ portfolio_id: String(portfolioId) })
+		: undefined;
 	const response = await httpClient.get<TradeSummary>('/trades/summary', {
 		fetch,
+		searchParams,
 	});
 	return response;
 }
 
-export const load: PageServerLoad = async ({ url, fetch, depends, parent }) => {
+async function fetchPortfolioSummary(
+	fetch: typeof globalThis.fetch,
+	portfolioId: number,
+): Promise<PortfolioSummary | null> {
+	try {
+		return await httpClient.get<PortfolioSummary>(`/portfolios/${portfolioId}/summary`, { fetch });
+	} catch {
+		return null;
+	}
+}
+
+export const load: PageServerLoad = async ({ url, fetch, depends, parent, cookies }) => {
 	depends('journal:trades');
 	depends('journal:facets');
 	depends('journal:summary');
 
-	const { isAuthenticated } = await parent();
+	const { isAuthenticated, portfolios, user } = await parent();
 	if (!isAuthenticated) {
 		throw redirect(303, '/login');
 	}
+
+	const plan = user?.plan ?? 'free';
+	const portfolioId = resolvePortfolioIdFromCookie(
+		cookies.get(ACTIVE_PORTFOLIO_COOKIE),
+		portfolios ?? [],
+	);
+	const baseFilters: TradeFilters = { symbol: '', tradeType: 'all', tags: [], portfolioId };
 
 	const tradeId = url.searchParams.get('edit');
 	const isAddMode = url.searchParams.get('add') === 'true';
@@ -79,42 +112,37 @@ export const load: PageServerLoad = async ({ url, fetch, depends, parent }) => {
 	const [openedTrades, closedTrades, facets, summary] = await Promise.all([
 		fetchTradeList(
 			fetch,
-			tradeFiltersToSearchParams(
-				{ symbol: '', tradeType: 'all', tags: [] },
-				{ status: 'open', limit: TRADES_PAGE_SIZE, offset: 0 },
-			),
+			tradeFiltersToSearchParams(baseFilters, { status: 'open', limit: TRADES_PAGE_SIZE, offset: 0 }),
 		),
 		fetchTradeList(
 			fetch,
-			tradeFiltersToSearchParams(
-				{ symbol: '', tradeType: 'all', tags: [] },
-				{ status: 'closed', limit: TRADES_PAGE_SIZE, offset: 0 },
-			),
+			tradeFiltersToSearchParams(baseFilters, { status: 'closed', limit: TRADES_PAGE_SIZE, offset: 0 }),
 		),
-		fetchFacets(fetch),
-		fetchSummary(fetch),
+		fetchFacets(fetch, portfolioId),
+		fetchSummary(fetch, portfolioId),
 	]);
+
+	const portfolioSummary =
+		(plan === 'pro' || plan === 'max') && portfolioId != null
+			? await fetchPortfolioSummary(fetch, portfolioId)
+			: null;
+
+	const activePortfolio = portfolios?.find((p) => p.id === portfolioId) ?? null;
 
 	let form;
 
 	if (tradeId) {
-		const apiTrade = await httpClient.get<ApiTrade>(`/trades/${tradeId}`, {
-			fetch,
-		});
+		const apiTrade = await httpClient.get<ApiTrade>(`/trades/${tradeId}`, { fetch });
 		const tradeToEdit = apiTrade ? convertApiTradeToUiTrade(apiTrade) : null;
 		form = tradeToEdit
-			? await superValidate(
-					convertUiTradeToTradeFormInput(tradeToEdit),
-					zod(formSchema),
-				)
-			: await superValidate(zod(formSchema), {
-					errors: false,
-					defaults: createTradeFormDefaults(),
-				});
+			? await superValidate(convertUiTradeToTradeFormInput(tradeToEdit), zod(formSchema))
+			: await superValidate(zod(formSchema), { errors: false, defaults: createTradeFormDefaults() });
 	} else {
+		const defaults = createTradeFormDefaults();
+		defaults.portfolioId = portfolioId;
 		form = await superValidate(zod(formSchema), {
 			errors: false,
-			defaults: createTradeFormDefaults(),
+			defaults,
 		});
 	}
 
@@ -123,9 +151,14 @@ export const load: PageServerLoad = async ({ url, fetch, depends, parent }) => {
 		closedTrades,
 		facets,
 		summary,
+		portfolioSummary,
 		form,
 		isEditMode: tradeId !== null,
 		isAddMode,
+		portfolioId,
+		plan,
+		isArchived: activePortfolio?.status === 'archived',
+		portfolios: portfolios ?? [],
 	};
 };
 

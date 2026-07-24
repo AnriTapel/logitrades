@@ -3,6 +3,8 @@ from typing import Optional
 
 from pydantic.v1 import EmailStr
 
+from ..portfolio.enums import SubscriptionPlan
+
 
 class UserDomain:
     def __init__(
@@ -14,6 +16,7 @@ class UserDomain:
             created_at: Optional[datetime] = None,
             is_active: bool = True,
             is_verified: bool = False,
+            plan: str = SubscriptionPlan.free.value,
     ):
         self.username = username
         self.email = email
@@ -22,6 +25,7 @@ class UserDomain:
         self.is_active = is_active
         self.id = id
         self.created_at = created_at
+        self.plan = plan
 
 
     def to_dict(self) -> dict:
@@ -33,4 +37,5 @@ class UserDomain:
             'is_active': self.is_active,
             'is_verified': self.is_verified,
             'hashed_password': self.hashed_password,
+            'plan': self.plan,
         }

@@ -7,7 +7,11 @@
 	import { Root, Trigger, Item, Content } from '$lib/components/ui/select';
 	import { deserialize } from '$app/forms';
 
-	let { onCancel = () => {} } = $props<{ onCancel: () => void }>();
+	let {
+		onCancel = () => {},
+		portfolioId = undefined,
+		isArchived = false,
+	} = $props<{ onCancel: () => void; portfolioId?: number; isArchived?: boolean }>();
 
 	let selectedFile = $state<File | null>(null);
 	let selectedFileFields = $state<string[]>([]);
@@ -99,6 +103,9 @@
 		}
 
 		formData.append('mapping', JSON.stringify(mapping));
+		if (portfolioId != null) {
+			formData.append('portfolio_id', String(portfolioId));
+		}
 
 		try {
 			const response = await fetch('?/import', {

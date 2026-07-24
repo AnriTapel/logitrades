@@ -2,14 +2,12 @@
 	import TradesDataTable from '$lib/layouts/trades-data-table.svelte';
 	import { TradeFiltersToolbar } from '$lib/components/custom';
 	import type { Trade, TradeFacets, TradeFilters } from '$lib/types';
-	import {
-		closedTradeFiltersStore,
-		setClosedTradeFilters,
-	} from '$lib/stores/closed-trade-filters';
+	import { closedTradeFiltersStore } from '$lib/stores/closed-trade-filters';
 	import { submitTradeFilterAction } from '$lib/tradeListClient';
 	import { debounce } from '$lib/inputDebounce';
 	import { TRADES_PAGE_SIZE } from '$lib/constants/trades';
 	import { onDestroy } from 'svelte';
+	import { get } from 'svelte/store';
 
 	let {
 		initialTrades,
@@ -17,12 +15,16 @@
 		facets,
 		handleTradeDelete,
 		handleTradeEdit,
+		isArchived = false,
+		portfolioId,
 	}: {
 		initialTrades: Trade[];
 		initialTotal: number;
 		facets: TradeFacets;
 		handleTradeDelete: (tradeId: number) => void;
 		handleTradeEdit: (tradeId: number) => void;
+		isArchived?: boolean;
+		portfolioId?: number;
 	} = $props();
 
 	let trades = $state<Trade[]>([...initialTrades]);
@@ -36,6 +38,16 @@
 		pageIndex = 0;
 	});
 
+	$effect(() => {
+		closedTradeFiltersStore.update((prev) =>
+			prev.portfolioId === portfolioId ? prev : { ...prev, portfolioId },
+		);
+	});
+
+	function withPortfolio(filters: TradeFilters): TradeFilters {
+		return portfolioId != null ? { ...filters, portfolioId } : filters;
+	}
+
 	async function fetchTrades(
 		filters: TradeFilters,
 		offset: number,
@@ -44,7 +56,7 @@
 		try {
 			const result = await submitTradeFilterAction(
 				'filterClosed',
-				filters,
+				withPortfolio(filters),
 				offset,
 			);
 			trades = result.items;
@@ -79,16 +91,7 @@
 
 	function handlePageChange(nextPageIndex: number): void {
 		pageIndex = nextPageIndex;
-		let currentFilters: TradeFilters = {
-			symbol: '',
-			tradeType: 'all',
-			tags: [],
-		};
-		const unsub = closedTradeFiltersStore.subscribe((f) => {
-			currentFilters = f;
-		});
-		unsub();
-		void fetchTrades(currentFilters, nextPageIndex * TRADES_PAGE_SIZE);
+		void fetchTrades(get(closedTradeFiltersStore), nextPageIndex * TRADES_PAGE_SIZE);
 	}
 </script>
 
@@ -108,7 +111,6 @@
 		filters={closedTradeFiltersStore}
 		availableTags={facets.tags}
 		dateFieldHint="Filter by closed date"
-		disabled={loading}
 	/>
 
 	<TradesDataTable

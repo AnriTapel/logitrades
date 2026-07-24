@@ -26,6 +26,7 @@ class TradeDomain:
             comment: str | None = None,
             tags: list[str] | None = None,
             fee: float | None = None,
+            portfolio_id: int | None = None,
     ):
         self.symbol = symbol
         self.type = TradeType(type) if isinstance(type, str) else type
@@ -42,6 +43,7 @@ class TradeDomain:
         self.comment = comment
         self.tags = tags if tags else None
         self.fee = fee
+        self.portfolio_id = portfolio_id
 
         validate_stop_loss(self)
         validate_take_profit(self)
@@ -65,4 +67,5 @@ class TradeDomain:
             'comment': self.comment,
             'tags': self.tags,
             'fee': self.fee,
+            'portfolio_id': self.portfolio_id,
         }
