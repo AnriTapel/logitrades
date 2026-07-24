@@ -2,6 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
+from ...domain.currency import CurrencyCode
 from ...domain.portfolio.enums import PortfolioStatus
 
 
@@ -10,3 +11,4 @@ class PortfolioUpdate(BaseModel):
     status: PortfolioStatus | None = None
     starting_capital: float | None = Field(None, ge=0)
     started_at: datetime | None = None
+    currency: CurrencyCode | None = None

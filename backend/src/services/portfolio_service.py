@@ -4,6 +4,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from ..db import BalanceTransactionORM, PortfolioORM, TradeORM, UserORM
+from ..domain.currency import DEFAULT_CURRENCY, parse_currency_code
 from ..domain.portfolio.enums import (
     PLAN_PORTFOLIO_LIMITS,
     BalanceTransactionType,
@@ -25,11 +26,44 @@ def get_user_plan(db: Session, user_id: int) -> SubscriptionPlan:
         return SubscriptionPlan.free
 
 
+def get_user_currency(db: Session, user_id: int) -> str:
+    user = db.query(UserORM).filter(UserORM.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user.currency or DEFAULT_CURRENCY
+
+
+def update_user_currency(db: Session, user_id: int, currency: str) -> UserORM:
+    try:
+        currency_code = parse_currency_code(currency)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    user = db.query(UserORM).filter(UserORM.id == user_id).first()
+    if not user or not user.is_active:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user.currency = currency_code
+    plan = get_user_plan(db, user_id)
+
+    # Free: keep default portfolio currency in sync for upgrade consistency
+    if plan == SubscriptionPlan.free:
+        default = get_default_portfolio(db, user_id)
+        if default is not None:
+            default.currency = currency_code
+
+    db.commit()
+    db.refresh(user)
+    return user
+
+
 def create_default_portfolio(
     db: Session,
     user_id: int,
     started_at: datetime | None = None,
+    currency: str | None = None,
 ) -> PortfolioORM:
+    resolved_currency = currency or get_user_currency(db, user_id)
     portfolio = PortfolioORM(
         user_id=user_id,
         name="Default",
@@ -37,6 +71,7 @@ def create_default_portfolio(
         started_at=to_utc_iso_string(started_at) if started_at else None,
         is_default=True,
         status=PortfolioStatus.active.value,
+        currency=resolved_currency,
     )
     db.add(portfolio)
     db.commit()
@@ -101,6 +136,7 @@ def create_portfolio(
     name: str,
     starting_capital: float = 0.0,
     started_at: datetime | None = None,
+    currency: str | None = None,
 ) -> PortfolioORM:
     plan = get_user_plan(db, user_id)
     limit = PLAN_PORTFOLIO_LIMITS[plan]
@@ -115,6 +151,14 @@ def create_portfolio(
             detail=f"Portfolio limit reached for {plan.value} plan ({limit})",
         )
 
+    if currency is not None:
+        try:
+            resolved_currency = parse_currency_code(currency)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+    else:
+        resolved_currency = get_user_currency(db, user_id)
+
     portfolio = PortfolioORM(
         user_id=user_id,
         name=name,
@@ -122,6 +166,7 @@ def create_portfolio(
         started_at=to_utc_iso_string(started_at) if started_at else None,
         is_default=False,
         status=PortfolioStatus.active.value,
+        currency=resolved_currency,
     )
     db.add(portfolio)
     db.commit()
@@ -137,6 +182,7 @@ def patch_portfolio(
     status: PortfolioStatus | str | None = None,
     starting_capital: float | None = None,
     started_at: datetime | None = None,
+    currency: str | None = None,
 ) -> PortfolioORM:
     portfolio = get_owned_portfolio(db, user_id, portfolio_id)
     if portfolio is None:
@@ -147,7 +193,12 @@ def patch_portfolio(
 
     if is_archived:
         if new_status == PortfolioStatus.active:
-            if name is not None or starting_capital is not None or started_at is not None:
+            if (
+                name is not None
+                or starting_capital is not None
+                or started_at is not None
+                or currency is not None
+            ):
                 raise HTTPException(
                     status_code=403,
                     detail="Archived portfolios can only be unarchived",
@@ -179,6 +230,12 @@ def patch_portfolio(
 
     if name is not None:
         portfolio.name = name
+
+    if currency is not None:
+        try:
+            portfolio.currency = parse_currency_code(str(currency))
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     if starting_capital is not None or started_at is not None:
         plan = get_user_plan(db, user_id)

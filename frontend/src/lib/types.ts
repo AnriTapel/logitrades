@@ -17,6 +17,7 @@ export interface Portfolio {
 	starting_capital: number;
 	started_at: string | null;
 	created_at: string | null;
+	currency: string;
 }
 
 export type BalanceTransaction = {

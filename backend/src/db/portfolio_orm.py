@@ -3,6 +3,7 @@ from datetime import datetime
 from sqlalchemy import Boolean, Column, Float, Integer, String
 
 from .base import Base
+from ..domain.currency import DEFAULT_CURRENCY
 from ..domain.portfolio.enums import PortfolioStatus
 from ..domain.portfolio.portfolio_domain import PortfolioDomain
 from ..utils import get_current_time
@@ -18,6 +19,7 @@ class PortfolioORM(Base):
     started_at = Column(String, nullable=True)
     is_default = Column(Boolean, nullable=False, default=False)
     status = Column(String, nullable=False, default=PortfolioStatus.active.value)
+    currency = Column(String, nullable=False, default=DEFAULT_CURRENCY)
     created_at = Column(String, default=get_current_time)
 
     def to_domain(self) -> PortfolioDomain:
@@ -33,6 +35,7 @@ class PortfolioORM(Base):
             ),
             is_default=bool(self.is_default),
             status=PortfolioStatus(self.status),
+            currency=self.currency or DEFAULT_CURRENCY,
             created_at=(
                 datetime.fromisoformat(self.created_at.replace("Z", "+00:00"))
                 if self.created_at

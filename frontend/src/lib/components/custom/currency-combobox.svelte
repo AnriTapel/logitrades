@@ -6,15 +6,26 @@
 	import * as Popover from '$lib/components/ui/popover';
 	import { Button } from '$lib/components/ui/button';
 	import { cn } from '$lib/utils';
-	import { localeStore } from '$lib/stores/locale';
+	import { localeStore, setLocaleCurrency } from '$lib/stores/locale';
 	import { CURRENCIES } from '$lib/constants/currencies';
 	import { clientLazyLoad } from '$lib/clientLazyLoad';
+	import { invalidateAll } from '$app/navigation';
+
+	let {
+		plan = 'free',
+		activePortfolioId = null,
+		disabled = false,
+	}: {
+		plan?: string;
+		activePortfolioId?: number | null;
+		disabled?: boolean;
+	} = $props();
 
 	let open = $state(false);
 	let triggerRef = $state<HTMLButtonElement | null>(null);
+	let saving = $state(false);
 
 	const currency = $derived($localeStore.currency);
-	$effect(() => console.log(currency));
 	const selectedOption = $derived(
 		CURRENCIES.find((o) => o.code === currency) ?? null,
 	);
@@ -26,9 +37,38 @@
 		});
 	}
 
-	function handleSelect(value: string) {
-		localeStore.update((s) => ({ ...s, currency: value }));
+	async function handleSelect(value: string) {
+		if (disabled || saving || value === currency) {
+			closeAndFocusTrigger();
+			return;
+		}
+
+		saving = true;
+		setLocaleCurrency(value);
 		closeAndFocusTrigger();
+
+		try {
+			const formData = new FormData();
+			formData.set('currency', value);
+			formData.set('plan', plan);
+			if (activePortfolioId != null) {
+				formData.set('portfolio_id', String(activePortfolioId));
+			}
+
+			const response = await fetch('/?/updateCurrency', {
+				method: 'POST',
+				body: formData,
+			});
+
+			if (!response.ok) {
+				await invalidateAll();
+				return;
+			}
+
+			await invalidateAll();
+		} finally {
+			saving = false;
+		}
 	}
 </script>
 
@@ -41,12 +81,18 @@
 				class="grow justify-between"
 				role="combobox"
 				aria-expanded={open}
+				disabled={disabled || saving}
 			>
 				{#if selectedOption}
-					<img
-						use:clientLazyLoad={selectedOption.flagUrl}
-						alt={selectedOption.code}
-					/>
+					{#key selectedOption.code}
+						<img
+							src={selectedOption.flagUrl}
+							alt={selectedOption.code}
+							width="20"
+							height="15"
+							class="shrink-0"
+						/>
+					{/key}
 					<span>{selectedOption.code}</span>
 				{:else}
 					<span>{currency}</span>

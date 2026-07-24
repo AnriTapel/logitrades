@@ -1,7 +1,16 @@
 export function clientLazyLoad(element: HTMLImageElement, src: string) {
+	let currentSrc = src;
+	let loaded = false;
+
+	const load = () => {
+		if (loaded && element.src === currentSrc) return;
+		element.src = currentSrc;
+		loaded = true;
+	};
+
 	const observer = new IntersectionObserver((entries) => {
 		if (entries[0].isIntersecting) {
-			element.src = src;
+			load();
 			observer.unobserve(element);
 		}
 	});
@@ -10,10 +19,15 @@ export function clientLazyLoad(element: HTMLImageElement, src: string) {
 
 	return {
 		destroy() {
-			observer.unobserve(element);
+			observer.disconnect();
 		},
-		update(src: string) {
-			element.src = src;
+		update(nextSrc: string) {
+			currentSrc = nextSrc;
+			// If already visible/loaded, swap immediately so late hydrations
+			// (e.g. currency store seed) don't leave a stale flag.
+			if (loaded) {
+				element.src = nextSrc;
+			}
 		},
 	};
 }

@@ -35,3 +35,9 @@ export const CURRENCIES = Object.entries(CURRENCY_TO_COUNTRY).map(
 
 export type Currency = (typeof CURRENCIES)[number];
 export type CurrencyCode = Currency['code'];
+
+export const DEFAULT_CURRENCY: CurrencyCode = 'USD';
+
+export const SUPPORTED_CURRENCY_CODES = new Set(
+	CURRENCIES.map((c) => c.code),
+);

@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from .enums import PortfolioStatus
+from ..currency import DEFAULT_CURRENCY
 from ...utils.datetime_utils import to_utc_iso_string
 
 
@@ -13,6 +14,7 @@ class PortfolioDomain:
         started_at: datetime | None = None,
         is_default: bool = False,
         status: PortfolioStatus = PortfolioStatus.active,
+        currency: str = DEFAULT_CURRENCY,
         id: int | None = None,
         created_at: datetime | None = None,
     ):
@@ -25,6 +27,7 @@ class PortfolioDomain:
         self.status = (
             PortfolioStatus(status) if isinstance(status, str) else status
         )
+        self.currency = currency
         self.created_at = created_at
 
     def to_dict(self) -> dict:
@@ -38,6 +41,7 @@ class PortfolioDomain:
             else None,
             "is_default": self.is_default,
             "status": self.status.value,
+            "currency": self.currency,
             "created_at": to_utc_iso_string(self.created_at)
             if self.created_at
             else None,

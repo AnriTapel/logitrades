@@ -1,5 +1,5 @@
 from .auth.auth_token import AuthToken, VerifyEmailRequest, ForgotPasswordRequest, ResetPasswordRequest
-from .auth.user import UserCreate, UserLogin, UserResponse
+from .auth.user import UserCreate, UserLogin, UserResponse, UserCurrencyUpdate
 
 from .trade.trade_form import TradeForm
 from .trade.trade_import import TradeImport

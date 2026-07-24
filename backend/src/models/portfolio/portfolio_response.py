@@ -13,6 +13,7 @@ class PortfolioResponse(BaseModel):
     started_at: datetime | None = None
     is_default: bool
     status: PortfolioStatus
+    currency: str = "USD"
     created_at: datetime | None = None
 
     class Config:

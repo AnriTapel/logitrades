@@ -3,6 +3,7 @@ from typing import Optional
 
 from pydantic.v1 import EmailStr
 
+from ..currency import DEFAULT_CURRENCY
 from ..portfolio.enums import SubscriptionPlan
 
 
@@ -17,6 +18,7 @@ class UserDomain:
             is_active: bool = True,
             is_verified: bool = False,
             plan: str = SubscriptionPlan.free.value,
+            currency: str = DEFAULT_CURRENCY,
     ):
         self.username = username
         self.email = email
@@ -26,6 +28,7 @@ class UserDomain:
         self.id = id
         self.created_at = created_at
         self.plan = plan
+        self.currency = currency
 
 
     def to_dict(self) -> dict:
@@ -38,4 +41,5 @@ class UserDomain:
             'is_verified': self.is_verified,
             'hashed_password': self.hashed_password,
             'plan': self.plan,
+            'currency': self.currency,
         }

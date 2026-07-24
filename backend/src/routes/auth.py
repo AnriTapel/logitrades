@@ -13,13 +13,23 @@ from ..auth import (
     create_auth_token,
     get_user_id_from_token,
     decode_token_unsafe,
-    create_email_verification_token
+    create_email_verification_token,
+    current_user_id,
 )
 from ..domain import UserDomain
-from ..models import UserCreate, UserLogin, UserResponse, VerifyEmailRequest, ForgotPasswordRequest, ResetPasswordRequest
+from ..domain.currency import DEFAULT_CURRENCY
+from ..models import (
+    UserCreate,
+    UserLogin,
+    UserResponse,
+    UserCurrencyUpdate,
+    VerifyEmailRequest,
+    ForgotPasswordRequest,
+    ResetPasswordRequest,
+)
 from ..db import UserORM, RefreshTokenORM, EmailVerificationTokenORM, PasswordResetTokenORM
 from ..services import email_service
-from ..services.portfolio_service import create_default_portfolio
+from ..services.portfolio_service import create_default_portfolio, update_user_currency
 from .. import database
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -227,6 +237,25 @@ def get_current_user_info(
         is_active=db_user.is_active,
         is_verified=db_user.is_verified,
         plan=db_user.plan or "free",
+        currency=db_user.currency or DEFAULT_CURRENCY,
+    )
+
+
+@router.patch("/me", response_model=UserResponse)
+def patch_current_user(
+    body: UserCurrencyUpdate,
+    db: db_dependency,
+    user_id: int = Depends(current_user_id),
+):
+    db_user = update_user_currency(db, user_id, body.currency.value)
+    return UserResponse(
+        id=db_user.id,
+        username=db_user.username,
+        email=db_user.email,
+        is_active=db_user.is_active,
+        is_verified=db_user.is_verified,
+        plan=db_user.plan or "free",
+        currency=db_user.currency or DEFAULT_CURRENCY,
     )
 
 

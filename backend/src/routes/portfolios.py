@@ -47,6 +47,7 @@ def create_portfolio(
         name=body.name,
         starting_capital=body.starting_capital,
         started_at=body.started_at,
+        currency=body.currency.value if body.currency is not None else None,
     )
     return _portfolio_response(portfolio)
 
@@ -66,6 +67,7 @@ def patch_portfolio(
         status=body.status,
         starting_capital=body.starting_capital,
         started_at=body.started_at,
+        currency=body.currency.value if body.currency is not None else None,
     )
     return _portfolio_response(portfolio)
 

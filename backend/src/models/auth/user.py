@@ -1,5 +1,8 @@
 from pydantic import BaseModel, EmailStr, Field
 
+from ...domain.currency import CurrencyCode, DEFAULT_CURRENCY
+
+
 class UserCreate(BaseModel):
     password: str = Field(..., min_length=8, max_length=32)
     username: str = Field(..., min_length=4, max_length=16)
@@ -16,3 +19,8 @@ class UserResponse(BaseModel):
     is_active: bool
     is_verified: bool
     plan: str = "free"
+    currency: str = DEFAULT_CURRENCY
+
+
+class UserCurrencyUpdate(BaseModel):
+    currency: CurrencyCode

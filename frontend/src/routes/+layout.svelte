@@ -7,6 +7,9 @@
 		setActivePortfolioId,
 		syncActivePortfolioFromServer,
 	} from '$lib/stores/active-portfolio';
+	import { setLocaleCurrency } from '$lib/stores/locale';
+	import { effectiveCurrency } from '$lib/portfolio/effectiveCurrency';
+	import { DEFAULT_CURRENCY } from '$lib/constants/currencies';
 	import { invalidateAll } from '$app/navigation';
 	import { browser } from '$app/environment';
 	import Sidebar from '$lib/layouts/sidebar.svelte';
@@ -20,6 +23,22 @@
 		} else {
 			clearAuth();
 		}
+	});
+
+	// Seed display currency from backend (active portfolio wins)
+	$effect(() => {
+		const portfolios = data.portfolios ?? [];
+		const activeId = data.activePortfolioId;
+		const activePortfolio =
+			activeId != null
+				? (portfolios.find((p) => p.id === activeId) ?? null)
+				: null;
+		setLocaleCurrency(
+			effectiveCurrency({
+				userCurrency: data.user?.currency ?? DEFAULT_CURRENCY,
+				activePortfolio,
+			}),
+		);
 	});
 
 	// Keep client store aligned with SSR cookie resolution. If only localStorage

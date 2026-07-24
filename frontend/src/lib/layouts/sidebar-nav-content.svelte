@@ -63,6 +63,9 @@
 	}
 
 	const isPro = $derived(plan === 'pro' || plan === 'max');
+	const currencyDisabled = $derived(
+		isPro && activePortfolio?.status === 'archived',
+	);
 </script>
 
 <div class={cn('flex flex-col flex-1 min-h-0', className)}>
@@ -164,7 +167,11 @@
 
 		<div class="flex items-center gap-2">
 			<span class="text-sm text-muted-foreground shrink-0">Currency:</span>
-			<CurrencyCombobox />
+			<CurrencyCombobox
+				{plan}
+				{activePortfolioId}
+				disabled={currencyDisabled}
+			/>
 		</div>
 
 		{#if showLogout}
