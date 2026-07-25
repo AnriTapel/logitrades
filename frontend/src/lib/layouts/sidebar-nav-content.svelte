@@ -8,6 +8,7 @@
 	import LayoutGrid from 'lucide-svelte/icons/layout-grid';
 	import LogOut from 'lucide-svelte/icons/log-out';
 	import Briefcase from 'lucide-svelte/icons/briefcase';
+	import Plus from 'lucide-svelte/icons/plus';
 	import { setActivePortfolioId } from '$lib/stores/active-portfolio';
 	import type { Portfolio } from '$lib/types';
 	import { Root, Trigger, Item, Content } from '$lib/components/ui/select';
@@ -20,6 +21,7 @@
 		portfolios = [],
 		activePortfolioId = null,
 		plan = 'free',
+		collapsed = false,
 		class: className = '',
 	}: {
 		onNavigate?: () => void;
@@ -27,6 +29,7 @@
 		portfolios?: Portfolio[];
 		activePortfolioId?: number | null;
 		plan?: string;
+		collapsed?: boolean;
 		class?: string;
 	} = $props();
 
@@ -66,10 +69,19 @@
 	const currencyDisabled = $derived(
 		isPro && activePortfolio?.status === 'archived',
 	);
+
+	const navLinkClass = (href: string) =>
+		cn(
+			'flex items-center rounded text-sm font-medium transition-colors',
+			collapsed ? 'justify-center px-2 py-2.5' : 'gap-3 px-3 py-2.5',
+			isActive(href)
+				? 'bg-white text-[#0369a1] shadow-sm'
+				: 'text-[#64748b] hover:text-foreground',
+		);
 </script>
 
 <div class={cn('flex flex-col flex-1 min-h-0', className)}>
-	{#if portfolios.length > 1}
+	{#if !collapsed && portfolios.length > 1}
 		<div class="mb-4">
 			<p
 				class="text-[10px] font-bold uppercase tracking-[0.15em] text-[#94a3b8] px-1 mb-1.5"
@@ -107,88 +119,100 @@
 		</div>
 	{/if}
 
-	<nav class="flex flex-col gap-1 flex-1">
+	<nav class="flex flex-col gap-1 flex-1 grow">
 		<a
 			href="/journal"
 			onclick={handleNavClick}
-			class={cn(
-				'flex items-center gap-3 rounded px-3 py-2.5 text-sm font-medium transition-colors',
-				isActive('/journal')
-					? 'bg-white text-[#0369a1] shadow-sm'
-					: 'text-[#64748b] hover:text-foreground',
-			)}
+			title="Trades"
+			class={navLinkClass('/journal')}
 		>
 			<BookOpen class="size-4 shrink-0" />
-			Trades
+			{#if !collapsed}
+				Trades
+			{/if}
 		</a>
 		<a
 			href="/dashboard"
 			onclick={handleNavClick}
-			class={cn(
-				'flex items-center gap-3 rounded px-3 py-2.5 text-sm font-medium transition-colors',
-				isActive('/dashboard')
-					? 'bg-white text-[#0369a1] shadow-sm'
-					: 'text-[#64748b] hover:text-foreground',
-			)}
+			title="Dashboard"
+			class={navLinkClass('/dashboard')}
 		>
 			<LayoutGrid class="size-4 shrink-0" />
-			Dashboard
+			{#if !collapsed}
+				Dashboard
+			{/if}
 		</a>
 		<!-- Portfolios link: shown for all authenticated users -->
 		<a
 			href="/portfolios"
 			onclick={handleNavClick}
-			class={cn(
-				'flex items-center gap-3 rounded px-3 py-2.5 text-sm font-medium transition-colors',
-				isActive('/portfolios')
-					? 'bg-white text-[#0369a1] shadow-sm'
-					: 'text-[#64748b] hover:text-foreground',
-			)}
+			title="Portfolios"
+			class={navLinkClass('/portfolios')}
 		>
 			<Briefcase class="size-4 shrink-0" />
-			Portfolios
-			{#if !isPro}
-				<span
-					class="ml-auto text-[10px] font-semibold uppercase tracking-wide text-[#94a3b8]"
-				>
-					Free
-				</span>
+			{#if !collapsed}
+				Portfolios
+				{#if !isPro}
+					<span
+						class="ml-auto text-[10px] font-semibold uppercase tracking-wide text-[#94a3b8]"
+					>
+						Free
+					</span>
+				{/if}
 			{/if}
 		</a>
-	</nav>
-
-	<div class="border-t border-[#e2e8f0] pt-4 mt-4 space-y-3 shrink-0">
-		<Button
-			class="w-full bg-[#003d6d] hover:bg-[#003d6d]/90 text-white"
-			onclick={handleAddTrade}
-		>
-			Add Trade
-		</Button>
-
-		<div class="flex items-center gap-2">
-			<span class="text-sm text-muted-foreground shrink-0">Currency:</span>
-			<CurrencyCombobox
-				{plan}
-				{activePortfolioId}
-				disabled={currencyDisabled}
-			/>
-		</div>
 
 		{#if showLogout}
-			<form action="/?/logout" method="POST">
+			<form action="/?/logout" method="POST" class="mt-auto">
 				<Button
 					type="submit"
 					variant="ghost"
-					class="w-full justify-start gap-3 px-3 text-[#64748b] hover:text-foreground"
+					class="w-full text-[#64748b] hover:text-foreground justify-start"
+					title="Log Out"
+					aria-label="Log Out"
 				>
 					<LogOut class="size-4 shrink-0" />
 					Log Out
 				</Button>
 			</form>
 		{/if}
+	</nav>
 
-		<p class="text-xs text-muted-foreground px-1">
-			&copy; 2025 – {currentYear} LogiTrades<br />All rights reserved.
-		</p>
+	<div class="border-t border-[#e2e8f0] pt-4 mt-4 space-y-3 shrink-0">
+		{#if collapsed}
+			<Button
+				size="icon"
+				class="w-full bg-[#003d6d] hover:bg-[#003d6d]/90 text-white"
+				onclick={handleAddTrade}
+				title="Add Trade"
+				aria-label="Add Trade"
+			>
+				<Plus class="size-4" />
+			</Button>
+		{:else}
+			<Button
+				class="w-full bg-[#003d6d] hover:bg-[#003d6d]/90 text-white"
+				onclick={handleAddTrade}
+			>
+				Add Trade
+			</Button>
+		{/if}
+
+		{#if !collapsed}
+			<div class="flex items-center gap-2">
+				<span class="text-sm text-muted-foreground shrink-0">Currency:</span>
+				<CurrencyCombobox
+					{plan}
+					{activePortfolioId}
+					disabled={currencyDisabled}
+				/>
+			</div>
+		{/if}
+
+		{#if !collapsed}
+			<p class="text-xs text-muted-foreground px-1">
+				&copy; 2025 – {currentYear} LogiTrades<br />All rights reserved.
+			</p>
+		{/if}
 	</div>
 </div>
