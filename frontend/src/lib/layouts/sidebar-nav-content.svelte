@@ -45,7 +45,7 @@
 
 	function handleAddTrade() {
 		onNavigate?.();
-		goto('/journal?add=true');
+		goto('/trade');
 	}
 
 	const activePortfolio = $derived(

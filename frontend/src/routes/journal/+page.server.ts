@@ -1,18 +1,6 @@
 import type { Actions, PageServerLoad } from './$types';
-import { superValidate } from 'sveltekit-superforms';
-import {
-	createTradeFormDefaults,
-	formSchema,
-	type TradeFormInput,
-} from '$lib/schemas/tradeSchemas';
 import { fail, redirect } from '@sveltejs/kit';
-import { zod } from 'sveltekit-superforms/adapters';
-import {
-	convertApiTradeListToUi,
-	convertApiTradeToUiTrade,
-	convertUiTradeToTradeFormInput,
-	normalizeTradeFormInputForApi,
-} from '$lib/tradeConverters';
+import { convertApiTradeListToUi } from '$lib/tradeConverters';
 import { httpClient } from '$lib/server/http-client/http-client';
 import {
 	tradeFiltersFromFormData,
@@ -23,7 +11,6 @@ import type {
 	TradeListResult,
 	TradeSummary,
 	TradeFilters,
-	ApiTrade,
 	Trade,
 	ApiTradeListResponse,
 	PortfolioSummary,
@@ -54,9 +41,10 @@ async function fetchFacets(
 	fetch: typeof globalThis.fetch,
 	portfolioId?: number,
 ): Promise<TradeFacets> {
-	const searchParams = portfolioId != null
-		? new URLSearchParams({ portfolio_id: String(portfolioId) })
-		: undefined;
+	const searchParams =
+		portfolioId != null
+			? new URLSearchParams({ portfolio_id: String(portfolioId) })
+			: undefined;
 	const response = await httpClient.get<TradeFacets>('/trades/facets', {
 		fetch,
 		searchParams,
@@ -68,9 +56,10 @@ async function fetchSummary(
 	fetch: typeof globalThis.fetch,
 	portfolioId?: number,
 ): Promise<TradeSummary> {
-	const searchParams = portfolioId != null
-		? new URLSearchParams({ portfolio_id: String(portfolioId) })
-		: undefined;
+	const searchParams =
+		portfolioId != null
+			? new URLSearchParams({ portfolio_id: String(portfolioId) })
+			: undefined;
 	const response = await httpClient.get<TradeSummary>('/trades/summary', {
 		fetch,
 		searchParams,
@@ -83,13 +72,22 @@ async function fetchPortfolioSummary(
 	portfolioId: number,
 ): Promise<PortfolioSummary | null> {
 	try {
-		return await httpClient.get<PortfolioSummary>(`/portfolios/${portfolioId}/summary`, { fetch });
+		return await httpClient.get<PortfolioSummary>(
+			`/portfolios/${portfolioId}/summary`,
+			{ fetch },
+		);
 	} catch {
 		return null;
 	}
 }
 
-export const load: PageServerLoad = async ({ url, fetch, depends, parent, cookies }) => {
+export const load: PageServerLoad = async ({
+	url,
+	fetch,
+	depends,
+	parent,
+	cookies,
+}) => {
 	depends('journal:trades');
 	depends('journal:facets');
 	depends('journal:summary');
@@ -104,19 +102,29 @@ export const load: PageServerLoad = async ({ url, fetch, depends, parent, cookie
 		cookies.get(ACTIVE_PORTFOLIO_COOKIE),
 		portfolios ?? [],
 	);
-	const baseFilters: TradeFilters = { symbol: '', tradeType: 'all', tags: [], portfolioId };
-
-	const tradeId = url.searchParams.get('edit');
-	const isAddMode = url.searchParams.get('add') === 'true';
+	const baseFilters: TradeFilters = {
+		symbol: '',
+		tradeType: 'all',
+		tags: [],
+		portfolioId,
+	};
 
 	const [openedTrades, closedTrades, facets, summary] = await Promise.all([
 		fetchTradeList(
 			fetch,
-			tradeFiltersToSearchParams(baseFilters, { status: 'open', limit: TRADES_PAGE_SIZE, offset: 0 }),
+			tradeFiltersToSearchParams(baseFilters, {
+				status: 'open',
+				limit: TRADES_PAGE_SIZE,
+				offset: 0,
+			}),
 		),
 		fetchTradeList(
 			fetch,
-			tradeFiltersToSearchParams(baseFilters, { status: 'closed', limit: TRADES_PAGE_SIZE, offset: 0 }),
+			tradeFiltersToSearchParams(baseFilters, {
+				status: 'closed',
+				limit: TRADES_PAGE_SIZE,
+				offset: 0,
+			}),
 		),
 		fetchFacets(fetch, portfolioId),
 		fetchSummary(fetch, portfolioId),
@@ -129,32 +137,12 @@ export const load: PageServerLoad = async ({ url, fetch, depends, parent, cookie
 
 	const activePortfolio = portfolios?.find((p) => p.id === portfolioId) ?? null;
 
-	let form;
-
-	if (tradeId) {
-		const apiTrade = await httpClient.get<ApiTrade>(`/trades/${tradeId}`, { fetch });
-		const tradeToEdit = apiTrade ? convertApiTradeToUiTrade(apiTrade) : null;
-		form = tradeToEdit
-			? await superValidate(convertUiTradeToTradeFormInput(tradeToEdit), zod(formSchema))
-			: await superValidate(zod(formSchema), { errors: false, defaults: createTradeFormDefaults() });
-	} else {
-		const defaults = createTradeFormDefaults();
-		defaults.portfolioId = portfolioId;
-		form = await superValidate(zod(formSchema), {
-			errors: false,
-			defaults,
-		});
-	}
-
 	return {
 		openedTrades,
 		closedTrades,
 		facets,
 		summary,
 		portfolioSummary,
-		form,
-		isEditMode: tradeId !== null,
-		isAddMode,
 		portfolioId,
 		plan,
 		isArchived: activePortfolio?.status === 'archived',
@@ -189,54 +177,6 @@ async function handleFilterAction(
 }
 
 export const actions = {
-	create: async ({ request, fetch }) => {
-		const form = await superValidate<TradeFormInput>(request, zod(formSchema));
-		if (!form.valid) {
-			return fail(400, {
-				form,
-				error: 'Form validation failed. Please check your input.',
-			});
-		}
-
-		try {
-			await httpClient.post<TradeFormInput, unknown>('/trades', {
-				payload: normalizeTradeFormInputForApi(form.data),
-				fetch,
-			});
-		} catch (error) {
-			return fail(500, {
-				form,
-				error,
-			});
-		}
-
-		throw redirect(303, '?');
-	},
-
-	update: async ({ request, fetch }) => {
-		const form = await superValidate(request, zod(formSchema));
-		if (!form.valid) {
-			return fail(400, {
-				form,
-				error: 'Form validation failed. Please check your input.',
-			});
-		}
-
-		try {
-			await httpClient.put<TradeFormInput>(`/trades/${form.data.id}`, {
-				payload: normalizeTradeFormInputForApi(form.data),
-				fetch,
-			});
-		} catch (error) {
-			return fail(500, {
-				form,
-				error,
-			});
-		}
-
-		throw redirect(303, '?');
-	},
-
 	delete: async ({ request, fetch }) => {
 		const formData = await request.formData();
 		const tradeId = formData.get('tradeId');

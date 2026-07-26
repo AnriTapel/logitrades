@@ -1,23 +1,13 @@
 <script lang="ts">
 	import { invalidate, goto } from '$app/navigation';
 	import type { PageData } from './$types';
-	import TradeForm from '$lib/layouts/trade-form.svelte';
 	import ImportDialog from '$lib/layouts/import-dialog.svelte';
 	import StatsSummary from '$lib/layouts/stats-summary.svelte';
 	import OpenedTrades from '../opened-trades.svelte';
 	import ClosedTrades from '../closed-trades.svelte';
 
 	let { data }: { data: PageData } = $props();
-	let isTradeFormOpen = $state(false);
 	let isImportDialogOpen = $state(false);
-
-	$effect(() => {
-		if (data.isEditMode || data.isAddMode) {
-			isTradeFormOpen = true;
-		} else {
-			isTradeFormOpen = false;
-		}
-	});
 
 	async function refreshJournalData(): Promise<void> {
 		await invalidate('journal:trades');
@@ -38,18 +28,11 @@
 	}
 
 	async function handleTradeEdit(tradeId: number) {
-		await goto(`?edit=${tradeId}`, { keepFocus: true });
-		isTradeFormOpen = true;
+		await goto(`/trade?edit=${tradeId}`);
 	}
 
 	function handleOpenTradeForm() {
-		isTradeFormOpen = true;
-		goto('?add=true', { keepFocus: true });
-	}
-
-	function handleCloseTradeForm() {
-		isTradeFormOpen = false;
-		goto('?', { keepFocus: true });
+		goto('/trade');
 	}
 
 	function handleOpenImportDialog() {
@@ -105,18 +88,5 @@
 		onCancel={handleCloseImportDialog}
 		portfolioId={data.portfolioId}
 		isArchived={data.isArchived ?? false}
-	/>
-{/if}
-
-{#if isTradeFormOpen}
-	<TradeForm
-		data={data.form}
-		onCancel={handleCloseTradeForm}
-		existingSymbols={data.facets.symbols}
-		existingTags={data.facets.tags}
-		isEdit={data.isEditMode}
-		portfolios={data.portfolios ?? []}
-		activePortfolioId={data.portfolioId}
-		plan={data.plan ?? 'free'}
 	/>
 {/if}

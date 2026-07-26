@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { tick } from 'svelte';
-	import * as Dialog from '$lib/components/ui/dialog';
+	import { goto } from '$app/navigation';
 	import * as Command from '$lib/components/ui/command';
 	import * as Popover from '$lib/components/ui/popover';
 	import Button from '$lib/components/ui/button/button.svelte';
@@ -50,7 +50,6 @@
 		existingSymbols,
 		existingTags,
 		isEdit = false,
-		onCancel,
 		portfolios = [],
 		activePortfolioId = undefined,
 		plan = 'free',
@@ -59,11 +58,24 @@
 		isEdit?: boolean;
 		existingSymbols: string[];
 		existingTags: string[];
-		onCancel: () => void;
 		portfolios?: Portfolio[];
 		activePortfolioId?: number;
 		plan?: string;
 	} = $props();
+
+	const form = superForm(data, {
+		validators: zodClient(formSchema),
+		id: 'trade-form',
+		onResult: ({ result }) => {
+			if (result.type === 'success' || result.type === 'redirect') {
+				goto('/journal');
+			} else if (result.type == 'failure') {
+				showServerErrors(result.data?.error as HttpError);
+			}
+		},
+	});
+
+	const { form: formData, enhance } = form;
 
 	// Non-archived portfolios that can receive new trades
 	const selectablePortfolios = $derived(
@@ -77,25 +89,11 @@
 	);
 	const isArchivedPortfolio = $derived(activePortfolio?.status === 'archived');
 
-	const form = superForm(data, {
-		validators: zodClient(formSchema),
-		id: 'trade-form',
-		onResult: ({ result }) => {
-			if (result.type === 'success') {
-				onCancel();
-			} else if (result.type == 'failure') {
-				showServerErrors(result.data?.error as HttpError);
-			}
-		},
-	});
-
-	const { form: formData, enhance } = form;
-
 	let symbolOpen = $state(false);
 	let symbolSearch = $state($formData.symbol ?? '');
 	let symbolTriggerRef = $state<HTMLButtonElement | null>(null);
 
-	const modalTitle = $derived(
+	const pageTitle = $derived(
 		isEdit ? `Edit Trade Note #${$formData.id}` : 'Create Trade Note',
 	);
 
@@ -107,7 +105,7 @@
 	const cardInputClass =
 		'h-10 rounded border border-[rgba(194,199,207,0.2)] bg-white';
 	const datePickerFieldClass =
-		'[&_label]:text-[10px] [&_label]:font-bold [&_label]:uppercase [&_label]:tracking-[1px] [&_label]:text-[#94a3b8] [&_button]:h-10 [&_button]:rounded [&_button]:border [&_button]:border-[rgba(194,199,207,0.2)] [&_button]:bg-white [&_input]:h-10 [&_input]:rounded [&_input]:border [&_input]:border-[rgba(194,199,207,0.2)] [&_input]:bg-white';
+		'flex flex-col gap-2 shrink-0 [&_button]:h-11 [&_button]:rounded [&_button]:border-transparent [&_button]:bg-[#f3f3f7] [&_input]:h-11 [&_input]:rounded [&_input]:border-transparent [&_input]:bg-[#f3f3f7]';
 
 	const filteredSymbolOptions = $derived.by(() => {
 		const query = symbolSearch.trim().toUpperCase();
@@ -229,13 +227,7 @@
 
 	const handleCancel = (): void => {
 		form.reset();
-		onCancel();
-	};
-
-	const handleOpenChange = (isOpen: boolean): void => {
-		if (!isOpen) {
-			handleCancel();
-		}
+		goto('/journal');
 	};
 
 	const setDecimalField = (
@@ -246,21 +238,19 @@
 	};
 </script>
 
-<Dialog.Root open onOpenChange={handleOpenChange}>
-	<Dialog.Content
-		class="h-auto max-h-[90vh] w-auto max-w-full rounded-lg min-h-0 flex flex-col sm:w-[680px]"
-	>
-		<Dialog.Header class="flex-shrink-0">
-			<Dialog.Title class="text-2xl font-bold text-[#003d6d]"
-				>{modalTitle}</Dialog.Title
-			>
-		</Dialog.Header>
+<div class="flex flex-col -m-4 sm:-m-8">
+	<div class="flex-1 overflow-y-auto px-4 py-6 sm:px-8 sm:py-8">
+		<header class="mb-8 md:mb-10">
+			<h1 class="text-2xl font-extrabold tracking-tight text-[#1a1c1f]">
+				{pageTitle}
+			</h1>
+		</header>
 
 		<form
 			method="POST"
 			use:enhance
 			action={isEdit ? '?/update' : '?/create'}
-			class="flex flex-col gap-10 py-4 px-2 overflow-y-auto flex-grow"
+			class="flex flex-col gap-10 md:gap-12"
 		>
 			{#if isEdit && $formData.id}
 				<input type="hidden" name="id" value={$formData.id} />
@@ -276,7 +266,7 @@
 				value={$formData.portfolioId ?? activePortfolioId ?? ''}
 			/>
 
-			<section class="flex flex-col gap-6">
+			<section class="flex flex-col gap-6 md:gap-8">
 				<div class="flex items-center gap-3">
 					<div class="h-4 w-1 rounded-full bg-[#003d6d]"></div>
 					<span
@@ -286,9 +276,8 @@
 					</span>
 				</div>
 
-				<!-- Portfolio selector: shown for Max plan with multiple selectable portfolios -->
 				{#if plan === 'max' && selectablePortfolios.length > 1}
-					<div class="flex flex-col gap-2">
+					<div class="flex flex-col gap-2 max-w-md">
 						<Field {form} name="portfolioId">
 							<Control>
 								<SelectRoot
@@ -325,32 +314,14 @@
 								</p>
 							{/if}
 						</Field>
-						<!-- <label for="portfolio-select" class={fieldLabelClass}>
-							Portfolio
-						</label>
-						<select
-							id="portfolio-select"
-							class="h-11 w-full rounded border-transparent bg-[#f3f3f7] px-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#0369a1]"
-							value={$formData.portfolioId ?? activePortfolioId ?? ''}
-							onchange={(e) => {
-								const id = parseInt((e.target as HTMLSelectElement).value, 10);
-								if (!isNaN(id)) $formData.portfolioId = id;
-							}}
-						>
-							{#each selectablePortfolios as p (p.id)}
-								<option value={p.id}
-									>{p.name}{p.is_default ? ' (default)' : ''}</option
-								>
-							{/each}
-						</select> -->
 					</div>
 				{/if}
 
-				<div class="grid grid-cols-12 gap-6">
+				<div class="grid grid-cols-1 gap-6 md:grid-cols-6 md:gap-8">
 					<Field
 						{form}
 						name="tradeType"
-						class="col-span-12 flex flex-col gap-2 sm:col-span-4"
+						class="flex flex-col gap-2 col-span-1 md:col-span-2"
 					>
 						<Control>
 							{#snippet children({ props })}
@@ -380,7 +351,7 @@
 					<Field
 						{form}
 						name="symbol"
-						class="col-span-6 flex flex-col gap-2 sm:col-span-4"
+						class="flex flex-col gap-2 col-span-1 md:col-span-2"
 					>
 						<Control>
 							{#snippet children({ props })}
@@ -478,7 +449,7 @@
 					<Field
 						{form}
 						name="quantity"
-						class="col-span-6 flex flex-col gap-2 sm:col-span-4"
+						class="flex flex-col gap-2 col-span-1 md:col-span-2"
 					>
 						<Control>
 							{#snippet children({ props })}
@@ -506,15 +477,169 @@
 						</FieldErrors>
 					</Field>
 
-					<Field {form} name="tags" class="col-span-12 flex flex-col gap-2">
+					<div
+						class="flex flex-col gap-4 md:gap-6 col-span-1 md:flex-row md:col-span-3 flex-wrap"
+					>
+						<Field
+							{form}
+							name="openPrice"
+							class="flex flex-col gap-2 grow-1 min-w-0 md:min-w-48"
+						>
+							<Control>
+								{#snippet children({ props })}
+									<FormLabel class={fieldLabelClass}>Open Price *</FormLabel>
+									<Input
+										{...props}
+										type="number"
+										class={filledInputClass}
+										required
+										step="0.000000001"
+										min="0.000000001"
+										placeholder="0.00"
+										value={$formData.openPrice ?? ''}
+										oninput={(e) =>
+											setDecimalField('openPrice', e.currentTarget.value)}
+									/>
+								{/snippet}
+							</Control>
+							<FieldErrors>
+								{#snippet children({ errors })}
+									<div class="text-destructive text-sm font-medium">
+										{errors[0]}
+									</div>
+								{/snippet}
+							</FieldErrors>
+						</Field>
+
+						<Field {form} name="openedAt" class={datePickerFieldClass}>
+							<Control>
+								{#snippet children({ props })}
+									<FormLabel class={fieldLabelClass}>Opened At *</FormLabel>
+									<DatePicker
+										{...props}
+										name="openedAt"
+										bind:value={$formData.openedAt}
+										withTime
+									/>
+								{/snippet}
+							</Control>
+							<FieldErrors>
+								{#snippet children({ errors })}
+									<span class="text-destructive text-sm font-medium">
+										{errors[0]}
+									</span>
+								{/snippet}
+							</FieldErrors>
+						</Field>
+					</div>
+
+					<div
+						class="flex flex-col gap-4 col-span-1 md:flex-row md:col-span-3 md:gap-6 flex-wrap"
+					>
+						<Field
+							{form}
+							name="closePrice"
+							class="flex flex-col gap-2 grow-1 min-w-0 md:min-w-48"
+						>
+							<Control>
+								{#snippet children({ props })}
+									<FormLabel class={fieldLabelClass}>Close Price</FormLabel>
+									<Input
+										{...props}
+										type="number"
+										class={filledInputClass}
+										step="0.000000001"
+										min="0.000000001"
+										placeholder="0.00"
+										bind:value={$formData.closePrice}
+									/>
+								{/snippet}
+							</Control>
+							<FieldErrors>
+								{#snippet children({ errors })}
+									<span class="text-destructive text-sm font-medium">
+										{errors[0]}
+									</span>
+								{/snippet}
+							</FieldErrors>
+						</Field>
+
+						<Field {form} name="closedAt" class={datePickerFieldClass}>
+							<Control>
+								{#snippet children({ props })}
+									<FormLabel class={fieldLabelClass}>Closed At</FormLabel>
+									<DatePicker
+										{...props}
+										name="closedAt"
+										bind:value={$formData.closedAt}
+										withTime
+									/>
+								{/snippet}
+							</Control>
+							<FieldErrors>
+								{#snippet children({ errors })}
+									<span class="text-destructive text-sm font-medium">
+										{errors[0]}
+									</span>
+								{/snippet}
+							</FieldErrors>
+						</Field>
+					</div>
+				</div>
+			</section>
+
+			<section class="flex flex-col gap-6 md:gap-8">
+				<div class="flex items-center gap-3">
+					<div class="h-4 w-1 rounded-full bg-[#003d6d]"></div>
+					<span
+						class="text-sm font-bold uppercase tracking-[1.4px] text-[#1a1c1f]"
+					>
+						Trade Details
+					</span>
+				</div>
+
+				<div class="grid grid-cols-1 gap-6 md:grid-cols-6 md:gap-8">
+					<Field
+						{form}
+						name="fee"
+						class="flex flex-col gap-2 col-span-1 md:col-span-2"
+					>
+						<Control>
+							{#snippet children({ props })}
+								<FormLabel class={fieldLabelClass}>Fee</FormLabel>
+								<Input
+									{...props}
+									type="number"
+									class={filledInputClass}
+									step="0.000000001"
+									min="0"
+									placeholder="Total fees (optional)"
+									bind:value={$formData.fee}
+								/>
+							{/snippet}
+						</Control>
+						<FieldErrors>
+							{#snippet children({ errors })}
+								<span class="text-destructive text-sm font-medium">
+									{errors[0]}
+								</span>
+							{/snippet}
+						</FieldErrors>
+					</Field>
+
+					<Field
+						{form}
+						name="tags"
+						class="flex md:col-span-2 flex-col gap-2 col-span-1 md:col-span-4"
+					>
 						<Control>
 							{#snippet children({ props })}
 								<FormLabel class={fieldLabelClass}>Tags</FormLabel>
 								{#each tradeTags as tag}
 									<input type="hidden" name="tags" value={tag} />
 								{/each}
-								<div class="grid grid-cols-12 gap-4">
-									<div class="col-span-12 sm:col-span-4">
+								<div class="grid grid-cols-1 gap-4 md:grid-cols-6">
+									<div class="md:col-span-3">
 										<Popover.Root bind:open={tagOpen}>
 											<Popover.Trigger bind:ref={tagTriggerRef}>
 												{#snippet child({ props: triggerProps })}
@@ -591,7 +716,7 @@
 										</Popover.Root>
 									</div>
 									<div
-										class="col-span-12 sm:col-span-8 flex flex-wrap items-center gap-2 min-h-11"
+										class="flex min-h-11 flex-wrap items-center gap-2 md:col-span-3"
 									>
 										{#each tradeTags as tag, index (tag)}
 											<Badge variant="outline" class="gap-1 pr-1">
@@ -627,14 +752,18 @@
 						</FieldErrors>
 					</Field>
 
-					<Field {form} name="comment" class="col-span-12 flex flex-col gap-2">
+					<Field
+						{form}
+						name="comment"
+						class="flex flex-col gap-2 col-span-1 md:col-span-6"
+					>
 						<Control>
 							{#snippet children({ props })}
 								<FormLabel class={fieldLabelClass}>Comment</FormLabel>
 								<Textarea
 									{...props}
 									class={filledInputClass + ' max-h-30'}
-									rows={3}
+									rows={4}
 									placeholder="Enter a comment for this trade"
 									bind:value={$formData.comment}
 								/>
@@ -651,163 +780,7 @@
 				</div>
 			</section>
 
-			<section class="flex flex-col gap-6">
-				<div class="flex items-center gap-3">
-					<div class="h-4 w-1 rounded-full bg-[#003d6d]"></div>
-					<span
-						class="text-sm font-bold uppercase tracking-[1.4px] text-[#1a1c1f]"
-					>
-						Entry & Exit
-					</span>
-				</div>
-
-				<div
-					class="rounded-lg border border-[rgba(194,199,207,0.1)] bg-[rgba(243,243,247,0.3)] p-[25px]"
-				>
-					<div class="grid grid-cols-12 gap-6">
-						<div class="col-span-12 flex flex-col gap-4 sm:col-span-6">
-							<Field {form} name="openPrice" class="flex flex-col gap-2">
-								<Control>
-									{#snippet children({ props })}
-										<FormLabel class={cardFieldLabelClass}
-											>Open Price *</FormLabel
-										>
-										<Input
-											{...props}
-											type="number"
-											class={cardInputClass}
-											required
-											step="0.000000001"
-											min="0.000000001"
-											placeholder="0.00"
-											value={$formData.openPrice ?? ''}
-											oninput={(e) =>
-												setDecimalField('openPrice', e.currentTarget.value)}
-										/>
-									{/snippet}
-								</Control>
-								<FieldErrors>
-									{#snippet children({ errors })}
-										<div class="text-destructive text-sm font-medium">
-											{errors[0]}
-										</div>
-									{/snippet}
-								</FieldErrors>
-							</Field>
-
-							<Field
-								{form}
-								name="openedAt"
-								class={cn('flex flex-col gap-2', datePickerFieldClass)}
-							>
-								<Control>
-									{#snippet children({ props })}
-										<DatePicker
-											{...props}
-											name="openedAt"
-											bind:value={$formData.openedAt}
-											withTime
-											label="Opened At *"
-										/>
-									{/snippet}
-								</Control>
-								<FieldErrors>
-									{#snippet children({ errors })}
-										<span class="text-destructive text-sm font-medium">
-											{errors[0]}
-										</span>
-									{/snippet}
-								</FieldErrors>
-							</Field>
-						</div>
-
-						<div
-							class="col-span-12 flex flex-col gap-4 border-l border-[rgba(194,199,207,0.1)] sm:col-span-6"
-						>
-							<Field {form} name="closePrice" class="flex flex-col gap-2">
-								<Control>
-									{#snippet children({ props })}
-										<FormLabel class={cardFieldLabelClass}
-											>Close Price</FormLabel
-										>
-										<Input
-											{...props}
-											type="number"
-											class={cardInputClass}
-											step="0.000000001"
-											min="0.000000001"
-											placeholder="0.00"
-											bind:value={$formData.closePrice}
-										/>
-									{/snippet}
-								</Control>
-								<FieldErrors>
-									{#snippet children({ errors })}
-										<span class="text-destructive text-sm font-medium">
-											{errors[0]}
-										</span>
-									{/snippet}
-								</FieldErrors>
-							</Field>
-
-							<Field
-								{form}
-								name="closedAt"
-								class={cn('flex flex-col gap-2', datePickerFieldClass)}
-							>
-								<Control>
-									{#snippet children({ props })}
-										<DatePicker
-											{...props}
-											name="closedAt"
-											bind:value={$formData.closedAt}
-											withTime
-											label="Closed At"
-										/>
-									{/snippet}
-								</Control>
-								<FieldErrors>
-									{#snippet children({ errors })}
-										<span class="text-destructive text-sm font-medium">
-											{errors[0]}
-										</span>
-									{/snippet}
-								</FieldErrors>
-							</Field>
-						</div>
-
-						<Field
-							{form}
-							name="fee"
-							class="col-span-12 flex flex-col gap-2 sm:col-span-6"
-						>
-							<Control>
-								{#snippet children({ props })}
-									<FormLabel class={cardFieldLabelClass}>Fee</FormLabel>
-									<Input
-										{...props}
-										type="number"
-										class={cardInputClass}
-										step="0.000000001"
-										min="0"
-										placeholder="Total fees (optional)"
-										bind:value={$formData.fee}
-									/>
-								{/snippet}
-							</Control>
-							<FieldErrors>
-								{#snippet children({ errors })}
-									<span class="text-destructive text-sm font-medium">
-										{errors[0]}
-									</span>
-								{/snippet}
-							</FieldErrors>
-						</Field>
-					</div>
-				</div>
-			</section>
-
-			<section class="flex flex-col gap-6">
+			<section class="flex flex-col gap-6 md:gap-8">
 				<div class="flex items-center gap-3">
 					<div class="h-4 w-1 rounded-full bg-[#003d6d]"></div>
 					<span
@@ -818,7 +791,7 @@
 				</div>
 
 				<div
-					class="rounded-lg border border-[rgba(194,199,207,0.1)] bg-[rgba(243,243,247,0.3)] p-[25px] flex flex-col gap-6"
+					class="rounded-lg border border-[rgba(194,199,207,0.1)] bg-[rgba(243,243,247,0.3)] p-5 md:p-8 flex flex-col gap-6 md:gap-8"
 				>
 					<div class="flex flex-col gap-4">
 						<div class="flex items-center justify-between">
@@ -876,12 +849,8 @@
 						</Field>
 					</div>
 
-					<div class="grid grid-cols-12 gap-6">
-						<Field
-							{form}
-							name="takeProfit"
-							class="col-span-12 flex flex-col gap-2 sm:col-span-6"
-						>
+					<div class="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
+						<Field {form} name="takeProfit" class="flex flex-col gap-2">
 							<Control>
 								{#snippet children({ props })}
 									<FormLabel class={fieldLabelClass}>Take Profit</FormLabel>
@@ -905,11 +874,7 @@
 							</FieldErrors>
 						</Field>
 
-						<Field
-							{form}
-							name="stopLoss"
-							class="col-span-12 flex flex-col gap-2 sm:col-span-6"
-						>
+						<Field {form} name="stopLoss" class="flex flex-col gap-2">
 							<Control>
 								{#snippet children({ props })}
 									<FormLabel class={fieldLabelClass}>Stop Loss</FormLabel>
@@ -936,27 +901,27 @@
 				</div>
 			</section>
 		</form>
+	</div>
 
-		<Dialog.Footer class="flex-shrink-0">
-			<Dialog.Close>
-				<Button
-					variant="ghost"
-					type="reset"
-					class="px-6 font-bold text-[#4c6076] hover:bg-transparent"
-					onclick={handleCancel}
-				>
-					Cancel
-				</Button>
-			</Dialog.Close>
+	<footer
+		class="sticky bottom-0 z-10 flex shrink-0 items-center justify-end gap-3 border-t border-[#e2e8f0]/80 bg-white/90 px-4 py-4 backdrop-blur-sm sm:px-8"
+	>
+		<Button
+			variant="ghost"
+			type="button"
+			class="px-6 font-bold text-[#4c6076] hover:bg-transparent"
+			onclick={handleCancel}
+		>
+			Cancel
+		</Button>
 
-			<Button
-				type="submit"
-				class="bg-[#003d6d] hover:bg-[#003d6d]/90 text-white"
-				onclick={handleSubmit}
-				disabled={isArchivedPortfolio}
-			>
-				Submit Position
-			</Button>
-		</Dialog.Footer>
-	</Dialog.Content>
-</Dialog.Root>
+		<Button
+			type="button"
+			class="bg-[#003d6d] hover:bg-[#003d6d]/90 text-white"
+			onclick={handleSubmit}
+			disabled={isArchivedPortfolio}
+		>
+			{isEdit ? 'Update Trade' : 'Submit Trade'}
+		</Button>
+	</footer>
+</div>

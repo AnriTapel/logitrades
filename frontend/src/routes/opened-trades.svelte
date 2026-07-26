@@ -102,7 +102,10 @@
 
 	function handlePageChange(nextPageIndex: number): void {
 		pageIndex = nextPageIndex;
-		void fetchTrades(get(openedTradeFiltersStore), nextPageIndex * TRADES_PAGE_SIZE);
+		void fetchTrades(
+			get(openedTradeFiltersStore),
+			nextPageIndex * TRADES_PAGE_SIZE,
+		);
 	}
 </script>
 
@@ -114,9 +117,7 @@
 			>
 				Trade execution log
 			</p>
-			<h2
-				class="text-2xl sm:text-[30px] font-extrabold tracking-tight text-[#1a1c1f]"
-			>
+			<h2 class="text-2xl font-extrabold tracking-tight text-[#1a1c1f]">
 				Opened trades
 			</h2>
 		</div>
