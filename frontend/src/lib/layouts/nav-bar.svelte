@@ -49,10 +49,17 @@
 				<!-- Mobile hamburger -->
 				<Sheet bind:open={mobileMenuOpen}>
 					<SheetTrigger>
-						<Button variant="outline" size="icon" class="lg:hidden">
-							<Menu class="h-5 w-5" />
-							<span class="sr-only">Open menu</span>
-						</Button>
+						{#snippet child({ props })}
+							<Button
+								{...props}
+								variant="outline"
+								size="icon"
+								class="lg:hidden"
+							>
+								<Menu class="h-5 w-5" />
+								<span class="sr-only">Open menu</span>
+							</Button>
+						{/snippet}
 					</SheetTrigger>
 					<SheetContent
 						side="right"
@@ -81,11 +88,17 @@
 				<div class="hidden lg:block">
 					<DropdownMenuRoot>
 						<DropdownMenuTrigger>
-							<Button variant="outline" class="rounded-xl h-8 w-8 p-0">
-								<span class="text-sm font-semibold">
-									{userState.username.charAt(0).toUpperCase()}
-								</span>
-							</Button>
+							{#snippet child({ props })}
+								<Button
+									{...props}
+									variant="outline"
+									class="rounded-xl h-8 w-8 p-0"
+								>
+									<span class="text-sm font-semibold">
+										{userState.username.charAt(0).toUpperCase()}
+									</span>
+								</Button>
+							{/snippet}
 						</DropdownMenuTrigger>
 						<DropdownMenuContent align="end">
 							<DropdownMenuLabel>{userState.username}</DropdownMenuLabel>

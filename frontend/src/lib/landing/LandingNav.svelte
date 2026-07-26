@@ -60,14 +60,17 @@
 			</Button>
 			<Sheet bind:open={isMenuOpen}>
 				<SheetTrigger>
-					<Button
-						variant="ghost"
-						size="icon"
-						class="h-9 w-9 text-primary lg:hidden"
-					>
-						<Menu class="h-5 w-5" />
-						<span class="sr-only">Open navigation menu</span>
-					</Button>
+					{#snippet child({ props })}
+						<Button
+							{...props}
+							variant="ghost"
+							size="icon"
+							class="h-9 w-9 text-primary lg:hidden"
+						>
+							<Menu class="h-5 w-5" />
+							<span class="sr-only">Open navigation menu</span>
+						</Button>
+					{/snippet}
 				</SheetTrigger>
 				<SheetContent side="right" class="flex w-[300px] flex-col p-0">
 					<!-- Header -->
