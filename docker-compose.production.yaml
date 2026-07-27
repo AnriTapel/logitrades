@@ -1,7 +1,6 @@
 services:
   backend:
-    build:
-      context: ./backend
+    image: ghcr.io/anritapel/logitrades-backend:latest
     env_file:
       - .env.production
     environment:
@@ -17,10 +16,7 @@ services:
       - frontend_network
 
   frontend:
-    build:
-      context: ./frontend
-      args:
-        BACKEND_API_URL: http://backend:8000
+    image: ghcr.io/anritapel/logitrades-frontend:latest
     environment:
       - BACKEND_API_URL=http://backend:8000
       - ORIGIN=${ORIGIN}
