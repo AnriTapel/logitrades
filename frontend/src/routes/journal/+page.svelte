@@ -3,11 +3,13 @@
 	import type { PageData } from './$types';
 	import ImportDialog from '$lib/layouts/import-dialog.svelte';
 	import StatsSummary from '$lib/layouts/stats-summary.svelte';
+	import ConfirmationModal from '$lib/components/custom/confirmation-modal.svelte';
 	import OpenedTrades from '../opened-trades.svelte';
 	import ClosedTrades from '../closed-trades.svelte';
 
 	let { data }: { data: PageData } = $props();
 	let isImportDialogOpen = $state(false);
+	let confirmDeleteTradeId = $state<number | null>(null);
 
 	async function refreshJournalData(): Promise<void> {
 		await invalidate('journal:trades');
@@ -15,7 +17,20 @@
 		await invalidate('journal:summary');
 	}
 
-	async function handleTradeDelete(tradeId: number) {
+	function handleTradeDelete(tradeId: number) {
+		confirmDeleteTradeId = tradeId;
+	}
+
+	function handleRejectTradeDelete() {
+		confirmDeleteTradeId = null;
+	}
+
+	async function handleConfirmTradeDelete() {
+		const tradeId = confirmDeleteTradeId;
+		if (tradeId == null) return;
+
+		confirmDeleteTradeId = null;
+
 		const formData = new FormData();
 		formData.append('tradeId', tradeId.toString());
 
@@ -90,3 +105,13 @@
 		isArchived={data.isArchived ?? false}
 	/>
 {/if}
+
+<ConfirmationModal
+	open={confirmDeleteTradeId != null}
+	title="Delete trade"
+	message="Are you sure you want to delete this trade? This cannot be undone."
+	confirmButtonText="Delete"
+	rejectButtonText="Cancel"
+	onConfirm={handleConfirmTradeDelete}
+	onReject={handleRejectTradeDelete}
+/>

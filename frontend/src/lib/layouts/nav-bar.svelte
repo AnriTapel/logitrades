@@ -8,6 +8,7 @@
 		Label as DropdownMenuLabel,
 	} from '$lib/components/ui/dropdown-menu';
 	import { Sheet, SheetContent, SheetTrigger } from '$lib/components/ui/sheet';
+	import ConfirmationModal from '$lib/components/custom/confirmation-modal.svelte';
 	import Menu from 'lucide-svelte/icons/menu';
 	import type { User } from '$lib/stores/auth';
 	import SidebarNavContent from './sidebar-nav-content.svelte';
@@ -15,6 +16,7 @@
 	import { activePortfolioId } from '$lib/stores/active-portfolio';
 
 	let mobileMenuOpen = $state(false);
+	let logoutConfirmOpen = $state(false);
 
 	const { userState } = $props<{ userState: User | null }>();
 
@@ -26,6 +28,23 @@
 
 	function closeMobileMenu() {
 		mobileMenuOpen = false;
+	}
+
+	function handleOpenLogoutConfirm() {
+		logoutConfirmOpen = true;
+	}
+
+	function handleRejectLogout() {
+		logoutConfirmOpen = false;
+	}
+
+	function handleConfirmLogout() {
+		logoutConfirmOpen = false;
+		const form = document.createElement('form');
+		form.method = 'POST';
+		form.action = '/?/logout';
+		document.body.appendChild(form);
+		form.submit();
 	}
 </script>
 
@@ -102,17 +121,24 @@
 						</DropdownMenuTrigger>
 						<DropdownMenuContent align="end">
 							<DropdownMenuLabel>{userState.username}</DropdownMenuLabel>
-							<DropdownMenuItem>
-								<form action="/?/logout" method="POST">
-									<Button type="submit" variant="link" class="p-0 h-auto">
-										Logout
-									</Button>
-								</form>
+							<DropdownMenuItem onclick={handleOpenLogoutConfirm}>
+								Logout
 							</DropdownMenuItem>
 						</DropdownMenuContent>
 					</DropdownMenuRoot>
 				</div>
 			</div>
+
+			<ConfirmationModal
+				open={logoutConfirmOpen}
+				title="Log out"
+				message="Are you sure you want to log out?"
+				confirmButtonText="Log out"
+				rejectButtonText="Cancel"
+				confirmVariant="default"
+				onConfirm={handleConfirmLogout}
+				onReject={handleRejectLogout}
+			/>
 		{:else}
 			<a href="/" class="flex items-center gap-2 shrink-0">
 				<img src="/logo.svg" alt="LogiTrades" class="h-10 w-10" />

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import * as Dialog from '$lib/components/ui/dialog';
 	import type { Snippet } from 'svelte';
-	import Button from '../button/button.svelte';
+	import Button, { type ButtonVariant } from '../button/button.svelte';
 	import { cn } from '$lib/utils';
 
 	let {
@@ -10,6 +10,7 @@
 		subtitle = '',
 		cancelText = 'Cancel',
 		submitText = 'Submit',
+		submitVariant = 'default' as ButtonVariant,
 		showCancel = true,
 		showSubmit = true,
 		disabled = false,
@@ -23,6 +24,7 @@
 		subtitle?: string;
 		cancelText?: string;
 		submitText?: string;
+		submitVariant?: ButtonVariant;
 		showCancel?: boolean;
 		showSubmit?: boolean;
 		disabled?: boolean;
@@ -75,7 +77,7 @@
 			{#if showSubmit}
 				<Button
 					type="submit"
-					variant="default"
+					variant={submitVariant}
 					onclick={handleSubmit}
 					{disabled}
 				>

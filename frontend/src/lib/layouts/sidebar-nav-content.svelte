@@ -3,6 +3,7 @@
 	import { goto, invalidateAll } from '$app/navigation';
 	import { Button } from '$lib/components/ui/button';
 	import CurrencyCombobox from '$lib/components/custom/currency-combobox.svelte';
+	import ConfirmationModal from '$lib/components/custom/confirmation-modal.svelte';
 	import { cn } from '$lib/utils';
 	import BookOpen from 'lucide-svelte/icons/book-open';
 	import LayoutGrid from 'lucide-svelte/icons/layout-grid';
@@ -33,6 +34,8 @@
 		class?: string;
 	} = $props();
 
+	let logoutConfirmOpen = $state(false);
+
 	const pathname = $derived(page.url.pathname);
 
 	function isActive(href: string): boolean {
@@ -46,6 +49,23 @@
 	function handleAddTrade() {
 		onNavigate?.();
 		goto('/trade');
+	}
+
+	function handleOpenLogoutConfirm() {
+		logoutConfirmOpen = true;
+	}
+
+	function handleRejectLogout() {
+		logoutConfirmOpen = false;
+	}
+
+	function handleConfirmLogout() {
+		logoutConfirmOpen = false;
+		const form = document.createElement('form');
+		form.method = 'POST';
+		form.action = '/?/logout';
+		document.body.appendChild(form);
+		form.submit();
 	}
 
 	const activePortfolio = $derived(
@@ -163,18 +183,17 @@
 		</a>
 
 		{#if showLogout}
-			<form action="/?/logout" method="POST" class="mt-auto">
-				<Button
-					type="submit"
-					variant="ghost"
-					class="w-full text-[#64748b] hover:text-foreground justify-start"
-					title="Log Out"
-					aria-label="Log Out"
-				>
-					<LogOut class="size-4 shrink-0" />
-					Log Out
-				</Button>
-			</form>
+			<Button
+				type="button"
+				variant="ghost"
+				class="mt-auto w-full text-[#64748b] hover:text-foreground justify-start"
+				title="Log Out"
+				aria-label="Log Out"
+				onclick={handleOpenLogoutConfirm}
+			>
+				<LogOut class="size-4 shrink-0" />
+				Log Out
+			</Button>
 		{/if}
 	</nav>
 
@@ -216,3 +235,16 @@
 		{/if}
 	</div>
 </div>
+
+{#if showLogout}
+	<ConfirmationModal
+		open={logoutConfirmOpen}
+		title="Log out"
+		message="Are you sure you want to log out?"
+		confirmButtonText="Log out"
+		rejectButtonText="Cancel"
+		confirmVariant="default"
+		onConfirm={handleConfirmLogout}
+		onReject={handleRejectLogout}
+	/>
+{/if}

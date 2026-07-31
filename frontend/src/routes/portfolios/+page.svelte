@@ -18,6 +18,7 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import DateTimePicker from '$lib/components/custom/date-time-picker.svelte';
+	import ConfirmationModal from '$lib/components/custom/confirmation-modal.svelte';
 	import {
 		Root as RadioGroupRoot,
 		Item as RadioGroupItem,
@@ -51,6 +52,27 @@
 
 	// Delete confirm state
 	let confirmDeleteId = $state<number | null>(null);
+
+	function handleRejectPortfolioDelete() {
+		confirmDeleteId = null;
+	}
+
+	async function handleConfirmPortfolioDelete() {
+		const portfolioId = confirmDeleteId;
+		if (portfolioId == null) return;
+
+		confirmDeleteId = null;
+
+		const formData = new FormData();
+		formData.append('id', portfolioId.toString());
+
+		await fetch('?/delete', {
+			method: 'POST',
+			body: formData,
+		});
+
+		await invalidateAll();
+	}
 
 	function startRename(p: Portfolio) {
 		renamingId = p.id;
@@ -318,45 +340,16 @@
 							{/if}
 
 							{#if !portfolio.is_default}
-								{#if confirmDeleteId === portfolio.id}
-									<span class="text-xs text-destructive mr-1">Delete?</span>
-									<form
-										method="POST"
-										action="?/delete"
-										use:enhance={() => {
-											return async ({ result, update }) => {
-												confirmDeleteId = null;
-												if (result.type === 'success') await update();
-											};
-										}}
-									>
-										<input type="hidden" name="id" value={portfolio.id} />
-										<Button
-											variant="link"
-											size="sm"
-											type="submit"
-											class="h-auto p-0 text-xs text-destructive">Yes</Button
-										>
-									</form>
-									<Button
-										variant="link"
-										size="sm"
-										type="button"
-										class="h-auto p-0 text-xs text-[#64748b]"
-										onclick={() => (confirmDeleteId = null)}>No</Button
-									>
-								{:else}
-									<Button
-										variant="ghost"
-										size="sm"
-										type="button"
-										class="h-8 w-8 p-0 text-[#64748b]"
-										title="Delete"
-										onclick={() => (confirmDeleteId = portfolio.id)}
-									>
-										<Trash2 class="size-3.5" />
-									</Button>
-								{/if}
+								<Button
+									variant="ghost"
+									size="sm"
+									type="button"
+									class="h-8 w-8 p-0 text-[#64748b]"
+									title="Delete"
+									onclick={() => (confirmDeleteId = portfolio.id)}
+								>
+									<Trash2 class="size-3.5" />
+								</Button>
 							{/if}
 						</div>
 					{:else}
@@ -766,3 +759,13 @@
 		</div>
 	{/if}
 </section>
+
+<ConfirmationModal
+	open={confirmDeleteId != null}
+	title="Delete portfolio"
+	message="Are you sure you want to delete this portfolio? This cannot be undone."
+	confirmButtonText="Delete"
+	rejectButtonText="Cancel"
+	onConfirm={handleConfirmPortfolioDelete}
+	onReject={handleRejectPortfolioDelete}
+/>
