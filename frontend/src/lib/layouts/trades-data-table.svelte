@@ -11,7 +11,6 @@
 	import type { Trade } from '$lib/types';
 	import ArrowUpDown from 'lucide-svelte/icons/arrow-up-down';
 	import { Button } from '$lib/components/ui/button';
-	import Loader2 from 'lucide-svelte/icons/loader-2';
 
 	const {
 		trades,
@@ -39,9 +38,7 @@
 		onPageChange?: (pageIndex: number) => void;
 	} = $props();
 
-	let sorting = $state<SortingState>([
-		{ id: 'tradeDates', desc: true },
-	]);
+	let sorting = $state<SortingState>([{ id: 'tradeDates', desc: true }]);
 
 	const pageCount = $derived(Math.max(1, Math.ceil(total / pageSize)));
 	const canPreviousPage = $derived(pageIndex > 0);
@@ -51,55 +48,53 @@
 		createColumns(onEdit, onDelete, $localeStore.currency),
 	);
 
-	const table = $derived(
-		createSvelteTable({
-			data: trades,
-			columns,
-			pageCount,
-			manualPagination: true,
-			getCoreRowModel: getCoreRowModel(),
-			getSortedRowModel: getSortedRowModel(),
-			onSortingChange: (updater) => {
-				if (typeof updater === 'function') {
-					sorting = updater(sorting);
-				} else {
-					sorting = updater;
-				}
+	const table = createSvelteTable({
+		get data() {
+			return trades;
+		},
+		get columns() {
+			return columns;
+		},
+		get pageCount() {
+			return pageCount;
+		},
+		manualPagination: true,
+		getCoreRowModel: getCoreRowModel(),
+		getSortedRowModel: getSortedRowModel(),
+		getRowId: (row) => String(row.id),
+		onSortingChange: (updater) => {
+			if (typeof updater === 'function') {
+				sorting = updater(sorting);
+			} else {
+				sorting = updater;
+			}
+		},
+		onPaginationChange: (updater) => {
+			const current = { pageIndex, pageSize };
+			const next = typeof updater === 'function' ? updater(current) : updater;
+			onPageChange?.(next.pageIndex);
+		},
+		state: {
+			get sorting() {
+				return sorting;
 			},
-			onPaginationChange: (updater) => {
-				const current = { pageIndex, pageSize };
-				const next = typeof updater === 'function' ? updater(current) : updater;
-				onPageChange?.(next.pageIndex);
+			get pagination() {
+				return { pageIndex, pageSize };
 			},
-			state: {
-				get sorting() {
-					return sorting;
-				},
-				get pagination() {
-					return { pageIndex, pageSize };
-				},
-			},
-		}),
-	);
+		},
+	});
 </script>
 
 <div class="w-full space-y-3 md:space-y-4">
-	{#if loading}
-		<div class="flex items-center gap-2 text-sm text-muted-foreground">
-			<Loader2 class="size-4 animate-spin" />
-			<span>Loading trades...</span>
-		</div>
-	{/if}
-
 	<div
 		class="rounded-md border relative overflow-x-auto overflow-y-auto"
 		style={styling?.maxBodyHeight ? `max-height: ${styling.maxBodyHeight}` : ''}
 	>
 		<Table.Root noWrapper class="min-w-[640px]">
 			<Table.Header class="sticky top-0 bg-background z-10">
-				{#each table.getHeaderGroups() as headerGroup}
+				{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
 					<Table.Row>
-						{#each headerGroup.headers as header}
+						{#each headerGroup.headers as header (header.id)}
 							<Table.Head class="whitespace-nowrap">
 								{#if !header.isPlaceholder}
 									{#if header.column.getCanSort()}
@@ -136,28 +131,31 @@
 				{/each}
 			</Table.Header>
 
-			{#if table.getRowModel().rows.length === 0}
-				<caption class="p-8 mb-4 text-sm text-muted-foreground">
-					{noTradesMessage}
-				</caption>
-			{:else}
-				<Table.Body>
-					{#each table.getRowModel().rows as row}
-						<Table.Row
-							data-state={row.getIsSelected() ? 'selected' : undefined}
+			<Table.Body>
+				{#each table.getRowModel().rows as row (row.id)}
+					<Table.Row
+						data-state={row.getIsSelected() ? 'selected' : undefined}
+					>
+						{#each row.getVisibleCells() as cell (cell.id)}
+							<Table.Cell>
+								<FlexRender
+									content={cell.column.columnDef.cell}
+									context={cell.getContext()}
+								/>
+							</Table.Cell>
+						{/each}
+					</Table.Row>
+				{:else}
+					<Table.Row>
+						<Table.Cell
+							colspan={columns.length}
+							class="h-24 text-center text-muted-foreground"
 						>
-							{#each row.getVisibleCells() as cell}
-								<Table.Cell>
-									<FlexRender
-										content={cell.column.columnDef.cell}
-										context={cell.getContext()}
-									/>
-								</Table.Cell>
-							{/each}
-						</Table.Row>
-					{/each}
-				</Table.Body>
-			{/if}
+							{noTradesMessage}
+						</Table.Cell>
+					</Table.Row>
+				{/each}
+			</Table.Body>
 		</Table.Root>
 	</div>
 
