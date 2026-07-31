@@ -46,7 +46,6 @@
 	let { data }: { data: PageData } = $props();
 
 	let closedTrades = $state<Trade[]>([...data.closedTrades.items]);
-	let loading = $state(false);
 
 	$effect(() => {
 		closedTrades = [...data.closedTrades.items];
@@ -93,16 +92,11 @@
 	}
 
 	async function fetchDashboardTrades(filters: TradeFilters): Promise<void> {
-		loading = true;
-		try {
-			const result = await submitTradeFilterAction(
-				'filterDashboard',
-				withPortfolio(filters),
-			);
-			closedTrades = result.items;
-		} finally {
-			loading = false;
-		}
+		const result = await submitTradeFilterAction(
+			'filterDashboard',
+			withPortfolio(filters),
+		);
+		closedTrades = result.items;
 	}
 
 	const debouncedFetch = debounce((filters: TradeFilters) => {
@@ -142,12 +136,6 @@
 
 	{#if data.closedTrades.total > 0 || hasActiveFilters}
 		<div class="mb-8">
-			{#if loading}
-				<div class="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
-					<Loader2 class="size-4 animate-spin" />
-					<span>Updating dashboard...</span>
-				</div>
-			{/if}
 			<TradeFiltersToolbar
 				filters={dashboardFiltersStore}
 				showSymbolFilter={false}
@@ -206,10 +194,7 @@
 				>
 					<p class="text-l font-bold">Equity Curve & Drawdown</p>
 					{#if filteredClosedTrades.length}
-						<LineChart
-							data={equityCurveData}
-							showLegend={false}
-						/>
+						<LineChart data={equityCurveData} showLegend={false} />
 					{:else}
 						<EmptyState message="Close a trade to see your equity curve" />
 					{/if}
