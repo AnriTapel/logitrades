@@ -17,3 +17,4 @@ export { default as TradeDatesDisplay } from './cells/trade-dates-display.svelte
 export { default as LineChart } from './charts/line-chart.svelte';
 export { default as BarChart } from './charts/bar-chart.svelte';
 export { default as PieChart } from './charts/pie-chart.svelte';
+export { default as CalendarHeatmap } from './charts/calendar-heatmap/calendar-heatmap.svelte';
