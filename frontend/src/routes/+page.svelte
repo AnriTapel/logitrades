@@ -18,8 +18,9 @@
 		featureItems,
 		pricingPlans,
 	} from '$lib/landing/data';
+	import type { PageProps } from './$types';
 
-	let { data }: { data: { isAuthenticated?: boolean } } = $props();
+	let { data }: PageProps = $props();
 
 	const featureIcons = [BarChart3, ShieldCheck, Clock3];
 </script>

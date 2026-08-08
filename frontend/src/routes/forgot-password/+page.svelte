@@ -1,10 +1,7 @@
 <script lang="ts">
-	import { superForm, type SuperValidated } from 'sveltekit-superforms';
-	import { zodClient } from 'sveltekit-superforms/adapters';
-	import {
-		forgotPasswordSchema,
-		type ForgotPasswordFormInput,
-	} from '$lib/schemas/authSchemas';
+	import { superForm } from 'sveltekit-superforms';
+	import { standardClient } from 'sveltekit-superforms/adapters';
+	import { forgotPasswordSchema } from '$lib/schemas/authSchemas';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import {
@@ -14,20 +11,22 @@
 		FieldErrors,
 	} from '$lib/components/ui/form';
 	import { goto } from '$app/navigation';
+	import type { PageProps } from './$types';
 
-	let { data }: { data: { form: SuperValidated<ForgotPasswordFormInput> } } =
-		$props();
+	let { data }: PageProps = $props();
 
-	const form = superForm(data.form, {
-		validators: zodClient(forgotPasswordSchema),
-		onResult: ({ result }) => {
-			if (result.type === 'redirect') {
-				goto(result.location);
-			}
-		},
-	});
+	const form = $derived.by(() =>
+		superForm(data.form, {
+			validators: standardClient(forgotPasswordSchema),
+			onResult: ({ result }) => {
+				if (result.type === 'redirect') {
+					goto(result.location);
+				}
+			},
+		}),
+	);
 
-	const { form: formData, enhance } = form;
+	const { form: formData, enhance } = $derived(form);
 </script>
 
 <svelte:head>

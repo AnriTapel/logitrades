@@ -1,6 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { superValidate } from 'sveltekit-superforms';
-import { zod } from 'sveltekit-superforms/adapters';
+import { zod } from '$lib/superform/zod';
 import { signupSchema } from '$lib/schemas/authSchemas';
 import { httpClient } from '$lib/server/http-client/http-client';
 

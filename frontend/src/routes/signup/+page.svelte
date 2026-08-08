@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { superForm, type SuperValidated } from 'sveltekit-superforms';
-	import { zodClient } from 'sveltekit-superforms/adapters';
+	import { standardClient } from 'sveltekit-superforms/adapters';
 	import { signupSchema, type SignupFormInput } from '$lib/schemas/authSchemas';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
@@ -13,21 +13,24 @@
 	import { goto } from '$app/navigation';
 	import { showServerErrors } from '$lib/stores/error';
 	import type { HttpError } from '$lib/server/http-client/types';
+	import type { PageProps } from './$types';
 
-	export let data: { form: SuperValidated<SignupFormInput> };
+	let { data }: PageProps = $props();
 
-	const form = superForm(data.form, {
-		validators: zodClient(signupSchema),
-		onResult: ({ result }) => {
-			if (result.type === 'redirect') {
-				goto(result.location);
-			} else if (result.type == 'failure') {
-				showServerErrors(result.data?.error as HttpError);
-			}
-		},
-	});
+	const form = $derived.by(() =>
+		superForm(data.form, {
+			validators: standardClient(signupSchema),
+			onResult: ({ result }) => {
+				if (result.type === 'redirect') {
+					goto(result.location);
+				} else if (result.type == 'failure') {
+					showServerErrors(result.data?.error as HttpError);
+				}
+			},
+		}),
+	);
 
-	const { form: formData, enhance } = form;
+	const { form: formData, enhance } = $derived(form);
 </script>
 
 <svelte:head>

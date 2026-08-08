@@ -163,3 +163,10 @@ export type PieChartData = {
 		borderWidth?: number;
 	}>;
 };
+
+export type ItemOption = {
+	key: string;
+	label: string;
+}
+
+export type CalendarHeatmapItemData = { date: string, pnl: number, tradesCount: number } | null;

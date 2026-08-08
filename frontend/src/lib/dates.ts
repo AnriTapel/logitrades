@@ -1,7 +1,12 @@
+import {getLocalTimeZone} from "@internationalized/date";
+
 /** Branded UTC ISO 8601 string, e.g. "2024-06-11T09:30:00.000Z" */
 export type UtcIsoDateTime = string;
 
-/** Normalise any ISO date string or Date object to a UTC ISO string. */
+export const localTimezone = getLocalTimeZone();
+export const userLocale = new Intl.Locale(navigator.language ?? navigator.languages[0] ?? 'en-US');
+
+/** Normalize any ISO date string or Date object to a UTC ISO string. */
 export function toUtcIso(value: Date | string): UtcIsoDateTime {
 	const d = typeof value === 'string' ? new Date(value) : value;
 	return d.toISOString();
@@ -31,6 +36,14 @@ export function formatTradeDateLocal(iso: UtcIsoDateTime): string {
 	return new Intl.DateTimeFormat('en-US', {
 		dateStyle: 'short',
 	}).format(new Date(iso));
+}
+
+/** Short date-only display value in MM YY format. */
+export function formatDateDisplay(iso: UtcIsoDateTime): string {
+	return new Intl.DateTimeFormat('en-US', {
+		month: 'short',
+		year: '2-digit'
+	}).format(new Date(iso))
 }
 
 /** For sort comparators. Negative = a before b. */

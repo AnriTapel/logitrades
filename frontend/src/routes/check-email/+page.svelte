@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
 	import { goto, invalidateAll } from '$app/navigation';
-	import type { ActionData } from './$types';
+	import type {ActionData, PageProps} from './$types';
 	import CheckEmailMessage from '$lib/layouts/check-email-message.svelte';
 
-	let { form }: { form: ActionData } = $props();
+	let { form }: PageProps = $props();
 
 	let isResending = $state(false);
 

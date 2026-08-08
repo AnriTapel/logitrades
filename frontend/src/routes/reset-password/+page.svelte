@@ -1,10 +1,7 @@
 <script lang="ts">
-	import { superForm, type SuperValidated } from 'sveltekit-superforms';
-	import { zodClient } from 'sveltekit-superforms/adapters';
-	import {
-		resetPasswordSchema,
-		type ResetPasswordFormInput,
-	} from '$lib/schemas/authSchemas';
+	import { superForm } from 'sveltekit-superforms';
+	import { standardClient } from 'sveltekit-superforms/adapters';
+	import { resetPasswordSchema } from '$lib/schemas/authSchemas';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import {
@@ -16,20 +13,17 @@
 	import { goto } from '$app/navigation';
 	import CircleSlashIcon from '@lucide/svelte/icons/circle-slash';
 	import BadgeCheckIcon from '@lucide/svelte/icons/badge-check';
+	import type { PageProps } from './$types';
 
-	let {
-		data,
-		form: actionData,
-	}: {
-		data: { form: SuperValidated<ResetPasswordFormInput>; hasToken: boolean };
-		form: { success?: boolean; error?: string } | null;
-	} = $props();
+	let { data, form: actionData }: PageProps = $props();
 
-	const form = superForm(data.form, {
-		validators: zodClient(resetPasswordSchema),
-	});
+	const form = $derived.by(() =>
+		superForm(data.form, {
+			validators: standardClient(resetPasswordSchema),
+		}),
+	);
 
-	const { form: formData, enhance } = form;
+	const { form: formData, enhance } = $derived(form);
 </script>
 
 <svelte:head>
@@ -64,7 +58,7 @@
 				Enter your new password below.
 			</p>
 
-			{#if actionData?.error}
+			{#if actionData && 'error' in actionData && actionData.error}
 				<p class="text-red-600 text-center">{actionData.error}</p>
 			{/if}
 

@@ -6,7 +6,7 @@ import {
 	type TradeFormInput,
 } from '$lib/schemas/tradeSchemas';
 import { fail, redirect } from '@sveltejs/kit';
-import { zod } from 'sveltekit-superforms/adapters';
+import { zod } from '$lib/superform/zod';
 import {
 	convertApiTradeToUiTrade,
 	convertUiTradeToTradeFormInput,

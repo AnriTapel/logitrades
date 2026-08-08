@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
-	import type { PageData } from './$types';
+	import type {PageData, PageProps} from './$types';
 	import type { Portfolio } from '$lib/types';
 	import { setActivePortfolioId } from '$lib/stores/active-portfolio';
 	import { formatIntToCurrency } from '$lib/formatters';
@@ -25,7 +25,7 @@
 	} from '$lib/components/ui/radio-group';
 	import { formatPortfolioDateLocal } from '$lib/dates';
 
-	let { data }: { data: PageData } = $props();
+	let { data }: PageProps = $props();
 
 	const isPro = $derived(data.plan === 'pro' || data.plan === 'max');
 	const isMax = $derived(data.plan === 'max');

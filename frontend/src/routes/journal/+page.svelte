@@ -1,13 +1,13 @@
 <script lang="ts">
 	import { invalidate, goto } from '$app/navigation';
-	import type { PageData } from './$types';
+	import type {PageData, PageProps} from './$types';
 	import ImportDialog from '$lib/layouts/import-dialog.svelte';
 	import StatsSummary from '$lib/layouts/stats-summary.svelte';
 	import ConfirmationModal from '$lib/components/custom/confirmation-modal.svelte';
 	import OpenedTrades from '../opened-trades.svelte';
 	import ClosedTrades from '../closed-trades.svelte';
 
-	let { data }: { data: PageData } = $props();
+	let { data }: PageProps = $props();
 	let isImportDialogOpen = $state(false);
 	let confirmDeleteTradeId = $state<number | null>(null);
 

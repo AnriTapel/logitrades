@@ -6,8 +6,10 @@
 		TradeTypeStats,
 		EmptyState,
 		TradeFiltersToolbar,
+		LineChart,
+		CalendarHeatmap,
 	} from '$lib/components/custom';
-	import type { PageData } from './$types';
+	import type { PageProps } from './$types';
 	import {
 		dashboardFiltersStore,
 		hasActiveDashboardFilters,
@@ -27,7 +29,6 @@
 		calcAverageRiskReward,
 		pnlForPeriod,
 	} from '$lib/calcFunctions';
-	import LineChart from '$lib/components/custom/charts/line-chart.svelte';
 	import {
 		createEquityCurveData,
 		createPortfolioEquityCurveData,
@@ -37,19 +38,14 @@
 	} from '$lib/chartsHelpers';
 	import RiskRewardChart from '$lib/layouts/risk-reward-chart.svelte';
 	import Info from 'lucide-svelte/icons/info';
-	import Loader2 from 'lucide-svelte/icons/loader-2';
 	import { submitTradeFilterAction } from '$lib/tradeListClient';
 	import { debounce } from '$lib/inputDebounce';
-	import type { Trade, TradeFilters } from '$lib/types';
+	import type { TradeFilters } from '$lib/types';
 	import { onDestroy } from 'svelte';
 
-	let { data }: { data: PageData } = $props();
+	let { data }: PageProps = $props();
 
-	let closedTrades = $state<Trade[]>([...data.closedTrades.items]);
-
-	$effect(() => {
-		closedTrades = [...data.closedTrades.items];
-	});
+	let closedTrades = $derived([...data.closedTrades.items]);
 
 	$effect(() => {
 		dashboardFiltersStore.update((prev) =>
@@ -59,14 +55,12 @@
 		);
 	});
 
-	const filteredClosedTrades = $derived(closedTrades);
-
 	let hasActiveFilters = $derived(
 		hasActiveDashboardFilters($dashboardFiltersStore),
 	);
 
-	let maxDrawdown = $derived(calcMaxDrawdown(filteredClosedTrades));
-	let avgRiskReward = $derived(calcAverageRiskReward(filteredClosedTrades));
+	let maxDrawdown = $derived(calcMaxDrawdown(closedTrades));
+	let avgRiskReward = $derived(calcAverageRiskReward(closedTrades));
 
 	const isPro = $derived(data.plan === 'pro' || data.plan === 'max');
 
@@ -76,13 +70,13 @@
 		// are not mixed with a filtered PnL subset.
 		if (isPro && data.portfolioSummary && !hasActiveFilters) {
 			return createPortfolioEquityCurveData(
-				filteredClosedTrades,
+				closedTrades,
 				data.transactions ?? [],
 				data.portfolioSummary.starting_capital ?? 0,
 				data.portfolioSummary.started_at ?? null,
 			);
 		}
-		return createEquityCurveData(filteredClosedTrades);
+		return createEquityCurveData(closedTrades);
 	});
 
 	function withPortfolio(filters: TradeFilters): TradeFilters {
@@ -144,7 +138,7 @@
 			/>
 		</div>
 
-		{#if hasActiveFilters && filteredClosedTrades.length === 0}
+		{#if hasActiveFilters && closedTrades.length === 0}
 			<EmptyState
 				message="No closed trades match the selected filters"
 				className="h-[30vh]"
@@ -154,33 +148,33 @@
 			<div class="grid grid-cols-2 gap-y-8 mb-16 sm:grid-cols-3">
 				<ValueStat
 					label="Total PnL"
-					value={pnlForPeriod(filteredClosedTrades)}
+					value={pnlForPeriod(closedTrades)}
 					type={'money'}
 					bordered={false}
 					baselineValue={0}
 				/>
 				<ValueStat
 					label="Winrate"
-					value={calcWinrate(filteredClosedTrades)}
+					value={calcWinrate(closedTrades)}
 					type={'percentage'}
 					bordered={false}
 					baselineValue={0.5}
 				/>
 				<ValueStat
 					label="Total Trades"
-					value={filteredClosedTrades.length}
+					value={closedTrades.length}
 					type={'integer'}
 					bordered={false}
 				/>
 				<ValueStat
 					label="Profit Factor"
-					value={calcProfitFactor(filteredClosedTrades)}
+					value={calcProfitFactor(closedTrades)}
 					type={'integer'}
 					bordered={false}
 				/>
 				<ValueStat
 					label="Expectancy"
-					value={calcExpectancy(filteredClosedTrades)}
+					value={calcExpectancy(closedTrades)}
 					type={'money'}
 					bordered={false}
 					baselineValue={0}
@@ -193,7 +187,7 @@
 					class="col-span-1 p-4 border rounded-lg shadow-md flex flex-col gap-4 sm:col-span-3"
 				>
 					<p class="text-l font-bold">Equity Curve & Drawdown</p>
-					{#if filteredClosedTrades.length}
+					{#if closedTrades.length}
 						<LineChart data={equityCurveData} showLegend={false} />
 					{:else}
 						<EmptyState message="Close a trade to see your equity curve" />
@@ -202,18 +196,31 @@
 				<div class="grid grid-cols-2 flex flex-col gap-4 sm:grid-cols-1">
 					<ValueStat
 						label="Gross Profit"
-						value={calcGrossProfit(filteredClosedTrades)}
+						value={calcGrossProfit(closedTrades)}
 						type={'money'}
 						className="flex-1 col-span-1"
 						baselineValue={0}
 					/>
 					<ValueStat
 						label="Gross Loss"
-						value={calcGrossLoss(filteredClosedTrades)}
+						value={calcGrossLoss(closedTrades)}
 						type={'money'}
 						className="flex-1 col-span-1"
 						baselineValue={0}
 					/>
+				</div>
+			</div>
+
+			<h2 class="text-xl font-semibold lg:mb-4 mb-8">Daily PnL Heatmap</h2>
+			<div class="mb-16 grid grid-cols-1 gap-4 md:grid-cols-5">
+				<div
+					class="p-4 border rounded-lg shadow-md flex flex-col gap-4 col-span-1 md:col-span-2"
+				>
+					{#if closedTrades.length}
+						<CalendarHeatmap trades={closedTrades} monthsToShow={12} />
+					{:else}
+						<EmptyState message="Close a trade to see daily PnL" />
+					{/if}
 				</div>
 			</div>
 
@@ -227,14 +234,14 @@
 					<div class="flex flex-col md:flex-row gap-4">
 						<ValueStat
 							label="Avg Win"
-							value={calcAverageWin(filteredClosedTrades)}
+							value={calcAverageWin(closedTrades)}
 							type={'money'}
 							className="w-full lg:shadow-none"
 							baselineValue={0}
 						/>
 						<ValueStat
 							label="Avg Loss"
-							value={calcAverageLoss(filteredClosedTrades)}
+							value={calcAverageLoss(closedTrades)}
 							type={'money'}
 							className="w-full lg:shadow-none"
 							baselineValue={0}
@@ -247,7 +254,7 @@
 					<div class="flex flex-col md:flex-row gap-4">
 						<ValueStat
 							label="Avg Trade Duration"
-							value={calcAverageTradeDuration(filteredClosedTrades)}
+							value={calcAverageTradeDuration(closedTrades)}
 							type={'string'}
 							className="w-full lg:shadow-none"
 						/>
@@ -265,13 +272,13 @@
 					<div class="flex flex-col md:flex-row gap-4">
 						<ValueStat
 							label="Max Win Streak"
-							value={calcMaxWinStreak(filteredClosedTrades)}
+							value={calcMaxWinStreak(closedTrades)}
 							type={'integer'}
 							className="w-full lg:shadow-none"
 						/>
 						<ValueStat
 							label="Max Loss Streak"
-							value={calcMaxLossStreak(filteredClosedTrades)}
+							value={calcMaxLossStreak(closedTrades)}
 							type={'integer'}
 							className="w-full lg:shadow-none"
 						/>
@@ -305,15 +312,15 @@
 			>
 				<div class="p-4 border rounded-lg shadow-md flex flex-col gap-4">
 					<p class="text-l font-bold">Risk Reward Distribution</p>
-					<RiskRewardChart closedTrades={filteredClosedTrades} />
+					<RiskRewardChart {closedTrades} />
 				</div>
 				<div class="p-4 border rounded-lg shadow-md flex flex-col gap-4">
 					<p class="text-l font-bold">Trade Type Stats</p>
-					<TradeTypeStats data={createTradeTypeStats(filteredClosedTrades)} />
+					<TradeTypeStats data={createTradeTypeStats(closedTrades)} />
 				</div>
 				<div class="p-4 border rounded-lg shadow-md flex flex-col gap-4">
 					<p class="text-l font-bold">Trade Pair Stats</p>
-					<SymbolStatsTable data={getSymbolStats(filteredClosedTrades)} />
+					<SymbolStatsTable data={getSymbolStats(closedTrades)} />
 				</div>
 			</div>
 
@@ -323,9 +330,9 @@
 					class="p-4 border rounded-lg shadow-md flex flex-col gap-4 col-span-1"
 				>
 					<p class="text-l font-bold">Monthly PnL</p>
-					{#if filteredClosedTrades.length}
+					{#if closedTrades.length}
 						<BarChart
-							data={createMonthlyPnLData(filteredClosedTrades)}
+							data={createMonthlyPnLData(closedTrades)}
 							showLegend={false}
 							height={310}
 						/>

@@ -71,10 +71,9 @@ export const load = (async ({ parent, fetch, depends, cookies }) => {
 	if ((plan === 'pro' || plan === 'max') && portfolioId != null) {
 		try {
 			const [summaryRes, allTx] = await Promise.all([
-				httpClient.get<PortfolioSummary>(
-					`/portfolios/${portfolioId}/summary`,
-					{ fetch },
-				),
+				httpClient.get<PortfolioSummary>(`/portfolios/${portfolioId}/summary`, {
+					fetch,
+				}),
 				fetchAllPortfolioTransactions(fetch, portfolioId),
 			]);
 			portfolioSummary = summaryRes ?? null;

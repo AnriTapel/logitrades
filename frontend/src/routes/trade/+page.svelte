@@ -1,8 +1,8 @@
 <script lang="ts">
-	import type { PageData } from './$types';
+	import type { PageProps } from './$types';
 	import TradeForm from '$lib/layouts/trade-form.svelte';
 
-	let { data }: { data: PageData } = $props();
+	let { data }: PageProps = $props();
 </script>
 
 <svelte:head>

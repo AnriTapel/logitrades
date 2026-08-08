@@ -17,8 +17,8 @@
 		tagsSchema,
 		MAX_TRADE_TAGS,
 	} from '$lib/schemas/tradeSchemas';
-	import { type SuperValidated, superForm } from 'sveltekit-superforms';
-	import { zodClient } from 'sveltekit-superforms/adapters';
+	import { superForm, type SuperValidated } from 'sveltekit-superforms';
+	import { standardClient } from 'sveltekit-superforms/adapters';
 	import { Input } from '$lib/components/ui/input';
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import { DatePicker } from '$lib';
@@ -63,19 +63,21 @@
 		plan?: string;
 	} = $props();
 
-	const form = superForm(data, {
-		validators: zodClient(formSchema),
-		id: 'trade-form',
-		onResult: ({ result }) => {
-			if (result.type === 'success' || result.type === 'redirect') {
-				goto('/journal');
-			} else if (result.type == 'failure') {
-				showServerErrors(result.data?.error as HttpError);
-			}
-		},
-	});
+	const form = $derived.by(() =>
+		superForm(data, {
+			validators: standardClient(formSchema),
+			id: 'trade-form',
+			onResult: ({ result }) => {
+				if (result.type === 'success' || result.type === 'redirect') {
+					goto('/journal');
+				} else if (result.type == 'failure') {
+					showServerErrors(result.data?.error as HttpError);
+				}
+			},
+		}),
+	);
 
-	const { form: formData, enhance } = form;
+	const { form: formData, enhance } = $derived(form);
 
 	// Non-archived portfolios that can receive new trades
 	const selectablePortfolios = $derived(

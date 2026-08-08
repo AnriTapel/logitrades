@@ -1,6 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { superValidate } from 'sveltekit-superforms';
-import { zod } from 'sveltekit-superforms/adapters';
+import { zod } from '$lib/superform/zod';
 import { loginSchema } from '$lib/schemas/authSchemas';
 import { httpClient } from '$lib/server/http-client/http-client';
 
@@ -20,10 +20,11 @@ export const actions = {
 			'/auth/login',
 			form.data,
 			fetch,
-			cookies
+			cookies,
 		);
 
 		if (!result.success) {
+			console.log(result);
 			return fail(result.status, { form, error: result.error });
 		}
 
