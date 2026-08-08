@@ -145,10 +145,13 @@
 		</div>
 	{/if}
 {:else}
-	<main class="min-h-screen">
-		{@render children()}
-		<ErrorDialog />
-	</main>
+	<div class="flex flex-col min-h-screen">
+		<NavBar userState={data.isAuthenticated ? data.user : null} />
+		<main class="min-h-screen">
+			{@render children()}
+			<ErrorDialog />
+		</main>
+	</div>
 {/if}
 
 <style>
