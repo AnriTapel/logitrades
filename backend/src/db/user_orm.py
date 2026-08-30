@@ -22,6 +22,11 @@ class UserORM(Base):
 
     provider = Column(String, nullable=False, default="local")
     provider_id = Column(String, nullable=True)
+    lemonsqueezy_customer_id = Column(String, unique=True, nullable=True, index=True)
+    pending_checkout_id = Column(String, nullable=True)
+    pending_checkout_url = Column(String, nullable=True)
+    pending_checkout_variant = Column(String, nullable=True)
+    pending_checkout_expires_at = Column(String, nullable=True)
 
     def to_domain(self) -> "UserDomain":
 

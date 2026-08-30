@@ -21,6 +21,9 @@ from src.db import (
     RefreshTokenORM,
     PasswordResetTokenORM,
     EmailVerificationTokenORM,
+    PortfolioORM,
+    BalanceTransactionORM,
+    SubscriptionORM,
 )
 from src.utils import _get_env_var
 

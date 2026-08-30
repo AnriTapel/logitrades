@@ -35,6 +35,7 @@ from .db import TradeORM
 from . import database
 from .routes import auth as auth_routes
 from .routes import portfolios as portfolios_routes
+from .routes import payments as payments_routes
 from .errors import format_import_error
 
 from pydantic import ValidationError
@@ -266,6 +267,7 @@ def delete_trade(trade_id: int, db: db_dependency, user_id: int = Depends(curren
 
 app.include_router(auth_routes.router, prefix="/api/v1")
 app.include_router(portfolios_routes.router, prefix="/api/v1")
+app.include_router(payments_routes.router, prefix="/api/v1")
 app.include_router(router, prefix="/api/v1")
 
 ErrorsHandlerService.register_exception_handlers(app)

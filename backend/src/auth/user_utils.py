@@ -13,6 +13,8 @@ async def current_user_id(access_token: str | None = Cookie(None, alias="access_
     )
     try:
         payload = jwt.decode(access_token, SECRET_KEY, algorithms=[ALGORITHM])
+        if payload.get("type") != "access":
+            raise access_token_exception
         return int(payload.get("sub"))
     except jwt.InvalidTokenError:
         raise access_token_exception
