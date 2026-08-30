@@ -71,6 +71,17 @@ const optionalUtcIsoDateTimeSchema = z.preprocess(
 		.optional(),
 );
 
+const COMMENT_ALLOWED_CHAR = /[A-Za-z0-9\s.'",!?\-\+_~%^\*\(\)=]/;
+
+const firstForbiddenCommentChar = (value: string): string | undefined => {
+	for (const char of value) {
+		if (!COMMENT_ALLOWED_CHAR.test(char)) {
+			return char;
+		}
+	}
+	return undefined;
+};
+
 export const MAX_TRADE_TAGS = 3;
 
 export const tagSchema = z
@@ -82,11 +93,9 @@ export const tagSchema = z
 		message: 'Tags can contain only letters, numbers, - and _',
 	});
 
-export const tagsSchema = z
-	.array(tagSchema)
-	.max(MAX_TRADE_TAGS, {
-		message: `Maximum ${MAX_TRADE_TAGS} tags per trade`,
-	});
+export const tagsSchema = z.array(tagSchema).max(MAX_TRADE_TAGS, {
+	message: `Maximum ${MAX_TRADE_TAGS} tags per trade`,
+});
 
 export const formSchema = z.object({
 	id: z.number().optional(),
@@ -105,9 +114,15 @@ export const formSchema = z.object({
 	comment: z
 		.string()
 		.max(255, { message: 'Comment must be less than 255 characters' })
-		.regex(/^[A-Za-z0-9\s.'",!?-_]*$/, {
-			message:
-				'Comment can contain only letters, numbers, spaces, and punctuation',
+		.superRefine((value, ctx) => {
+			const symbol = firstForbiddenCommentChar(value);
+			if (symbol === undefined) {
+				return;
+			}
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				message: `'${symbol}' symbol is forbidden in comment text`,
+			});
 		})
 		.optional(),
 	tags: tagsSchema.optional(),
