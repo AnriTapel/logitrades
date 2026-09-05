@@ -22,6 +22,7 @@ const makePortfolio = (
 	name: `Portfolio ${id}`,
 	is_default: false,
 	status: 'active',
+	currency: 'USD',
 	starting_capital: 0,
 	started_at: null,
 	created_at: '2025-01-01T00:00:00Z',
@@ -58,7 +59,10 @@ describe('resolveActivePortfolioId', () => {
 
 	it('returns lastActive when it is still owned', () => {
 		(localStorage.getItem as ReturnType<typeof vi.fn>).mockReturnValue('10');
-		const portfolios = [makePortfolio(10), makePortfolio(2, { is_default: true })];
+		const portfolios = [
+			makePortfolio(10),
+			makePortfolio(2, { is_default: true }),
+		];
 		expect(resolveActivePortfolioId(portfolios)).toBe(10);
 	});
 
