@@ -9,6 +9,7 @@ export interface User {
 	is_verified: boolean;
 	plan?: string;
 	currency?: string;
+	created_at?: string | null;
 }
 
 declare global {

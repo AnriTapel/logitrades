@@ -6,6 +6,50 @@ export type TradeFilterType = TradeType | 'all';
 
 export type SubscriptionPlan = 'free' | 'pro' | 'max';
 
+export type PlanVariant =
+	| 'pro_monthly'
+	| 'pro_annually'
+	| 'max_monthly'
+	| 'max_annually';
+
+export type Subscription = {
+	id: number;
+	user_id: number;
+	lemonsqueezy_subscription_id: string;
+	lemonsqueezy_customer_id: string | null;
+	product_id: string | null;
+	variant_id: string | null;
+	plan_variant: PlanVariant | null;
+	status: string;
+	renews_at: string | null;
+	ends_at: string | null;
+	trial_ends_at: string | null;
+	card_brand: string | null;
+	card_last_four: string | null;
+	created_at: string | null;
+	updated_at: string | null;
+	urls: Record<string, string> | null;
+};
+
+export type SubscriptionInvoice = {
+	id: string;
+	store_id: number | null;
+	subscription_id: number | string | null;
+	customer_id: number | string | null;
+	status: string | null;
+	billing_reason: string | null;
+	card_brand: string | null;
+	card_last_four: string | null;
+	currency: string | null;
+	total: number | null;
+	total_formatted: string | null;
+	refunded: boolean | null;
+	refunded_at: string | null;
+	created_at: string | null;
+	updated_at: string | null;
+	urls: Record<string, string> | null;
+};
+
 export type PortfolioStatus = 'active' | 'archived';
 
 export interface Portfolio {

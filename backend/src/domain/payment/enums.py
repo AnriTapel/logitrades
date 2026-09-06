@@ -68,6 +68,20 @@ def get_plan_for_variant_id(variant_id: str | int | None) -> SubscriptionPlan | 
     return None
 
 
+def get_plan_variant_for_variant_id(
+    variant_id: str | int | None,
+) -> PlanVariant | None:
+    """Map a Lemon Squeezy variant ID back to a PlanVariant enum value."""
+    if variant_id is None:
+        return None
+    variant_id_str = str(variant_id)
+    for plan_variant, env_key in _VARIANT_ENV_KEYS.items():
+        env_value = os.getenv(env_key)
+        if env_value and env_value == variant_id_str:
+            return plan_variant
+    return None
+
+
 def plan_variant_to_subscription_plan(plan_variant: PlanVariant) -> SubscriptionPlan:
     return _PLAN_BY_VARIANT[plan_variant]
 

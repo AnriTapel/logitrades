@@ -24,6 +24,7 @@ from ..domain.payment.enums import (
     PlanVariant,
     SubscriptionStatus,
     get_plan_for_variant_id,
+    get_plan_variant_for_variant_id,
     get_variant_id,
     plan_variant_to_subscription_plan,
 )
@@ -892,6 +893,7 @@ def subscription_response_from_row(
     *,
     urls: dict | None = None,
 ) -> dict:
+    plan_variant = get_plan_variant_for_variant_id(row.variant_id)
     return {
         "id": row.id,
         "user_id": row.user_id,
@@ -899,6 +901,7 @@ def subscription_response_from_row(
         "lemonsqueezy_customer_id": row.lemonsqueezy_customer_id,
         "product_id": row.product_id,
         "variant_id": row.variant_id,
+        "plan_variant": plan_variant.value if plan_variant else None,
         "status": row.status,
         "renews_at": row.renews_at,
         "ends_at": row.ends_at,

@@ -8,6 +8,7 @@ class SubscriptionResponse(BaseModel):
     lemonsqueezy_customer_id: str | None = None
     product_id: str | None = None
     variant_id: str | None = None
+    plan_variant: str | None = None
     status: str
     renews_at: str | None = None
     ends_at: str | None = None

@@ -6,7 +6,7 @@ import {
 	resolvePortfolioIdFromCookieOnly,
 } from '$lib/portfolio/resolvePortfolioId';
 
-const BASE_LAYOUT_ROUTES = ['/journal', '/portfolios', '/dashboard', '/trade'];
+const BASE_LAYOUT_ROUTES = ['/journal', '/portfolios', '/dashboard', '/trade', '/account'];
 
 const isBaseLayoutRoute = (pathname: string) => {
 	return BASE_LAYOUT_ROUTES.some((route) => pathname.startsWith(route));

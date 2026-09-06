@@ -9,6 +9,7 @@
 	import LayoutGrid from 'lucide-svelte/icons/layout-grid';
 	import LogOut from 'lucide-svelte/icons/log-out';
 	import Briefcase from 'lucide-svelte/icons/briefcase';
+	import CircleUser from 'lucide-svelte/icons/circle-user';
 	import Plus from 'lucide-svelte/icons/plus';
 	import { setActivePortfolioId } from '$lib/stores/active-portfolio';
 	import type { Portfolio } from '$lib/types';
@@ -179,6 +180,18 @@
 						Free
 					</span>
 				{/if}
+			{/if}
+		</a>
+
+		<a
+			href="/account"
+			onclick={handleNavClick}
+			title="Account"
+			class={navLinkClass('/account')}
+		>
+			<CircleUser class="size-4 shrink-0" />
+			{#if !collapsed}
+				Account
 			{/if}
 		</a>
 

@@ -238,6 +238,7 @@ def get_current_user_info(
         is_verified=db_user.is_verified,
         plan=db_user.plan or "free",
         currency=db_user.currency or DEFAULT_CURRENCY,
+        created_at=db_user.created_at,
     )
 
 
@@ -256,6 +257,7 @@ def patch_current_user(
         is_verified=db_user.is_verified,
         plan=db_user.plan or "free",
         currency=db_user.currency or DEFAULT_CURRENCY,
+        created_at=db_user.created_at,
     )
 
 

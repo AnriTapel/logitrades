@@ -121,6 +121,11 @@
 						</DropdownMenuTrigger>
 						<DropdownMenuContent align="end">
 							<DropdownMenuLabel>{userState.username}</DropdownMenuLabel>
+							<DropdownMenuItem>
+								{#snippet child({ props })}
+									<a href="/account" {...props}>Account</a>
+								{/snippet}
+							</DropdownMenuItem>
 							<DropdownMenuItem onclick={handleOpenLogoutConfirm}>
 								Logout
 							</DropdownMenuItem>

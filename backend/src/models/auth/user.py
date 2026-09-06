@@ -20,6 +20,7 @@ class UserResponse(BaseModel):
     is_verified: bool
     plan: str = "free"
     currency: str = DEFAULT_CURRENCY
+    created_at: str | None = None
 
 
 class UserCurrencyUpdate(BaseModel):
