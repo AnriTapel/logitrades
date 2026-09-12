@@ -120,7 +120,7 @@
 						bind:value={accountBalance}
 					/>
 					<div class="w-[130px] shrink-0">
-						<CurrencyCombobox local bind:value={displayCurrency} />
+						<CurrencyCombobox bind:value={displayCurrency} />
 					</div>
 				</div>
 			</div>

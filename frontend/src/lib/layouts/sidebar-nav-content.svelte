@@ -13,6 +13,8 @@
 	import Calculator from 'lucide-svelte/icons/calculator';
 	import Plus from 'lucide-svelte/icons/plus';
 	import { setActivePortfolioId } from '$lib/stores/active-portfolio';
+	import { localeStore, setLocaleCurrency } from '$lib/stores/locale';
+	import { persistCurrency } from '$lib/portfolio/persistCurrency';
 	import type { Portfolio } from '$lib/types';
 	import { Root, Trigger, Item, Content } from '$lib/components/ui/select';
 
@@ -37,7 +39,6 @@
 	} = $props();
 
 	let logoutConfirmOpen = $state(false);
-
 	const pathname = $derived(page.url.pathname);
 
 	function isActive(href: string): boolean {
@@ -91,6 +92,26 @@
 	const currencyDisabled = $derived(
 		isPro && activePortfolio?.status === 'archived',
 	);
+
+	async function handleCurrencyChange(next: string) {
+		if (next === $localeStore.currency) {
+			return;
+		}
+
+		setLocaleCurrency(next);
+		const ok = await persistCurrency({
+			currency: next,
+			plan,
+			activePortfolioId,
+		});
+
+		if (!ok) {
+			await invalidateAll();
+			return;
+		}
+
+		await invalidateAll();
+	}
 
 	const navLinkClass = (href: string) =>
 		cn(
@@ -247,9 +268,9 @@
 			<div class="flex items-center gap-2">
 				<span class="text-sm text-muted-foreground shrink-0">Currency:</span>
 				<CurrencyCombobox
-					{plan}
-					{activePortfolioId}
+					value={$localeStore.currency}
 					disabled={currencyDisabled}
+					onValueChange={handleCurrencyChange}
 				/>
 			</div>
 		{/if}

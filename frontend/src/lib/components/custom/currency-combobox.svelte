@@ -6,35 +6,24 @@
 	import * as Popover from '$lib/components/ui/popover';
 	import { Button } from '$lib/components/ui/button';
 	import { cn } from '$lib/utils';
-	import { localeStore, setLocaleCurrency } from '$lib/stores/locale';
-	import { CURRENCIES, DEFAULT_CURRENCY } from '$lib/constants/currencies';
+	import { CURRENCIES } from '$lib/constants/currencies';
 	import { clientLazyLoad } from '$lib/clientLazyLoad';
-	import { invalidateAll } from '$app/navigation';
 
 	let {
-		plan = 'free',
-		activePortfolioId = null,
+		value = $bindable(''),
 		disabled = false,
-		local = false,
-		value = $bindable<string | undefined>(undefined),
+		onValueChange,
 	}: {
-		plan?: string;
-		activePortfolioId?: number | null;
-		disabled?: boolean;
-		/** When true, selection is local-only (no server persistence). */
-		local?: boolean;
 		value?: string;
+		disabled?: boolean;
+		onValueChange?: (code: string) => void;
 	} = $props();
 
 	let open = $state(false);
 	let triggerRef = $state<HTMLButtonElement | null>(null);
-	let saving = $state(false);
 
-	const currency = $derived(
-		local ? (value ?? DEFAULT_CURRENCY) : $localeStore.currency,
-	);
 	const selectedOption = $derived(
-		CURRENCIES.find((o) => o.code === currency) ?? null,
+		CURRENCIES.find((o) => o.code === value) ?? null,
 	);
 
 	function closeAndFocusTrigger() {
@@ -44,44 +33,15 @@
 		});
 	}
 
-	async function handleSelect(next: string) {
-		if (disabled || saving || next === currency) {
+	function handleSelect(next: string) {
+		if (disabled || next === value) {
 			closeAndFocusTrigger();
 			return;
 		}
 
-		if (local) {
-			value = next;
-			closeAndFocusTrigger();
-			return;
-		}
-
-		saving = true;
-		setLocaleCurrency(next);
+		value = next;
 		closeAndFocusTrigger();
-
-		try {
-			const formData = new FormData();
-			formData.set('currency', next);
-			formData.set('plan', plan);
-			if (activePortfolioId != null) {
-				formData.set('portfolio_id', String(activePortfolioId));
-			}
-
-			const response = await fetch('/?/updateCurrency', {
-				method: 'POST',
-				body: formData,
-			});
-
-			if (!response.ok) {
-				await invalidateAll();
-				return;
-			}
-
-			await invalidateAll();
-		} finally {
-			saving = false;
-		}
+		onValueChange?.(next);
 	}
 </script>
 
@@ -94,7 +54,7 @@
 				class="grow justify-between"
 				role="combobox"
 				aria-expanded={open}
-				disabled={disabled || saving}
+				{disabled}
 			>
 				{#if selectedOption}
 					{#key selectedOption.code}
@@ -108,7 +68,7 @@
 					{/key}
 					<span>{selectedOption.code}</span>
 				{:else}
-					<span>{currency}</span>
+					<span>{value}</span>
 				{/if}
 				<ChevronsUpDown class="ms-2 size-4 shrink-0 opacity-50" />
 			</Button>
@@ -126,7 +86,7 @@
 							<Check
 								class={cn(
 									'me-2 size-4 shrink-0',
-									currency !== option.code && 'text-transparent',
+									value !== option.code && 'text-transparent',
 								)}
 							/>
 							<img use:clientLazyLoad={option.flagUrl} alt={option.code} />
