@@ -10,6 +10,7 @@
 	import LogOut from 'lucide-svelte/icons/log-out';
 	import Briefcase from 'lucide-svelte/icons/briefcase';
 	import CircleUser from 'lucide-svelte/icons/circle-user';
+	import Calculator from 'lucide-svelte/icons/calculator';
 	import Plus from 'lucide-svelte/icons/plus';
 	import { setActivePortfolioId } from '$lib/stores/active-portfolio';
 	import type { Portfolio } from '$lib/types';
@@ -180,6 +181,18 @@
 						Free
 					</span>
 				{/if}
+			{/if}
+		</a>
+
+		<a
+			href="/tools/position-size"
+			onclick={handleNavClick}
+			title="Position Size Calculator"
+			class={navLinkClass('/tools')}
+		>
+			<Calculator class="size-4 shrink-0" />
+			{#if !collapsed}
+				Position Size
 			{/if}
 		</a>
 

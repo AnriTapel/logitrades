@@ -11,6 +11,7 @@ import {
 	resolvePortfolioIdFromCookie,
 } from '$lib/portfolio/resolvePortfolioId';
 import { fetchAllPortfolioTransactions } from '$lib/server/fetchAllPortfolioTransactions';
+import { fetchPortfolioSummary } from '$lib/server/fetchPortfolioSummary';
 
 const MAX_PORTFOLIOS = 5;
 
@@ -26,8 +27,7 @@ export const load: PageServerLoad = async ({ parent, fetch, cookies }) => {
 		portfolios ?? [],
 	);
 
-	const activePortfolio =
-		portfolios?.find((p) => p.id === portfolioId) ?? null;
+	const activePortfolio = portfolios?.find((p) => p.id === portfolioId) ?? null;
 
 	let portfolioSummary: PortfolioSummary | null = null;
 	let transactions: BalanceTransaction[] = [];
@@ -35,10 +35,7 @@ export const load: PageServerLoad = async ({ parent, fetch, cookies }) => {
 	if ((plan === 'pro' || plan === 'max') && activePortfolio) {
 		try {
 			const [summaryRes, allTx] = await Promise.all([
-				httpClient.get<PortfolioSummary>(
-					`/portfolios/${activePortfolio.id}/summary`,
-					{ fetch },
-				),
+				fetchPortfolioSummary(fetch, activePortfolio.id),
 				fetchAllPortfolioTransactions(fetch, activePortfolio.id),
 			]);
 			portfolioSummary = summaryRes ?? null;

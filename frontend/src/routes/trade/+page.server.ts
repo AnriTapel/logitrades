@@ -14,6 +14,7 @@ import {
 } from '$lib/tradeConverters';
 import { httpClient } from '$lib/server/http-client/http-client';
 import type { ApiTrade, TradeFacets } from '$lib/types';
+import { fetchPortfolioSummary } from '$lib/server/fetchPortfolioSummary';
 import {
 	ACTIVE_PORTFOLIO_COOKIE,
 	resolvePortfolioIdFromCookie,
@@ -47,6 +48,11 @@ export const load: PageServerLoad = async ({ url, fetch, parent, cookies }) => {
 	const tradeId = url.searchParams.get('edit');
 	const facets = await fetchFacets(fetch, portfolioId);
 
+	const portfolioSummary =
+		(plan === 'pro' || plan === 'max') && portfolioId != null
+			? await fetchPortfolioSummary(fetch, portfolioId)
+			: null;
+
 	let form;
 	if (tradeId) {
 		const apiTrade = await httpClient.get<ApiTrade>(`/trades/${tradeId}`, {
@@ -78,6 +84,8 @@ export const load: PageServerLoad = async ({ url, fetch, parent, cookies }) => {
 		portfolioId,
 		plan,
 		portfolios: portfolios ?? [],
+		portfolioSummary,
+		userCurrency: user?.currency,
 	};
 };
 

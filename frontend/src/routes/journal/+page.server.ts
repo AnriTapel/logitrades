@@ -20,6 +20,7 @@ import {
 	ACTIVE_PORTFOLIO_COOKIE,
 	resolvePortfolioIdFromCookie,
 } from '$lib/portfolio/resolvePortfolioId';
+import { fetchPortfolioSummary } from '$lib/server/fetchPortfolioSummary';
 
 async function fetchTradeList(
 	fetch: typeof globalThis.fetch,
@@ -65,20 +66,6 @@ async function fetchSummary(
 		searchParams,
 	});
 	return response;
-}
-
-async function fetchPortfolioSummary(
-	fetch: typeof globalThis.fetch,
-	portfolioId: number,
-): Promise<PortfolioSummary | null> {
-	try {
-		return await httpClient.get<PortfolioSummary>(
-			`/portfolios/${portfolioId}/summary`,
-			{ fetch },
-		);
-	} catch {
-		return null;
-	}
 }
 
 export const load: PageServerLoad = async ({

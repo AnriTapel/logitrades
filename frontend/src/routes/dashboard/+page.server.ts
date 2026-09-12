@@ -20,6 +20,7 @@ import {
 	resolvePortfolioIdFromCookie,
 } from '$lib/portfolio/resolvePortfolioId';
 import { fetchAllPortfolioTransactions } from '$lib/server/fetchAllPortfolioTransactions';
+import { fetchPortfolioSummary } from '$lib/server/fetchPortfolioSummary';
 
 export const load = (async ({ parent, fetch, depends, cookies }) => {
 	depends('dashboard:trades');
@@ -71,9 +72,7 @@ export const load = (async ({ parent, fetch, depends, cookies }) => {
 	if ((plan === 'pro' || plan === 'max') && portfolioId != null) {
 		try {
 			const [summaryRes, allTx] = await Promise.all([
-				httpClient.get<PortfolioSummary>(`/portfolios/${portfolioId}/summary`, {
-					fetch,
-				}),
+				fetchPortfolioSummary(fetch, portfolioId),
 				fetchAllPortfolioTransactions(fetch, portfolioId),
 			]);
 			portfolioSummary = summaryRes ?? null;

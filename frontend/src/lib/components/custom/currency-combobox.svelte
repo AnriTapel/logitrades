@@ -7,7 +7,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import { cn } from '$lib/utils';
 	import { localeStore, setLocaleCurrency } from '$lib/stores/locale';
-	import { CURRENCIES } from '$lib/constants/currencies';
+	import { CURRENCIES, DEFAULT_CURRENCY } from '$lib/constants/currencies';
 	import { clientLazyLoad } from '$lib/clientLazyLoad';
 	import { invalidateAll } from '$app/navigation';
 
@@ -15,17 +15,24 @@
 		plan = 'free',
 		activePortfolioId = null,
 		disabled = false,
+		local = false,
+		value = $bindable<string | undefined>(undefined),
 	}: {
 		plan?: string;
 		activePortfolioId?: number | null;
 		disabled?: boolean;
+		/** When true, selection is local-only (no server persistence). */
+		local?: boolean;
+		value?: string;
 	} = $props();
 
 	let open = $state(false);
 	let triggerRef = $state<HTMLButtonElement | null>(null);
 	let saving = $state(false);
 
-	const currency = $derived($localeStore.currency);
+	const currency = $derived(
+		local ? (value ?? DEFAULT_CURRENCY) : $localeStore.currency,
+	);
 	const selectedOption = $derived(
 		CURRENCIES.find((o) => o.code === currency) ?? null,
 	);
@@ -37,19 +44,25 @@
 		});
 	}
 
-	async function handleSelect(value: string) {
-		if (disabled || saving || value === currency) {
+	async function handleSelect(next: string) {
+		if (disabled || saving || next === currency) {
+			closeAndFocusTrigger();
+			return;
+		}
+
+		if (local) {
+			value = next;
 			closeAndFocusTrigger();
 			return;
 		}
 
 		saving = true;
-		setLocaleCurrency(value);
+		setLocaleCurrency(next);
 		closeAndFocusTrigger();
 
 		try {
 			const formData = new FormData();
-			formData.set('currency', value);
+			formData.set('currency', next);
 			formData.set('plan', plan);
 			if (activePortfolioId != null) {
 				formData.set('portfolio_id', String(activePortfolioId));

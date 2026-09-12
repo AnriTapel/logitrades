@@ -4,6 +4,7 @@
 	import * as Command from '$lib/components/ui/command';
 	import * as Popover from '$lib/components/ui/popover';
 	import Button from '$lib/components/ui/button/button.svelte';
+	import * as Dialog from '$lib/components/ui/dialog';
 	import {
 		Field,
 		Control,
@@ -23,9 +24,10 @@
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import { DatePicker } from '$lib';
 	import ToggleGroup from '$lib/components/custom/toggle-group.svelte';
+	import LeverageSlider from '$lib/components/custom/leverage-slider.svelte';
+	import PositionSizeCalculator from '$lib/components/custom/position-size-calculator.svelte';
 	import { showServerErrors } from '$lib/stores/error';
 	import type { HttpError } from '$lib/server/http-client/types';
-	import Slider from '$lib/components/ui/slider/slider.svelte';
 	import {
 		Check,
 		ChevronsUpDown,
@@ -37,7 +39,8 @@
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { Badge } from '$lib/components/ui/badge';
 
-	import type { Portfolio } from '$lib/types';
+	import type { Portfolio, PortfolioSummary } from '$lib/types';
+	import { effectiveCurrency } from '$lib/portfolio/effectiveCurrency';
 	import {
 		Content as SelectContent,
 		Root as SelectRoot,
@@ -53,6 +56,8 @@
 		portfolios = [],
 		activePortfolioId = undefined,
 		plan = 'free',
+		portfolioSummary = null,
+		userCurrency = undefined,
 	}: {
 		data: SuperValidated<TradeFormData>;
 		isEdit?: boolean;
@@ -61,6 +66,8 @@
 		portfolios?: Portfolio[];
 		activePortfolioId?: number;
 		plan?: string;
+		portfolioSummary?: PortfolioSummary | null;
+		userCurrency?: string;
 	} = $props();
 
 	const form = $derived.by(() =>
@@ -90,6 +97,15 @@
 		) ?? null,
 	);
 	const isArchivedPortfolio = $derived(activePortfolio?.status === 'archived');
+
+	const calculatorCurrency = $derived(
+		effectiveCurrency({
+			userCurrency,
+			activePortfolio,
+		}),
+	);
+
+	const calculatorInitialBalance = $derived(portfolioSummary?.equity ?? null);
 
 	let symbolOpen = $state(false);
 	let symbolSearch = $state($formData.symbol ?? '');
@@ -168,6 +184,7 @@
 	const canAddMoreTags = $derived(tradeTags.length < MAX_TRADE_TAGS);
 
 	let tagInputError = $state<string | null>(null);
+	let calculatorOpen = $state(false);
 
 	const hasTag = (value: string): boolean =>
 		tradeTags.some((tag) => tag.toLowerCase() === value.toLowerCase());
@@ -242,10 +259,20 @@
 
 <div class="flex flex-col -m-4 sm:-m-8">
 	<div class="flex-1 overflow-y-auto px-4 py-6 sm:px-8 sm:py-8">
-		<header class="mb-8 md:mb-10">
+		<header class="mb-8 md:mb-10 flex items-center justify-between gap-4">
 			<h1 class="text-2xl font-extrabold tracking-tight text-[#1a1c1f]">
 				{pageTitle}
 			</h1>
+			<Button
+				type="button"
+				variant="outline"
+				class="shrink-0 font-semibold"
+				onclick={() => {
+					calculatorOpen = true;
+				}}
+			>
+				Position calculator
+			</Button>
 		</header>
 
 		<form
@@ -795,61 +822,35 @@
 				<div
 					class="rounded-lg border border-[rgba(194,199,207,0.1)] bg-[rgba(243,243,247,0.3)] p-5 md:p-8 flex flex-col gap-6 md:gap-8"
 				>
-					<div class="flex flex-col gap-4">
-						<div class="flex items-center justify-between">
-							<div class="flex items-center gap-2">
-								<Field {form} name="useLeverage">
+					<Field {form} name="useLeverage">
+						<Control>
+							{#snippet children({ props: useLeverageProps })}
+								<Field {form} name="leverage">
 									<Control>
-										{#snippet children({ props })}
+										{#snippet children({ props: leverageProps })}
 											<input
 												name="useLeverage"
 												type="checkbox"
 												value={$formData.useLeverage}
 												hidden
 											/>
-											<Checkbox
-												{...props}
-												bind:checked={$formData.useLeverage}
+											<input
+												name="leverage"
+												value={$formData.leverage}
+												hidden
+											/>
+											<LeverageSlider
+												bind:enabled={$formData.useLeverage}
+												bind:leverage={$formData.leverage}
+												checkboxProps={useLeverageProps}
+												sliderProps={leverageProps}
 											/>
 										{/snippet}
 									</Control>
 								</Field>
-								<span class={fieldLabelClass}>Leverage</span>
-							</div>
-							<span
-								class={cn(
-									'rounded-[2px] bg-[#d2e4ff] px-2 py-0.5 text-[10px] font-bold text-[#001c37]',
-									{ 'opacity-50': !$formData.useLeverage },
-								)}
-							>
-								{$formData.leverage}x
-							</span>
-						</div>
-
-						<Field {form} name="leverage" class="flex flex-col gap-2 px-1">
-							<Control>
-								{#snippet children({ props })}
-									<input name="leverage" value={$formData.leverage} hidden />
-									<Slider
-										type="single"
-										{...props}
-										disabled={!$formData.useLeverage}
-										bind:value={$formData.leverage}
-										min={1}
-										max={50}
-										step={1}
-									/>
-									<div
-										class="flex justify-between text-[10px] font-medium text-[#94a3b8]"
-									>
-										<span>1x</span>
-										<span>25x</span>
-										<span>50x</span>
-									</div>
-								{/snippet}
-							</Control>
-						</Field>
-					</div>
+							{/snippet}
+						</Control>
+					</Field>
 
 					<div class="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
 						<Field {form} name="takeProfit" class="flex flex-col gap-2">
@@ -927,3 +928,16 @@
 		</Button>
 	</footer>
 </div>
+
+<Dialog.Root bind:open={calculatorOpen}>
+	<Dialog.Content class="max-h-[90vh] w-full max-w-3xl overflow-y-auto">
+		<Dialog.Header>
+			<Dialog.Title>Position calculator</Dialog.Title>
+		</Dialog.Header>
+		<PositionSizeCalculator
+			embedded
+			initialBalance={calculatorInitialBalance}
+			initialCurrency={calculatorCurrency}
+		/>
+	</Dialog.Content>
+</Dialog.Root>

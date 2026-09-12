@@ -17,4 +17,6 @@
 	portfolios={data.portfolios ?? []}
 	activePortfolioId={data.portfolioId}
 	plan={data.plan ?? 'free'}
+	portfolioSummary={data.portfolioSummary ?? null}
+	userCurrency={data.userCurrency}
 />
