@@ -74,8 +74,10 @@ function isPositiveFinite(value: number): boolean {
 	return Number.isFinite(value) && value > 0;
 }
 
-function getSizeStepValue(preset: SizeStepPreset): number {
-	return SIZE_STEP_OPTIONS.find((option) => option.value === preset)?.step ?? 1;
+function getSizeStepValue(preset: SizeStepPreset): number | null {
+	return (
+		SIZE_STEP_OPTIONS.find((option) => option.value === preset)?.step ?? null
+	);
 }
 
 function roundDownToStep(value: number, step: number): number {
@@ -156,7 +158,11 @@ export function calculatePositionSize(
 	const priceDistance = Math.abs(entryPrice - stopLossPrice);
 
 	let positionSize = riskAmount / (priceDistance * contractSize);
-	positionSize = roundDownToStep(positionSize, getSizeStepValue(sizeStep));
+
+	const sizeStepValue = getSizeStepValue(sizeStep);
+	if (sizeStepValue !== null) {
+		positionSize = roundDownToStep(positionSize, sizeStepValue);
+	}
 
 	const notionalValue = positionSize * entryPrice * contractSize;
 	const requiredMargin = notionalValue / leverage;
