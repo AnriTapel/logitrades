@@ -40,6 +40,11 @@ import {
 	pnlForPeriod,
 	totalTradedVolumeForPeriod,
 	totalEquityInOpenedTrades,
+	calcPayoffRatio,
+	calcRecoveryFactor,
+	calcSharpeRatio,
+	calcCurrentStreak,
+	calcTotalFees,
 } from '$lib/calcFunctions';
 
 // ---------------------------------------------------------------------------
@@ -887,5 +892,168 @@ describe('totalEquityInOpenedTrades', () => {
 			makeTrade({ tradeType: 'sell', openPrice: 200, quantity: 3 }),
 		];
 		expect(totalEquityInOpenedTrades(trades)).toBe(1100);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// calcPayoffRatio
+// ---------------------------------------------------------------------------
+
+describe('calcPayoffRatio', () => {
+	it('returns null when there are no losing trades', () => {
+		const trades = [
+			closed({ tradeType: 'buy', openPrice: 100, quantity: 1, closePrice: 110 }),
+		];
+		expect(calcPayoffRatio(trades)).toBeNull();
+	});
+
+	it('computes avgWin / |avgLoss|', () => {
+		// wins: +20, +40 → avgWin = 30
+		// losses: -10 → avgLoss = -10
+		// payoff = 30 / 10 = 3
+		const trades = [
+			closed({ tradeType: 'buy', openPrice: 100, quantity: 1, closePrice: 120 }),
+			closed({ tradeType: 'buy', openPrice: 100, quantity: 1, closePrice: 140 }),
+			closed({ tradeType: 'buy', openPrice: 100, quantity: 1, closePrice: 90 }),
+		];
+		expect(calcPayoffRatio(trades)).toBeCloseTo(3);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// calcRecoveryFactor
+// ---------------------------------------------------------------------------
+
+describe('calcRecoveryFactor', () => {
+	it('returns null when max drawdown is zero', () => {
+		const trades = [
+			closed({ tradeType: 'buy', openPrice: 100, quantity: 1, closePrice: 110 }),
+		];
+		expect(calcRecoveryFactor(trades)).toBeNull();
+	});
+
+	it('computes netPnl / |maxDrawdown|', () => {
+		// equity: +100, +50, -80, +30 → net = 100, max DD = 80
+		const trades = [
+			closed({ tradeType: 'buy', openPrice: 100, quantity: 1, closePrice: 200, closedAt: '2024-01-01T00:00:00Z' }),
+			closed({ tradeType: 'buy', openPrice: 100, quantity: 1, closePrice: 150, closedAt: '2024-01-02T00:00:00Z' }),
+			closed({ tradeType: 'buy', openPrice: 100, quantity: 1, closePrice: 20, closedAt: '2024-01-03T00:00:00Z' }),
+			closed({ tradeType: 'buy', openPrice: 100, quantity: 1, closePrice: 130, closedAt: '2024-01-04T00:00:00Z' }),
+		];
+		expect(calcRecoveryFactor(trades)).toBeCloseTo(100 / 80);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// calcSharpeRatio
+// ---------------------------------------------------------------------------
+
+describe('calcSharpeRatio', () => {
+	it('returns null when fewer than 2 active days', () => {
+		const trades = [
+			closed({
+				tradeType: 'buy',
+				openPrice: 100,
+				quantity: 1,
+				closePrice: 110,
+				closedAt: '2024-01-01T10:00:00Z',
+			}),
+		];
+		expect(calcSharpeRatio(trades)).toBeNull();
+	});
+
+	it('returns null when daily standard deviation is zero', () => {
+		const trades = [
+			closed({
+				tradeType: 'buy',
+				openPrice: 100,
+				quantity: 1,
+				closePrice: 110,
+				closedAt: '2024-01-01T10:00:00Z',
+			}),
+			closed({
+				tradeType: 'buy',
+				openPrice: 100,
+				quantity: 1,
+				closePrice: 110,
+				closedAt: '2024-01-02T10:00:00Z',
+			}),
+		];
+		expect(calcSharpeRatio(trades)).toBeNull();
+	});
+
+	it('annualizes mean/std of daily PnL with sqrt(252)', () => {
+		const trades = [
+			closed({
+				tradeType: 'buy',
+				openPrice: 100,
+				quantity: 1,
+				closePrice: 110,
+				closedAt: '2024-01-01T10:00:00Z',
+			}),
+			closed({
+				tradeType: 'buy',
+				openPrice: 100,
+				quantity: 1,
+				closePrice: 90,
+				closedAt: '2024-01-02T10:00:00Z',
+			}),
+		];
+		// daily returns: +10, -10 → mean=0, sample std=sqrt(200/1)=sqrt(200)
+		expect(calcSharpeRatio(trades)).toBeCloseTo(0);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// calcCurrentStreak
+// ---------------------------------------------------------------------------
+
+describe('calcCurrentStreak', () => {
+	it('returns null for empty trades', () => {
+		expect(calcCurrentStreak([])).toBeNull();
+	});
+
+	it('returns the current win streak from most recent trades', () => {
+		const trades = [
+			closed({ tradeType: 'buy', openPrice: 100, quantity: 1, closePrice: 90, closedAt: '2024-01-01T10:00:00Z' }),
+			closed({ tradeType: 'buy', openPrice: 100, quantity: 1, closePrice: 110, closedAt: '2024-01-02T10:00:00Z' }),
+			closed({ tradeType: 'buy', openPrice: 100, quantity: 1, closePrice: 120, closedAt: '2024-01-03T10:00:00Z' }),
+		];
+		expect(calcCurrentStreak(trades)).toEqual({ count: 2, type: 'win' });
+	});
+
+	it('returns the current loss streak from most recent trades', () => {
+		const trades = [
+			closed({ tradeType: 'buy', openPrice: 100, quantity: 1, closePrice: 110, closedAt: '2024-01-01T10:00:00Z' }),
+			closed({ tradeType: 'buy', openPrice: 100, quantity: 1, closePrice: 90, closedAt: '2024-01-02T10:00:00Z' }),
+			closed({ tradeType: 'buy', openPrice: 100, quantity: 1, closePrice: 80, closedAt: '2024-01-03T10:00:00Z' }),
+		];
+		expect(calcCurrentStreak(trades)).toEqual({ count: 2, type: 'loss' });
+	});
+
+	it('returns null when the latest closed trade breaks even', () => {
+		const trades = [
+			closed({ tradeType: 'buy', openPrice: 100, quantity: 1, closePrice: 100, closedAt: '2024-01-01T10:00:00Z' }),
+		];
+		expect(calcCurrentStreak(trades)).toBeNull();
+	});
+});
+
+// ---------------------------------------------------------------------------
+// calcTotalFees
+// ---------------------------------------------------------------------------
+
+describe('calcTotalFees', () => {
+	it('returns 0 for empty trades', () => {
+		expect(calcTotalFees([])).toBe(0);
+	});
+
+	it('sums fees from closed trades only', () => {
+		const trades = [
+			closed({ tradeType: 'buy', openPrice: 100, quantity: 1, closePrice: 110, fee: 2.5 }),
+			closed({ tradeType: 'buy', openPrice: 100, quantity: 1, closePrice: 90, fee: 1.5 }),
+			makeTrade({ tradeType: 'buy', openPrice: 100, quantity: 1, fee: 99 }),
+		];
+		expect(calcTotalFees(trades)).toBe(4);
 	});
 });

@@ -1,7 +1,8 @@
 <script lang="ts">
 	import * as Card from '$lib/components/ui/card';
 	import type { TradeTypeStats } from '$lib/chartsHelpers';
-	import EmptyState from './empty-state.svelte';
+	import { formatIntToCurrency } from '$lib/formatters';
+	import { localeStore } from '$lib/stores/locale';
 	import { getFinancialColor } from '$lib/utils';
 
 	interface Props {
@@ -22,9 +23,9 @@
 				<div class="w-2 h-2 rounded-full bg-green-500"></div>
 				<span class="text-sm font-semibold text-slate-700">Long</span>
 			</div>
-			<div class="flex gap-4 flex-1">
+			<div class="grid grid-cols-3 gap-2 flex-1">
 				<div
-					class="flex-1 bg-gray-100 rounded-lg p-3 flex flex-col justify-center items-center"
+					class="bg-gray-100 rounded-lg p-3 flex flex-col justify-center items-center"
 				>
 					<span class="text-xs text-slate-500 mb-1">Trades</span>
 					<span class="text-xl font-bold">
@@ -32,7 +33,7 @@
 					</span>
 				</div>
 				<div
-					class="flex-1 bg-gray-100 rounded-lg p-3 flex flex-col justify-center items-center"
+					class="bg-gray-100 rounded-lg p-3 flex flex-col justify-center items-center"
 				>
 					<span class="text-xs text-slate-500 mb-1">Winrate</span>
 					<span
@@ -42,6 +43,16 @@
 						)}"
 					>
 						{(longStats?.winrate ?? 0).toFixed(1)}%
+					</span>
+				</div>
+				<div
+					class="bg-gray-100 rounded-lg p-3 flex flex-col justify-center items-center"
+				>
+					<span class="text-xs text-slate-500 mb-1">PnL</span>
+					<span
+						class="text-lg font-bold {getFinancialColor(longStats?.pnl ?? 0, 0)}"
+					>
+						{formatIntToCurrency(longStats?.pnl ?? 0, $localeStore.currency)}
 					</span>
 				</div>
 			</div>
@@ -55,9 +66,9 @@
 				<div class="w-2 h-2 rounded-full bg-red-500"></div>
 				<span class="text-sm font-semibold text-slate-700">Short</span>
 			</div>
-			<div class="flex gap-4 flex-1">
+			<div class="grid grid-cols-3 gap-2 flex-1">
 				<div
-					class="flex-1 bg-gray-100 rounded-lg p-3 flex flex-col justify-center items-center"
+					class="bg-gray-100 rounded-lg p-3 flex flex-col justify-center items-center"
 				>
 					<span class="text-xs text-slate-500 mb-1">Trades</span>
 					<span class="text-xl font-bold">
@@ -65,7 +76,7 @@
 					</span>
 				</div>
 				<div
-					class="flex-1 bg-gray-100 rounded-lg p-3 flex flex-col justify-center items-center"
+					class="bg-gray-100 rounded-lg p-3 flex flex-col justify-center items-center"
 				>
 					<span class="text-xs text-slate-500 mb-1">Winrate</span>
 					<span
@@ -75,6 +86,16 @@
 						)}"
 					>
 						{(shortStats?.winrate ?? 0).toFixed(1)}%
+					</span>
+				</div>
+				<div
+					class="bg-gray-100 rounded-lg p-3 flex flex-col justify-center items-center"
+				>
+					<span class="text-xs text-slate-500 mb-1">PnL</span>
+					<span
+						class="text-lg font-bold {getFinancialColor(shortStats?.pnl ?? 0, 0)}"
+					>
+						{formatIntToCurrency(shortStats?.pnl ?? 0, $localeStore.currency)}
 					</span>
 				</div>
 			</div>

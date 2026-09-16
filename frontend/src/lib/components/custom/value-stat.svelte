@@ -7,6 +7,7 @@
 	} from '$lib/formatters';
 	import { localeStore } from '$lib/stores/locale';
 	import { cn, getFinancialColor } from '$lib/utils';
+	import SectionCard from './section-card.svelte';
 
 	const {
 		label,
@@ -51,22 +52,22 @@
 	});
 </script>
 
-<div
-	class={cn(
-		className,
-		bordered
-			? 'flex flex-col gap-4 p-4 border rounded-lg shadow-md bg-white'
-			: '',
-	)}
->
-	<p class="text-l font-bold text-gray-500">{label}</p>
-	<div
-		class={cn(
-			bordered
-				? 'bg-gray-100 p-4 rounded flex justify-center items-center flex-1'
-				: 'pt-2',
-		)}
+{#if bordered}
+	<SectionCard
+		title={label}
+		contentClass="flex justify-center items-center flex-1 px-4 pb-0 rounded"
 	>
-		<span class={cn('text-xl font-semibold', colorClass())}>{data()}</span>
+		<div
+			class="bg-gray-100 rounded flex-1 w-full h-full flex items-center justify-center"
+		>
+			<span class={cn('text-xl font-semibold', colorClass())}>{data()}</span>
+		</div>
+	</SectionCard>
+{:else}
+	<div class={className}>
+		<p class="text-l font-bold text-gray-500">{label}</p>
+		<div class="pt-2">
+			<span class={cn('text-xl font-semibold', colorClass())}>{data()}</span>
+		</div>
 	</div>
-</div>
+{/if}

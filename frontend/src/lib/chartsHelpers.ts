@@ -68,7 +68,7 @@ function formatDateMMMYY(dateStr: string): string {
 	}).format(new Date(parseInt(year), parseInt(month) - 1));
 }
 
-// Convert a Date to "YYYY-MM" month key format
+// Convert a Date to "YYYY-MM" month key format (local time, used by equity curve)
 function toMonthKey(date: Date): string {
 	return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
 		2,
@@ -76,59 +76,227 @@ function toMonthKey(date: Date): string {
 	)}`;
 }
 
-// Generate array of consecutive month keys starting from a given month
-function generateMonthRange(startMonth: string, count: number): string[] {
-	const [year, month] = startMonth.split('-').map(Number);
+export type PnlGranularity = 'daily' | 'weekly' | 'monthly' | 'yearly';
+export type PnlMode = 'periodic' | 'cumulative';
+
+const GRANULARITY_CONFIG: Record<
+	PnlGranularity,
+	{ count: number | null; label: string }
+> = {
+	daily: { count: 30, label: 'Daily P&L' },
+	weekly: { count: 12, label: 'Weekly P&L' },
+	monthly: { count: 12, label: 'Monthly P&L' },
+	yearly: { count: null, label: 'Yearly P&L' },
+};
+
+function toUtcDayKey(isoDate: string): string {
+	return isoDate.slice(0, 10);
+}
+
+function toUtcWeekKey(isoDate: string): string {
+	const date = new Date(isoDate);
+	const day = date.getUTCDay();
+	const diff = day === 0 ? -6 : 1 - day;
+	const monday = new Date(date);
+	monday.setUTCDate(date.getUTCDate() + diff);
+	return monday.toISOString().slice(0, 10);
+}
+
+function toUtcMonthKey(isoDate: string): string {
+	const date = new Date(isoDate);
+	return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
+}
+
+function toUtcYearKey(isoDate: string): string {
+	return String(new Date(isoDate).getUTCFullYear());
+}
+
+function toPeriodKey(isoDate: string, granularity: PnlGranularity): string {
+	switch (granularity) {
+		case 'daily':
+			return toUtcDayKey(isoDate);
+		case 'weekly':
+			return toUtcWeekKey(isoDate);
+		case 'monthly':
+			return toUtcMonthKey(isoDate);
+		case 'yearly':
+			return toUtcYearKey(isoDate);
+	}
+}
+
+function getCurrentPeriodKey(granularity: PnlGranularity): string {
+	return toPeriodKey(new Date().toISOString(), granularity);
+}
+
+function getWindowStartKey(granularity: PnlGranularity): string | null {
+	const now = new Date();
+	switch (granularity) {
+		case 'daily': {
+			const start = new Date(now);
+			start.setUTCDate(start.getUTCDate() - 30);
+			return toUtcDayKey(start.toISOString());
+		}
+		case 'weekly': {
+			const weekDate = new Date(toUtcWeekKey(now.toISOString()));
+			weekDate.setUTCDate(weekDate.getUTCDate() - 12 * 7);
+			return toUtcWeekKey(weekDate.toISOString());
+		}
+		case 'monthly': {
+			return toUtcMonthKey(
+				new Date(
+					Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 12, 1),
+				).toISOString(),
+			);
+		}
+		case 'yearly':
+			return null;
+	}
+}
+
+function addPeriod(
+	startKey: string,
+	offset: number,
+	granularity: PnlGranularity,
+): string {
+	switch (granularity) {
+		case 'daily': {
+			const date = new Date(startKey);
+			date.setUTCDate(date.getUTCDate() + offset);
+			return toUtcDayKey(date.toISOString());
+		}
+		case 'weekly': {
+			const date = new Date(startKey);
+			date.setUTCDate(date.getUTCDate() + offset * 7);
+			return toUtcWeekKey(date.toISOString());
+		}
+		case 'monthly': {
+			const [year, month] = startKey.split('-').map(Number);
+			return toUtcMonthKey(
+				new Date(Date.UTC(year, month - 1 + offset, 1)).toISOString(),
+			);
+		}
+		case 'yearly':
+			return String(parseInt(startKey, 10) + offset);
+	}
+}
+
+function generatePeriodRange(
+	startKey: string,
+	count: number,
+	granularity: PnlGranularity,
+): string[] {
 	const result: string[] = [];
 	for (let i = 0; i < count; i++) {
-		result.push(toMonthKey(new Date(year, month - 1 + i, 1)));
+		result.push(addPeriod(startKey, i, granularity));
 	}
 	return result;
 }
 
-// Helper function to create monthly P&L data
-// Always shows 6 months starting from the earliest month with data
-// (within the last 6 months from current). Current month is always visible.
-export function createMonthlyPnLData(trades: Trade[]): BarChartData {
-	const MONTHS_TO_SHOW = 6;
-	const pnlByMonth = new Map<string, number>();
+function formatPeriodLabel(key: string, granularity: PnlGranularity): string {
+	switch (granularity) {
+		case 'monthly':
+			return formatDateMMMYY(key);
+		case 'yearly':
+			return key;
+		default:
+			return formatDateDDMMMYY(key);
+	}
+}
 
-	// Aggregate PnL by month
-	trades.forEach((trade) => {
+export function createPeriodicPnLData(
+	trades: Trade[],
+	granularity: PnlGranularity = 'monthly',
+	mode: PnlMode = 'periodic',
+): BarChartData {
+	const pnlByPeriod = new Map<string, number>();
+
+	for (const trade of trades) {
 		const pnl = calcAbsolutePnl(trade);
-		if (pnl == null || !trade.closedAt) return;
-		const monthKey = toMonthKey(new Date(trade.closedAt));
-		pnlByMonth.set(monthKey, (pnlByMonth.get(monthKey) || 0) + pnl);
-	});
+		if (pnl == null || !trade.closedAt) continue;
+		const periodKey = toPeriodKey(trade.closedAt, granularity);
+		pnlByPeriod.set(periodKey, (pnlByPeriod.get(periodKey) ?? 0) + pnl);
+	}
 
-	const currentMonth = toMonthKey(new Date());
+	const config = GRANULARITY_CONFIG[granularity];
+	let periodsToDisplay: string[];
 
-	// Calculate 6-month lookback window boundary
-	const [currYear, currMonth] = currentMonth.split('-').map(Number);
-	const windowStartKey = toMonthKey(
-		new Date(currYear, currMonth - MONTHS_TO_SHOW, 1),
+	if (granularity === 'yearly') {
+		const yearsWithData = Array.from(pnlByPeriod.keys()).sort();
+		const currentYear = getCurrentPeriodKey('yearly');
+		const startYear = yearsWithData[0] || currentYear;
+		const count = parseInt(currentYear, 10) - parseInt(startYear, 10) + 1;
+		periodsToDisplay = generatePeriodRange(startYear, count, 'yearly');
+	} else {
+		const windowStart = getWindowStartKey(granularity)!;
+		const currentPeriod = getCurrentPeriodKey(granularity);
+		const periodsWithData = Array.from(pnlByPeriod.keys())
+			.filter((period) => period >= windowStart && period <= currentPeriod)
+			.sort();
+		const startPeriod = periodsWithData[0] || currentPeriod;
+		periodsToDisplay = generatePeriodRange(
+			startPeriod,
+			config.count!,
+			granularity,
+		);
+	}
+
+	const periodicValues = periodsToDisplay.map(
+		(period) => pnlByPeriod.get(period) ?? null,
 	);
+	const dataValues =
+		mode === 'cumulative'
+			? periodicValues.reduce<(number | null)[]>((acc, value) => {
+					const previous = acc.length > 0 ? (acc[acc.length - 1] ?? 0) : 0;
+					const next = previous + (value ?? 0);
+					acc.push(next);
+					return acc;
+				}, [])
+			: periodicValues;
 
-	// Find earliest month with data within the window
-	const monthsWithData = Array.from(pnlByMonth.keys())
-		.filter((m) => m >= windowStartKey && m <= currentMonth)
-		.sort();
-
-	// Start from earliest data in window, or current month if no data
-	const startMonth = monthsWithData[0] || currentMonth;
-	const monthsToDisplay = generateMonthRange(startMonth, MONTHS_TO_SHOW);
+	const datasetLabel =
+		mode === 'cumulative' ? `Cumulative ${config.label}` : config.label;
 
 	return {
-		labels: monthsToDisplay.map(formatDateMMMYY),
+		labels: periodsToDisplay.map((period) =>
+			formatPeriodLabel(period, granularity),
+		),
 		datasets: [
 			{
-				label: 'Monthly P&L',
-				data: monthsToDisplay.map((m) => pnlByMonth.get(m) ?? null),
-				backgroundColor: monthsToDisplay.map((m) => {
-					const pnl = pnlByMonth.get(m);
+				label: datasetLabel,
+				data: dataValues,
+				backgroundColor: dataValues.map((pnl) => {
 					if (pnl == null) return 'transparent';
 					return pnl >= 0 ? financialColors.profit : financialColors.loss;
 				}),
+				borderWidth: 0,
+				borderRadius: 4,
+			},
+		],
+	};
+}
+
+const WEEKDAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+export function createWeekdayPnLData(trades: Trade[]): BarChartData {
+	const pnlByWeekday = new Array<number>(7).fill(0);
+
+	for (const trade of trades) {
+		const pnl = calcAbsolutePnl(trade);
+		if (pnl == null || !trade.closedAt) continue;
+		const day = new Date(trade.closedAt).getUTCDay();
+		const index = day === 0 ? 6 : day - 1;
+		pnlByWeekday[index] += pnl;
+	}
+
+	return {
+		labels: WEEKDAY_LABELS,
+		datasets: [
+			{
+				label: 'PnL by Weekday',
+				data: pnlByWeekday,
+				backgroundColor: pnlByWeekday.map((pnl) =>
+					pnl >= 0 ? financialColors.profit : financialColors.loss,
+				),
 				borderWidth: 0,
 				borderRadius: 4,
 			},
@@ -158,10 +326,41 @@ export function getSymbolStats(allTrades: Trade[]): SymbolStatsRow[] {
 		.sort((a, b) => b.notionalVolume - a.notionalVolume);
 }
 
+export type TagStatsRow = {
+	tag: string;
+	pnl: number;
+	tradesCount: number;
+	winrate: number;
+};
+
+export function getTagStats(trades: Trade[]): TagStatsRow[] {
+	const statsByTag = new Map<string, Trade[]>();
+
+	for (const trade of trades) {
+		if (!trade.tags?.length) continue;
+		for (const tag of trade.tags) {
+			const existing = statsByTag.get(tag) ?? [];
+			existing.push(trade);
+			statsByTag.set(tag, existing);
+		}
+	}
+
+	return Array.from(statsByTag.entries())
+		.map(([tag, tagTrades]) => ({
+			tag,
+			pnl: pnlForPeriod(tagTrades),
+			tradesCount: tagTrades.length,
+			winrate: calcWinrate(tagTrades),
+		}))
+		.sort((a, b) => b.pnl - a.pnl)
+		.slice(0, 10);
+}
+
 export type TradeTypeStats = {
 	type: 'long' | 'short';
 	tradeCount: number;
 	winrate: number;
+	pnl: number;
 };
 
 export function createTradeTypeStats(trades: Trade[]): TradeTypeStats[] {
@@ -179,6 +378,7 @@ export function createTradeTypeStats(trades: Trade[]): TradeTypeStats[] {
 			type: tradeType === 'buy' ? 'long' : 'short',
 			tradeCount: filteredTrades.length,
 			winrate: closedTrades.length > 0 ? (wins / closedTrades.length) * 100 : 0,
+			pnl: pnlForPeriod(closedTrades),
 		};
 	};
 

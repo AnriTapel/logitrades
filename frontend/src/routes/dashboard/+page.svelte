@@ -3,12 +3,15 @@
 		BarChart,
 		ValueStat,
 		SymbolStatsTable,
+		TagStatsTable,
 		TradeTypeStats,
 		EmptyState,
+		SectionCard,
 		TradeFiltersToolbar,
 		LineChart,
 		CalendarHeatmap,
 	} from '$lib/components/custom';
+	import ToggleGroup from '$lib/components/custom/toggle-group.svelte';
 	import type { PageProps } from './$types';
 	import {
 		dashboardFiltersStore,
@@ -27,25 +30,112 @@
 		calcGrossProfit,
 		calcGrossLoss,
 		calcAverageRiskReward,
+		calcBestTrade,
+		calcWorstTrade,
+		calcPayoffRatio,
+		calcRecoveryFactor,
+		calcSharpeRatio,
+		calcCurrentStreak,
+		calcTotalFees,
 		pnlForPeriod,
 	} from '$lib/calcFunctions';
 	import {
 		createEquityCurveData,
 		createPortfolioEquityCurveData,
-		createMonthlyPnLData,
+		createPeriodicPnLData,
+		createWeekdayPnLData,
 		createTradeTypeStats,
 		getSymbolStats,
+		getTagStats,
+		type PnlGranularity,
+		type PnlMode,
 	} from '$lib/chartsHelpers';
 	import RiskRewardChart from '$lib/layouts/risk-reward-chart.svelte';
 	import Info from 'lucide-svelte/icons/info';
 	import { submitTradeFilterAction } from '$lib/tradeListClient';
 	import { debounce } from '$lib/inputDebounce';
-	import type { TradeFilters } from '$lib/types';
+	import type { Trade, TradeFilters } from '$lib/types';
+	import { browser } from '$app/environment';
 	import { onDestroy } from 'svelte';
+
+	const STORAGE_KEYS = {
+		pnlGranularity: 'dashboard.pnlGranularity',
+		pnlMode: 'dashboard.pnlMode',
+		equityTimeframe: 'dashboard.equityTimeframe',
+	} as const;
+
+	const pnlGranularityOptions = [
+		{ label: 'D', value: 'daily' },
+		{ label: 'W', value: 'weekly' },
+		{ label: 'M', value: 'monthly' },
+		{ label: 'Y', value: 'yearly' },
+	];
+
+	const pnlModeOptions = [
+		{ label: 'Period', value: 'periodic' },
+		{ label: 'Cumulative', value: 'cumulative' },
+	];
+
+	const equityTimeframeOptions = [
+		{ label: 'D', value: 'daily' },
+		{ label: 'W', value: 'weekly' },
+		{ label: 'M', value: 'monthly' },
+	];
+
+	function readStoredPreference<T extends string>(
+		key: string,
+		allowed: readonly T[],
+		fallback: T,
+	): T {
+		if (!browser) return fallback;
+		const stored = localStorage.getItem(key);
+		return stored && allowed.includes(stored as T) ? (stored as T) : fallback;
+	}
 
 	let { data }: PageProps = $props();
 
-	let closedTrades = $derived([...data.closedTrades.items]);
+	let closedTrades = $state<Trade[]>([]);
+
+	$effect(() => {
+		closedTrades = [...data.closedTrades.items];
+	});
+
+	let pnlGranularity = $state<PnlGranularity>(
+		readStoredPreference(
+			STORAGE_KEYS.pnlGranularity,
+			['daily', 'weekly', 'monthly', 'yearly'],
+			'monthly',
+		),
+	);
+	let pnlMode = $state<PnlMode>(
+		readStoredPreference(
+			STORAGE_KEYS.pnlMode,
+			['periodic', 'cumulative'],
+			'periodic',
+		),
+	);
+	let equityTimeframe = $state<'daily' | 'weekly' | 'monthly'>(
+		readStoredPreference(
+			STORAGE_KEYS.equityTimeframe,
+			['daily', 'weekly', 'monthly'],
+			'daily',
+		),
+	);
+
+	$effect(() => {
+		if (!browser) return;
+		localStorage.setItem(STORAGE_KEYS.pnlGranularity, pnlGranularity);
+	});
+
+	$effect(() => {
+		if (!browser) return;
+		localStorage.setItem(STORAGE_KEYS.pnlMode, pnlMode);
+	});
+
+	$effect(() => {
+		if (!browser) return;
+		localStorage.setItem(STORAGE_KEYS.equityTimeframe, equityTimeframe);
+	});
 
 	$effect(() => {
 		dashboardFiltersStore.update((prev) =>
@@ -61,6 +151,24 @@
 
 	let maxDrawdown = $derived(calcMaxDrawdown(closedTrades));
 	let avgRiskReward = $derived(calcAverageRiskReward(closedTrades));
+	let payoffRatio = $derived(calcPayoffRatio(closedTrades));
+	let recoveryFactor = $derived(calcRecoveryFactor(closedTrades));
+	let sharpeRatio = $derived(calcSharpeRatio(closedTrades));
+	let currentStreak = $derived(calcCurrentStreak(closedTrades));
+	let bestTrade = $derived(calcBestTrade(closedTrades));
+	let worstTrade = $derived(calcWorstTrade(closedTrades));
+
+	const streakDisplay = $derived(
+		currentStreak
+			? `${currentStreak.count} ${currentStreak.type === 'win' ? 'wins' : 'losses'}`
+			: '—',
+	);
+
+	const pnlChartTitle = $derived(
+		pnlMode === 'cumulative'
+			? `Cumulative ${pnlGranularity.charAt(0).toUpperCase()}${pnlGranularity.slice(1)} PnL`
+			: `${pnlGranularity.charAt(0).toUpperCase()}${pnlGranularity.slice(1)} PnL`,
+	);
 
 	const isPro = $derived(data.plan === 'pro' || data.plan === 'max');
 
@@ -74,10 +182,17 @@
 				data.transactions ?? [],
 				data.portfolioSummary.starting_capital ?? 0,
 				data.portfolioSummary.started_at ?? null,
+				equityTimeframe,
 			);
 		}
-		return createEquityCurveData(closedTrades);
+		return createEquityCurveData(closedTrades, 0, equityTimeframe);
 	});
+
+	const periodicPnLData = $derived(
+		createPeriodicPnLData(closedTrades, pnlGranularity, pnlMode),
+	);
+	const weekdayPnLData = $derived(createWeekdayPnLData(closedTrades));
+	const tagStats = $derived(getTagStats(closedTrades));
 
 	function withPortfolio(filters: TradeFilters): TradeFilters {
 		return data.portfolioId != null
@@ -179,20 +294,33 @@
 					bordered={false}
 					baselineValue={0}
 				/>
+				<ValueStat
+					label="Total Fees"
+					value={calcTotalFees(closedTrades)}
+					type={'money'}
+					bordered={false}
+				/>
 			</div>
 
 			<h2 class="text-xl font-semibold lg:mb-4 mb-8">Equity Analysis</h2>
 			<div class="grid grid-cols-1 gap-8 sm:gap-4 mb-16 sm:grid-cols-4">
-				<div
-					class="col-span-1 p-4 border rounded-lg shadow-md flex flex-col gap-4 sm:col-span-3"
+				<SectionCard
+					title="Equity Curve & Drawdown"
+					class="col-span-1 sm:col-span-3"
 				>
-					<p class="text-l font-bold">Equity Curve & Drawdown</p>
+					{#snippet action()}
+						<ToggleGroup
+							options={equityTimeframeOptions}
+							bind:value={equityTimeframe}
+							label="Equity timeframe"
+						/>
+					{/snippet}
 					{#if closedTrades.length}
 						<LineChart data={equityCurveData} showLegend={false} />
 					{:else}
 						<EmptyState message="Close a trade to see your equity curve" />
 					{/if}
-				</div>
+				</SectionCard>
 				<div class="grid grid-cols-2 flex flex-col gap-4 sm:grid-cols-1">
 					<ValueStat
 						label="Gross Profit"
@@ -211,98 +339,124 @@
 				</div>
 			</div>
 
-			<h2 class="text-xl font-semibold lg:mb-4 mb-8">Daily PnL Heatmap</h2>
-			<div class="mb-16 grid grid-cols-1 gap-4 md:grid-cols-5">
-				<div
-					class="p-4 border rounded-lg shadow-md flex flex-col gap-4 col-span-1 md:col-span-2"
-				>
-					{#if closedTrades.length}
-						<CalendarHeatmap trades={closedTrades} monthsToShow={12} />
-					{:else}
-						<EmptyState message="Close a trade to see daily PnL" />
-					{/if}
-				</div>
-			</div>
-
 			<h2 class="text-xl font-semibold lg:mb-4 mb-8">Trade Statistics</h2>
-			<div
-				class="lg:shadow-md lg:border lg:rounded-lg lg:grid-cols-2 lg:gap-x-24 lg:gap-y-4 grid grid-cols-1 gap-8 mb-16"
-			>
-				<!-- Profitability -->
-				<div class="lg:p-4 flex flex-col gap-4">
-					<p class="text-l font-bold">Profitability</p>
-					<div class="flex flex-col md:flex-row gap-4">
-						<ValueStat
-							label="Avg Win"
-							value={calcAverageWin(closedTrades)}
-							type={'money'}
-							className="w-full lg:shadow-none"
-							baselineValue={0}
-						/>
-						<ValueStat
-							label="Avg Loss"
-							value={calcAverageLoss(closedTrades)}
-							type={'money'}
-							className="w-full lg:shadow-none"
-							baselineValue={0}
-						/>
-					</div>
-				</div>
-				<!-- Behavior -->
-				<div class="lg:p-4 flex flex-col gap-4">
-					<p class="text-l font-bold">Behavior</p>
-					<div class="flex flex-col md:flex-row gap-4">
-						<ValueStat
-							label="Avg Trade Duration"
-							value={calcAverageTradeDuration(closedTrades)}
-							type={'string'}
-							className="w-full lg:shadow-none"
-						/>
-						<ValueStat
-							label="Avg Risk:Reward"
-							value={avgRiskReward ?? 0}
-							type={'integer'}
-							className="w-full lg:shadow-none"
-						/>
-					</div>
-				</div>
-				<!-- Consistency -->
-				<div class="lg:p-4 flex flex-col gap-4">
-					<p class="text-l font-bold">Consistency</p>
-					<div class="flex flex-col md:flex-row gap-4">
-						<ValueStat
-							label="Max Win Streak"
-							value={calcMaxWinStreak(closedTrades)}
-							type={'integer'}
-							className="w-full lg:shadow-none"
-						/>
-						<ValueStat
-							label="Max Loss Streak"
-							value={calcMaxLossStreak(closedTrades)}
-							type={'integer'}
-							className="w-full lg:shadow-none"
-						/>
-					</div>
-				</div>
-				<!-- Risk -->
-				<div class="lg:p-4 flex flex-col gap-4">
-					<p class="text-l font-bold">Risk</p>
-					<div class="flex flex-col md:flex-row gap-4">
-						<ValueStat
-							label="Max Drawdown"
-							value={maxDrawdown.absolute}
-							type={'money'}
-							className="w-full lg:shadow-none"
-							baselineValue={0}
-						/>
-						<ValueStat
-							label="Max DD %"
-							value={maxDrawdown.percentage}
-							type={'percentage'}
-							className="w-full lg:shadow-none"
-							baselineValue={0}
-						/>
-					</div>
+			<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-16">
+				<SectionCard
+					title="Profitability"
+					contentClass="grid grid-cols-2 gap-4"
+				>
+					<ValueStat
+						label="Avg Win"
+						value={calcAverageWin(closedTrades)}
+						type={'money'}
+						bordered={false}
+						baselineValue={0}
+					/>
+					<ValueStat
+						label="Avg Loss"
+						value={calcAverageLoss(closedTrades)}
+						type={'money'}
+						bordered={false}
+						baselineValue={0}
+					/>
+					<ValueStat
+						label="Best Trade"
+						value={bestTrade ?? '—'}
+						type={bestTrade != null ? 'money' : 'string'}
+						bordered={false}
+						baselineValue={0}
+					/>
+					<ValueStat
+						label="Worst Trade"
+						value={worstTrade ?? '—'}
+						type={worstTrade != null ? 'money' : 'string'}
+						bordered={false}
+						baselineValue={0}
+					/>
+					<ValueStat
+						label="Payoff Ratio"
+						value={payoffRatio ?? '—'}
+						type={payoffRatio != null ? 'integer' : 'string'}
+						bordered={false}
+					/>
+				</SectionCard>
+
+				<SectionCard title="Behavior" contentClass="grid grid-cols-2 gap-4">
+					<ValueStat
+						label="Avg Trade Duration"
+						value={calcAverageTradeDuration(closedTrades)}
+						type={'string'}
+						bordered={false}
+					/>
+					<ValueStat
+						label="Avg Risk:Reward"
+						value={avgRiskReward ?? '—'}
+						type={avgRiskReward != null ? 'integer' : 'string'}
+						bordered={false}
+					/>
+					<ValueStat
+						label="Current Streak"
+						value={streakDisplay}
+						type={'string'}
+						bordered={false}
+					/>
+				</SectionCard>
+
+				<SectionCard title="Consistency" contentClass="grid grid-cols-2 gap-4">
+					<ValueStat
+						label="Max Win Streak"
+						value={calcMaxWinStreak(closedTrades)}
+						type={'integer'}
+						bordered={false}
+					/>
+					<ValueStat
+						label="Max Loss Streak"
+						value={calcMaxLossStreak(closedTrades)}
+						type={'integer'}
+						bordered={false}
+					/>
+				</SectionCard>
+
+				<SectionCard title="Risk" contentClass="grid grid-cols-2 gap-4">
+					<ValueStat
+						label="Max Drawdown"
+						value={maxDrawdown.absolute}
+						type={'money'}
+						bordered={false}
+						baselineValue={0}
+					/>
+					<ValueStat
+						label="Max DD %"
+						value={maxDrawdown.percentage}
+						type={'percentage'}
+						bordered={false}
+						baselineValue={0}
+					/>
+					<ValueStat
+						label="Recovery Factor"
+						value={recoveryFactor ?? '—'}
+						type={recoveryFactor != null ? 'integer' : 'string'}
+						bordered={false}
+					/>
+					<ValueStat
+						label="Sharpe Ratio"
+						value={sharpeRatio != null ? sharpeRatio.toFixed(2) : '—'}
+						type={'string'}
+						bordered={false}
+					/>
+				</SectionCard>
+
+				<div class="grid col-span-1 gap-4 md:col-span-2 xl:col-span-4 mt-4">
+					<SectionCard
+						title="Daily PnL Heatmap"
+						class="max-w-full md:max-w-[400px] w-full"
+					>
+						{#if closedTrades.length}
+							<CalendarHeatmap trades={closedTrades} monthsToShow={12} />
+						{:else}
+							<EmptyState message="Close a trade to see daily PnL" />
+						{/if}
+					</SectionCard>
 				</div>
 			</div>
 
@@ -310,36 +464,56 @@
 			<div
 				class="grid grid-cols-1 sm:gap-4 gap-8 mb-16 xl:grid-cols-3 sm:grid-cols-2"
 			>
-				<div class="p-4 border rounded-lg shadow-md flex flex-col gap-4">
-					<p class="text-l font-bold">Risk Reward Distribution</p>
+				<SectionCard title="Risk Reward Distribution">
 					<RiskRewardChart {closedTrades} />
-				</div>
-				<div class="p-4 border rounded-lg shadow-md flex flex-col gap-4">
-					<p class="text-l font-bold">Trade Type Stats</p>
+				</SectionCard>
+				<SectionCard title="Trade Type Stats">
 					<TradeTypeStats data={createTradeTypeStats(closedTrades)} />
-				</div>
-				<div class="p-4 border rounded-lg shadow-md flex flex-col gap-4">
-					<p class="text-l font-bold">Trade Pair Stats</p>
+				</SectionCard>
+				<SectionCard title="Trade Pair Stats">
 					<SymbolStatsTable data={getSymbolStats(closedTrades)} />
-				</div>
+				</SectionCard>
 			</div>
 
-			<h2 class="text-xl font-semibold lg:mb-4 mb-8">Monthly Performance</h2>
-			<div class="mb-8 grid grid-cols-1 gap-4 xl:grid-cols-3 sm:grid-cols-2">
-				<div
-					class="p-4 border rounded-lg shadow-md flex flex-col gap-4 col-span-1"
-				>
-					<p class="text-l font-bold">Monthly PnL</p>
+			<h2 class="text-xl font-semibold lg:mb-4 mb-8">Patterns</h2>
+			<div
+				class="grid grid-cols-1 sm:gap-4 gap-8 mb-16 xl:grid-cols-3 sm:grid-cols-2"
+			>
+				<SectionCard title="PnL by Weekday">
 					{#if closedTrades.length}
-						<BarChart
-							data={createMonthlyPnLData(closedTrades)}
-							showLegend={false}
-							height={310}
-						/>
+						<BarChart data={weekdayPnLData} showLegend={false} height={310} />
 					{:else}
-						<EmptyState message="Close a trade to see monthly P&L" />
+						<EmptyState message="Close a trade to see weekday PnL" />
 					{/if}
-				</div>
+				</SectionCard>
+				<SectionCard title="Tag Stats">
+					<TagStatsTable data={tagStats} />
+				</SectionCard>
+			</div>
+
+			<h2 class="text-xl font-semibold lg:mb-4 mb-8">PnL Performance</h2>
+			<div class="grid grid-cols-1 gap-4 xl:grid-cols-3 sm:grid-cols-2">
+				<SectionCard title={pnlChartTitle} class="col-span-1">
+					{#snippet action()}
+						<div class="flex flex-wrap items-center gap-2">
+							<ToggleGroup
+								options={pnlGranularityOptions}
+								bind:value={pnlGranularity}
+								label="PnL granularity"
+							/>
+							<ToggleGroup
+								options={pnlModeOptions}
+								bind:value={pnlMode}
+								label="PnL mode"
+							/>
+						</div>
+					{/snippet}
+					{#if closedTrades.length}
+						<BarChart data={periodicPnLData} showLegend={false} height={310} />
+					{:else}
+						<EmptyState message="Close a trade to see P&L" />
+					{/if}
+				</SectionCard>
 			</div>
 		{/if}
 	{:else}

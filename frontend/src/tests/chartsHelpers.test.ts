@@ -6,13 +6,16 @@
  * of the implementation source.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import type { Trade } from '$lib/types';
 import {
 	getColorPalette,
 	getSymbolStats,
+	getTagStats,
 	createTradeTypeStats,
 	createRiskRewardDistribution,
+	createPeriodicPnLData,
+	createWeekdayPnLData,
 } from '$lib/chartsHelpers';
 
 // ---------------------------------------------------------------------------
@@ -31,6 +34,7 @@ function makeTrade(params: {
 	openedAt?: string;
 	leverage?: number;
 	stopLoss?: number;
+	tags?: string[];
 }): Trade {
 	const base: Trade = {
 		id: ++_id,
@@ -45,6 +49,7 @@ function makeTrade(params: {
 	if (params.closedAt !== undefined) base.closedAt = params.closedAt;
 	if (params.leverage !== undefined) base.leverage = params.leverage;
 	if (params.stopLoss !== undefined) base.stopLoss = params.stopLoss;
+	if (params.tags !== undefined) base.tags = params.tags;
 	return base;
 }
 
@@ -55,6 +60,12 @@ function closed(
 		...params,
 		closedAt: params.closedAt ?? '2024-01-02T10:00:00Z',
 	});
+}
+
+function closedWithTags(
+	params: Parameters<typeof closed>[0] & { tags: string[] },
+): Trade {
+	return closed(params);
 }
 
 // ---------------------------------------------------------------------------
@@ -277,6 +288,200 @@ describe('createTradeTypeStats', () => {
 		)!;
 		expect(longStats.tradeCount).toBe(0);
 		expect(longStats.winrate).toBe(0);
+	});
+
+	it('computes pnl from closed trades only', () => {
+		const trades = [
+			closed({
+				tradeType: 'buy',
+				openPrice: 100,
+				quantity: 1,
+				closePrice: 110,
+			}),
+			closed({
+				tradeType: 'buy',
+				openPrice: 100,
+				quantity: 1,
+				closePrice: 90,
+			}),
+			makeTrade({ tradeType: 'buy', openPrice: 100, quantity: 1 }),
+		];
+		const longStats = createTradeTypeStats(trades).find(
+			(s) => s.type === 'long',
+		)!;
+		expect(longStats.pnl).toBe(0);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// createPeriodicPnLData
+// ---------------------------------------------------------------------------
+
+describe('createPeriodicPnLData', () => {
+	afterEach(() => {
+		vi.useRealTimers();
+	});
+
+	it('aggregates monthly PnL within the display window', () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date('2024-06-15T12:00:00Z'));
+
+		const trades = [
+			closed({
+				tradeType: 'buy',
+				openPrice: 100,
+				quantity: 1,
+				closePrice: 110,
+				closedAt: '2024-05-10T10:00:00Z',
+			}),
+			closed({
+				tradeType: 'buy',
+				openPrice: 100,
+				quantity: 1,
+				closePrice: 90,
+				closedAt: '2024-06-05T10:00:00Z',
+			}),
+		];
+
+		const result = createPeriodicPnLData(trades, 'monthly', 'periodic');
+		expect(result.labels).toHaveLength(12);
+		expect(result.datasets[0].data).toContain(10);
+		expect(result.datasets[0].data).toContain(-10);
+	});
+
+	it('transforms periodic values into a cumulative series', () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date('2024-03-15T12:00:00Z'));
+
+		const trades = [
+			closed({
+				tradeType: 'buy',
+				openPrice: 100,
+				quantity: 1,
+				closePrice: 110,
+				closedAt: '2024-01-10T10:00:00Z',
+			}),
+			closed({
+				tradeType: 'buy',
+				openPrice: 100,
+				quantity: 1,
+				closePrice: 90,
+				closedAt: '2024-02-10T10:00:00Z',
+			}),
+		];
+
+		const result = createPeriodicPnLData(trades, 'monthly', 'cumulative');
+		const values = result.datasets[0].data as number[];
+		expect(values[values.length - 1]).toBe(0);
+	});
+
+	it('aggregates yearly PnL across all years with data', () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date('2024-06-15T12:00:00Z'));
+
+		const trades = [
+			closed({
+				tradeType: 'buy',
+				openPrice: 100,
+				quantity: 1,
+				closePrice: 110,
+				closedAt: '2023-05-10T10:00:00Z',
+			}),
+			closed({
+				tradeType: 'buy',
+				openPrice: 100,
+				quantity: 1,
+				closePrice: 120,
+				closedAt: '2024-06-05T10:00:00Z',
+			}),
+		];
+
+		const result = createPeriodicPnLData(trades, 'yearly', 'periodic');
+		expect(result.labels).toEqual(['2023', '2024']);
+		expect(result.datasets[0].data).toEqual([10, 20]);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// createWeekdayPnLData
+// ---------------------------------------------------------------------------
+
+describe('createWeekdayPnLData', () => {
+	it('returns seven weekday labels', () => {
+		const result = createWeekdayPnLData([]);
+		expect(result.labels).toEqual([
+			'Mon',
+			'Tue',
+			'Wed',
+			'Thu',
+			'Fri',
+			'Sat',
+			'Sun',
+		]);
+	});
+
+	it('aggregates PnL by UTC weekday', () => {
+		// 2024-01-01 is a Monday
+		const trades = [
+			closed({
+				tradeType: 'buy',
+				openPrice: 100,
+				quantity: 1,
+				closePrice: 110,
+				closedAt: '2024-01-01T10:00:00Z',
+			}),
+			closed({
+				tradeType: 'buy',
+				openPrice: 100,
+				quantity: 1,
+				closePrice: 90,
+				closedAt: '2024-01-02T10:00:00Z',
+			}),
+		];
+
+		const result = createWeekdayPnLData(trades);
+		const values = result.datasets[0].data as number[];
+		expect(values[0]).toBe(10);
+		expect(values[1]).toBe(-10);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// getTagStats
+// ---------------------------------------------------------------------------
+
+describe('getTagStats', () => {
+	it('returns empty array when no tagged trades exist', () => {
+		expect(getTagStats([])).toEqual([]);
+	});
+
+	it('aggregates stats per tag and limits to top 10 by pnl', () => {
+		const trades = [
+			closedWithTags({
+				tradeType: 'buy',
+				openPrice: 100,
+				quantity: 1,
+				closePrice: 110,
+				tags: ['breakout', 'swing'],
+			}),
+			closedWithTags({
+				tradeType: 'buy',
+				openPrice: 100,
+				quantity: 1,
+				closePrice: 90,
+				tags: ['breakout'],
+			}),
+		];
+
+		const result = getTagStats(trades);
+		const breakout = result.find((row) => row.tag === 'breakout');
+		const swing = result.find((row) => row.tag === 'swing');
+
+		expect(breakout?.pnl).toBe(0);
+		expect(breakout?.tradesCount).toBe(2);
+		expect(breakout?.winrate).toBeCloseTo(0.5);
+		expect(swing?.pnl).toBe(10);
+		expect(swing?.tradesCount).toBe(1);
 	});
 });
 

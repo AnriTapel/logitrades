@@ -376,3 +376,104 @@ export function calcAverageRiskReward(trades: Trade[]): number | null {
 	const avgRR = rrRatios.reduce((sum, rr) => sum + rr, 0) / rrRatios.length;
 	return avgRR;
 }
+
+function getClosedTrades(trades: Trade[]): Trade[] {
+	return trades.filter((t) => t.closePrice != null && t.closedAt != null);
+}
+
+export function calcPayoffRatio(trades: Trade[]): number | null {
+	const avgWin = calcAverageWin(trades);
+	const avgLoss = calcAverageLoss(trades);
+	if (avgLoss === 0) {
+		return null;
+	}
+	return avgWin / Math.abs(avgLoss);
+}
+
+export function calcRecoveryFactor(trades: Trade[]): number | null {
+	const closedTrades = getClosedTrades(trades);
+	if (closedTrades.length === 0) {
+		return null;
+	}
+	const netPnl = pnlForPeriod(closedTrades);
+	const maxDrawdown = calcMaxDrawdown(closedTrades);
+	if (maxDrawdown.absolute === 0) {
+		return null;
+	}
+	return netPnl / Math.abs(maxDrawdown.absolute);
+}
+
+/**
+ * Annualized Sharpe ratio from daily PnL returns (PnL-based, not equity-normalized).
+ * Standard approach for trading journals without a fixed equity base.
+ */
+export function calcSharpeRatio(trades: Trade[]): number | null {
+	const closedTrades = getClosedTrades(trades);
+	if (closedTrades.length === 0) {
+		return null;
+	}
+
+	const pnlByDay = new Map<string, number>();
+	for (const trade of closedTrades) {
+		const pnl = calcAbsolutePnl(trade);
+		if (pnl === null || !trade.closedAt) continue;
+		const dayKey = trade.closedAt.slice(0, 10);
+		pnlByDay.set(dayKey, (pnlByDay.get(dayKey) ?? 0) + pnl);
+	}
+
+	const dailyReturns = Array.from(pnlByDay.values());
+	if (dailyReturns.length < 2) {
+		return null;
+	}
+
+	const mean =
+		dailyReturns.reduce((sum, value) => sum + value, 0) / dailyReturns.length;
+	const variance =
+		dailyReturns.reduce((sum, value) => sum + (value - mean) ** 2, 0) /
+		(dailyReturns.length - 1);
+	const std = Math.sqrt(variance);
+	if (std === 0) {
+		return null;
+	}
+
+	return (mean / std) * Math.sqrt(252);
+}
+
+export function calcCurrentStreak(
+	trades: Trade[],
+): { count: number; type: 'win' | 'loss' } | null {
+	const closedTrades = getClosedTrades(trades);
+	if (closedTrades.length === 0) {
+		return null;
+	}
+
+	const sortedTrades = [...closedTrades].sort(
+		(a, b) => new Date(b.closedAt!).getTime() - new Date(a.closedAt!).getTime(),
+	);
+
+	const latestPnl = calcAbsolutePnl(sortedTrades[0]);
+	if (latestPnl === null || latestPnl === 0) {
+		return null;
+	}
+
+	const streakType: 'win' | 'loss' = latestPnl > 0 ? 'win' : 'loss';
+	let count = 0;
+
+	for (const trade of sortedTrades) {
+		const pnl = calcAbsolutePnl(trade);
+		if (pnl === null || pnl === 0) {
+			break;
+		}
+		if ((streakType === 'win' && pnl > 0) || (streakType === 'loss' && pnl < 0)) {
+			count++;
+			continue;
+		}
+		break;
+	}
+
+	return count > 0 ? { count, type: streakType } : null;
+}
+
+export function calcTotalFees(trades: Trade[]): number {
+	return getClosedTrades(trades).reduce((sum, trade) => sum + (trade.fee ?? 0), 0);
+}
