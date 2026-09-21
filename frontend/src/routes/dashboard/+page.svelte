@@ -29,7 +29,8 @@
 		calcMaxDrawdown,
 		calcGrossProfit,
 		calcGrossLoss,
-		calcAverageRiskReward,
+		calcAveragePlannedRiskReward,
+		calcAverageRealizedR,
 		calcBestTrade,
 		calcWorstTrade,
 		calcPayoffRatio,
@@ -150,7 +151,8 @@
 	);
 
 	let maxDrawdown = $derived(calcMaxDrawdown(closedTrades));
-	let avgRiskReward = $derived(calcAverageRiskReward(closedTrades));
+	let avgPlannedRiskReward = $derived(calcAveragePlannedRiskReward(closedTrades));
+	let avgRealizedR = $derived(calcAverageRealizedR(closedTrades));
 	let payoffRatio = $derived(calcPayoffRatio(closedTrades));
 	let recoveryFactor = $derived(calcRecoveryFactor(closedTrades));
 	let sharpeRatio = $derived(calcSharpeRatio(closedTrades));
@@ -284,7 +286,7 @@
 				<ValueStat
 					label="Profit Factor"
 					value={calcProfitFactor(closedTrades)}
-					type={'integer'}
+					type={'decimal'}
 					bordered={false}
 				/>
 				<ValueStat
@@ -376,7 +378,7 @@
 					<ValueStat
 						label="Payoff Ratio"
 						value={payoffRatio ?? '—'}
-						type={payoffRatio != null ? 'integer' : 'string'}
+						type={payoffRatio != null ? 'decimal' : 'string'}
 						bordered={false}
 					/>
 				</SectionCard>
@@ -390,8 +392,14 @@
 					/>
 					<ValueStat
 						label="Avg Risk:Reward"
-						value={avgRiskReward ?? '—'}
-						type={avgRiskReward != null ? 'integer' : 'string'}
+						value={avgPlannedRiskReward ?? '—'}
+						type={avgPlannedRiskReward != null ? 'decimal' : 'string'}
+						bordered={false}
+					/>
+					<ValueStat
+						label="Avg Realized R"
+						value={avgRealizedR ?? '—'}
+						type={avgRealizedR != null ? 'decimal' : 'string'}
 						bordered={false}
 					/>
 					<ValueStat
@@ -435,7 +443,7 @@
 					<ValueStat
 						label="Recovery Factor"
 						value={recoveryFactor ?? '—'}
-						type={recoveryFactor != null ? 'integer' : 'string'}
+						type={recoveryFactor != null ? 'decimal' : 'string'}
 						bordered={false}
 					/>
 					<ValueStat

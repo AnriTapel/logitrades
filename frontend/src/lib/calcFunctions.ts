@@ -1,8 +1,14 @@
 import type { Trade } from '$lib/types';
 
 export function calcAbsolutePnl(trade: Trade): number | null {
-	const { openPrice, closePrice, quantity, leverage = 1, tradeType, fee = 0 } =
-		trade;
+	const {
+		openPrice,
+		closePrice,
+		quantity,
+		leverage = 1,
+		tradeType,
+		fee = 0,
+	} = trade;
 	if (closePrice == null || closePrice === undefined) {
 		return null;
 	}
@@ -21,11 +27,11 @@ export function calcAbsolutePnl(trade: Trade): number | null {
 	}
 
 	return (
-		(closePrice - openPrice) * quantity * (tradeType === 'buy' ? 1 : -1) -
-		fee
+		(closePrice - openPrice) * quantity * (tradeType === 'buy' ? 1 : -1) - fee
 	);
 }
 
+/** All calc helpers expect closed trades (closePrice + closedAt set). */
 export function calcWinrate(trades: Trade[]): number {
 	if (trades.length === 0) {
 		return 0;
@@ -38,10 +44,7 @@ export function calcWinrate(trades: Trade[]): number {
 }
 
 export const calcAverageWin = (trades: Trade[]): number => {
-	const closedTrades = trades.filter(
-		(t) => t.closePrice != null && t.closedAt != null,
-	);
-	const winningTrades = closedTrades
+	const winningTrades = trades
 		.map((trade) => calcAbsolutePnl(trade))
 		.filter((pnl): pnl is number => pnl !== null && pnl > 0);
 	if (winningTrades.length === 0) {
@@ -52,10 +55,7 @@ export const calcAverageWin = (trades: Trade[]): number => {
 };
 
 export const calcAverageLoss = (trades: Trade[]): number => {
-	const closedTrades = trades.filter(
-		(t) => t.closePrice != null && t.closedAt != null,
-	);
-	const losingTrades = closedTrades
+	const losingTrades = trades
 		.map((trade) => calcAbsolutePnl(trade))
 		.filter((pnl): pnl is number => pnl !== null && pnl < 0);
 	if (losingTrades.length === 0) {
@@ -66,16 +66,13 @@ export const calcAverageLoss = (trades: Trade[]): number => {
 };
 
 export const calcProfitFactor = (trades: Trade[]): number => {
-	const closedTrades = trades.filter(
-		(t) => t.closePrice != null && t.closedAt != null,
-	);
-	const totalProfit = closedTrades
+	const totalProfit = trades
 		.map((trade) => calcAbsolutePnl(trade))
 		.filter((pnl): pnl is number => pnl !== null && pnl > 0)
 		.reduce((sum, pnl) => sum + pnl, 0);
 
 	const totalLoss = Math.abs(
-		closedTrades
+		trades
 			.map((trade) => calcAbsolutePnl(trade))
 			.filter((pnl): pnl is number => pnl !== null && pnl < 0)
 			.reduce((sum, pnl) => sum + pnl, 0),
@@ -99,35 +96,10 @@ export function calcPnlPercentage(trade: Trade): number | null {
 	return absolutePnl / investedAmount;
 }
 
-export function calculatePnl(trade: Trade): number {
-	if (!trade.closePrice) {
-		return 0;
-	}
-
-	const { openPrice, closePrice, quantity, leverage = 1, tradeType } = trade;
-
-	if (leverage > 1) {
-		const liquidationPriceLong = openPrice * (1 - 1 / leverage);
-		const liquidationPriceShort = openPrice * (1 + 1 / leverage);
-
-		if (tradeType === 'buy' && closePrice <= liquidationPriceLong) {
-			return (-openPrice * quantity) / leverage;
-		}
-
-		if (tradeType === 'sell' && closePrice >= liquidationPriceShort) {
-			return (-openPrice * quantity) / leverage;
-		}
-	}
-
-	return (closePrice - openPrice) * quantity * (tradeType === 'buy' ? 1 : -1);
-}
-
 export function pnlForPeriod(trades: Trade[]): number {
 	return trades.reduce((total, trade) => {
-		if (!trade.closePrice || !trade.closedAt) {
-			return total;
-		}
-		return total + calculatePnl(trade);
+		const pnl = calcAbsolutePnl(trade);
+		return pnl !== null ? total + pnl : total;
 	}, 0);
 }
 
@@ -146,27 +118,21 @@ export function totalEquityInOpenedTrades(trades: Trade[]): number {
 }
 
 export function calcExpectancy(trades: Trade[]): number {
-	const closedTrades = trades.filter(
-		(t) => t.closePrice != null && t.closedAt != null,
-	);
-	if (closedTrades.length === 0) {
+	if (trades.length === 0) {
 		return 0;
 	}
-	const totalPnl = closedTrades
+	const totalPnl = trades
 		.map((trade) => calcAbsolutePnl(trade))
 		.filter((pnl): pnl is number => pnl !== null)
 		.reduce((sum, pnl) => sum + pnl, 0);
-	return totalPnl / closedTrades.length;
+	return totalPnl / trades.length;
 }
 
 export function calcBestTrade(trades: Trade[]): number | null {
-	const closedTrades = trades.filter(
-		(t) => t.closePrice != null && t.closedAt != null,
-	);
-	if (closedTrades.length === 0) {
+	if (trades.length === 0) {
 		return null;
 	}
-	const pnls = closedTrades
+	const pnls = trades
 		.map((trade) => calcAbsolutePnl(trade))
 		.filter((pnl): pnl is number => pnl !== null);
 	if (pnls.length === 0) {
@@ -176,13 +142,10 @@ export function calcBestTrade(trades: Trade[]): number | null {
 }
 
 export function calcWorstTrade(trades: Trade[]): number | null {
-	const closedTrades = trades.filter(
-		(t) => t.closePrice != null && t.closedAt != null,
-	);
-	if (closedTrades.length === 0) {
+	if (trades.length === 0) {
 		return null;
 	}
-	const pnls = closedTrades
+	const pnls = trades
 		.map((trade) => calcAbsolutePnl(trade))
 		.filter((pnl): pnl is number => pnl !== null);
 	if (pnls.length === 0) {
@@ -192,35 +155,25 @@ export function calcWorstTrade(trades: Trade[]): number | null {
 }
 
 export function calcGrossProfit(trades: Trade[]): number {
-	const closedTrades = trades.filter(
-		(t) => t.closePrice != null && t.closedAt != null,
-	);
-	return closedTrades
+	return trades
 		.map((trade) => calcAbsolutePnl(trade))
 		.filter((pnl): pnl is number => pnl !== null && pnl > 0)
 		.reduce((sum, pnl) => sum + pnl, 0);
 }
 
 export function calcGrossLoss(trades: Trade[]): number {
-	const closedTrades = trades.filter(
-		(t) => t.closePrice != null && t.closedAt != null,
-	);
-	return closedTrades
+	return trades
 		.map((trade) => calcAbsolutePnl(trade))
 		.filter((pnl): pnl is number => pnl !== null && pnl < 0)
 		.reduce((sum, pnl) => sum + pnl, 0);
 }
 
 export function calcMaxWinStreak(trades: Trade[]): number {
-	const closedTrades = trades.filter(
-		(t) => t.closePrice != null && t.closedAt != null,
-	);
-	if (closedTrades.length === 0) {
+	if (trades.length === 0) {
 		return 0;
 	}
 
-	// Sort by closedAt chronologically
-	const sortedTrades = [...closedTrades].sort((a, b) => {
+	const sortedTrades = [...trades].sort((a, b) => {
 		return new Date(a.closedAt!).getTime() - new Date(b.closedAt!).getTime();
 	});
 
@@ -241,15 +194,11 @@ export function calcMaxWinStreak(trades: Trade[]): number {
 }
 
 export function calcMaxLossStreak(trades: Trade[]): number {
-	const closedTrades = trades.filter(
-		(t) => t.closePrice != null && t.closedAt != null,
-	);
-	if (closedTrades.length === 0) {
+	if (trades.length === 0) {
 		return 0;
 	}
 
-	// Sort by closedAt chronologically
-	const sortedTrades = [...closedTrades].sort((a, b) => {
+	const sortedTrades = [...trades].sort((a, b) => {
 		return new Date(a.closedAt!).getTime() - new Date(b.closedAt!).getTime();
 	});
 
@@ -270,20 +219,17 @@ export function calcMaxLossStreak(trades: Trade[]): number {
 }
 
 export function calcAverageTradeDuration(trades: Trade[]): string {
-	const closedTrades = trades.filter(
-		(t) => t.closePrice != null && t.closedAt != null,
-	);
-	if (closedTrades.length === 0) {
+	if (trades.length === 0) {
 		return '0m';
 	}
 
-	const totalDurationMs = closedTrades.reduce((sum, trade) => {
+	const totalDurationMs = trades.reduce((sum, trade) => {
 		const openTime = new Date(trade.openedAt).getTime();
 		const closeTime = new Date(trade.closedAt!).getTime();
 		return sum + (closeTime - openTime);
 	}, 0);
 
-	const avgDurationMs = totalDurationMs / closedTrades.length;
+	const avgDurationMs = totalDurationMs / trades.length;
 	const avgDurationMinutes = avgDurationMs / (1000 * 60);
 	const avgDurationHours = avgDurationMinutes / 60;
 	const avgDurationDays = avgDurationHours / 24;
@@ -302,15 +248,11 @@ export function calcMaxDrawdown(trades: Trade[]): {
 	absolute: number;
 	percentage: number;
 } {
-	const closedTrades = trades.filter(
-		(t) => t.closePrice != null && t.closedAt != null,
-	);
-	if (closedTrades.length === 0) {
+	if (trades.length === 0) {
 		return { absolute: 0, percentage: 0 };
 	}
 
-	// Sort by closedAt chronologically
-	const sortedTrades = [...closedTrades].sort((a, b) => {
+	const sortedTrades = [...trades].sort((a, b) => {
 		return new Date(a.closedAt!).getTime() - new Date(b.closedAt!).getTime();
 	});
 
@@ -341,44 +283,63 @@ export function calcMaxDrawdown(trades: Trade[]): {
 	return { absolute: -maxDrawdownAbs, percentage: -maxDrawdownPct };
 }
 
-export function calcAverageRiskReward(trades: Trade[]): number | null {
-	const closedTrades = trades.filter(
-		(t) => t.closePrice != null && t.closedAt != null,
-	);
-
-	// Only include trades with stopLoss defined
-	const tradesWithSL = closedTrades.filter((t) => t.stopLoss != null);
+/** Mean realized R-multiple: net PnL / planned $ risk (|entry − SL| × qty). */
+export function calcAverageRealizedR(trades: Trade[]): number | null {
+	const tradesWithSL = trades.filter((t) => t.stopLoss != null);
 
 	if (tradesWithSL.length === 0) {
 		return null;
 	}
 
-	const rrRatios: number[] = [];
+	const realizedRs: number[] = [];
 
 	for (const trade of tradesWithSL) {
 		const actualPnl = calcAbsolutePnl(trade);
 		if (actualPnl === null) continue;
 
-		// Calculate planned risk
 		const plannedRisk =
 			Math.abs(trade.stopLoss! - trade.openPrice) * trade.quantity;
 
 		if (plannedRisk === 0) continue;
 
-		const rrRatio = actualPnl / plannedRisk;
-		rrRatios.push(rrRatio);
+		realizedRs.push(actualPnl / plannedRisk);
 	}
 
-	if (rrRatios.length === 0) {
+	if (realizedRs.length === 0) {
 		return null;
 	}
 
-	const avgRR = rrRatios.reduce((sum, rr) => sum + rr, 0) / rrRatios.length;
-	return avgRR;
+	return realizedRs.reduce((sum, r) => sum + r, 0) / realizedRs.length;
 }
 
-function getClosedTrades(trades: Trade[]): Trade[] {
-	return trades.filter((t) => t.closePrice != null && t.closedAt != null);
+/** Mean planned R:R: |TP − entry| / |entry − SL| for trades with both SL and TP. */
+export function calcAveragePlannedRiskReward(trades: Trade[]): number | null {
+	const tradesWithSlAndTp = trades.filter(
+		(t) => t.stopLoss != null && t.takeProfit != null,
+	);
+
+	if (tradesWithSlAndTp.length === 0) {
+		return null;
+	}
+
+	const plannedRatios: number[] = [];
+
+	for (const trade of tradesWithSlAndTp) {
+		const plannedRisk =
+			Math.abs(trade.stopLoss! - trade.openPrice) * trade.quantity;
+		const plannedReward =
+			Math.abs(trade.takeProfit! - trade.openPrice) * trade.quantity;
+
+		if (plannedRisk === 0) continue;
+
+		plannedRatios.push(plannedReward / plannedRisk);
+	}
+
+	if (plannedRatios.length === 0) {
+		return null;
+	}
+
+	return plannedRatios.reduce((sum, rr) => sum + rr, 0) / plannedRatios.length;
 }
 
 export function calcPayoffRatio(trades: Trade[]): number | null {
@@ -391,12 +352,11 @@ export function calcPayoffRatio(trades: Trade[]): number | null {
 }
 
 export function calcRecoveryFactor(trades: Trade[]): number | null {
-	const closedTrades = getClosedTrades(trades);
-	if (closedTrades.length === 0) {
+	if (trades.length === 0) {
 		return null;
 	}
-	const netPnl = pnlForPeriod(closedTrades);
-	const maxDrawdown = calcMaxDrawdown(closedTrades);
+	const netPnl = pnlForPeriod(trades);
+	const maxDrawdown = calcMaxDrawdown(trades);
 	if (maxDrawdown.absolute === 0) {
 		return null;
 	}
@@ -408,13 +368,12 @@ export function calcRecoveryFactor(trades: Trade[]): number | null {
  * Standard approach for trading journals without a fixed equity base.
  */
 export function calcSharpeRatio(trades: Trade[]): number | null {
-	const closedTrades = getClosedTrades(trades);
-	if (closedTrades.length === 0) {
+	if (trades.length === 0) {
 		return null;
 	}
 
 	const pnlByDay = new Map<string, number>();
-	for (const trade of closedTrades) {
+	for (const trade of trades) {
 		const pnl = calcAbsolutePnl(trade);
 		if (pnl === null || !trade.closedAt) continue;
 		const dayKey = trade.closedAt.slice(0, 10);
@@ -442,12 +401,11 @@ export function calcSharpeRatio(trades: Trade[]): number | null {
 export function calcCurrentStreak(
 	trades: Trade[],
 ): { count: number; type: 'win' | 'loss' } | null {
-	const closedTrades = getClosedTrades(trades);
-	if (closedTrades.length === 0) {
+	if (trades.length === 0) {
 		return null;
 	}
 
-	const sortedTrades = [...closedTrades].sort(
+	const sortedTrades = [...trades].sort(
 		(a, b) => new Date(b.closedAt!).getTime() - new Date(a.closedAt!).getTime(),
 	);
 
@@ -464,7 +422,10 @@ export function calcCurrentStreak(
 		if (pnl === null || pnl === 0) {
 			break;
 		}
-		if ((streakType === 'win' && pnl > 0) || (streakType === 'loss' && pnl < 0)) {
+		if (
+			(streakType === 'win' && pnl > 0) ||
+			(streakType === 'loss' && pnl < 0)
+		) {
 			count++;
 			continue;
 		}
@@ -475,5 +436,5 @@ export function calcCurrentStreak(
 }
 
 export function calcTotalFees(trades: Trade[]): number {
-	return getClosedTrades(trades).reduce((sum, trade) => sum + (trade.fee ?? 0), 0);
+	return trades.reduce((sum, trade) => sum + (trade.fee ?? 0), 0);
 }

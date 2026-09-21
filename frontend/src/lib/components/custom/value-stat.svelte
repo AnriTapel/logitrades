@@ -19,7 +19,7 @@
 	}: {
 		label: string;
 		value: string | number;
-		type?: 'money' | 'percentage' | 'integer' | 'string' | 'date';
+		type?: 'money' | 'percentage' | 'integer' | 'decimal' | 'string' | 'date';
 		bordered?: boolean;
 		className?: string;
 		baselineValue?: number;
@@ -34,6 +34,8 @@
 			return formatNumberPercentage(numValue);
 		} else if (type === 'integer') {
 			return formatNumber(Math.round(numValue));
+		} else if (type === 'decimal') {
+			return formatNumber(numValue, 2);
 		} else if (type === 'date') {
 			return formatTradeDateTimeLocal(value as string);
 		} else {
