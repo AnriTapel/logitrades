@@ -4,8 +4,10 @@ import {
 	pnlForPeriod,
 	totalTradedVolumeForPeriod,
 } from './calcFunctions';
+import { calcHourExpectancy, calcWeekdayExpectancy } from './coachingCalcs';
 import { chartTheme } from './chart-theme';
 import type { BalanceTransaction, BarChartData, LineChartData, PieChartData, Trade } from './types';
+import {WEEKDAY_LABELS} from "$lib/constants/display";
 
 /**
  *
@@ -275,8 +277,6 @@ export function createPeriodicPnLData(
 	};
 }
 
-const WEEKDAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
 export function createWeekdayPnLData(trades: Trade[]): BarChartData {
 	const pnlByWeekday = new Array<number>(7).fill(0);
 
@@ -302,6 +302,40 @@ export function createWeekdayPnLData(trades: Trade[]): BarChartData {
 			},
 		],
 	};
+}
+
+function bucketsToBarData(
+	buckets: ReturnType<typeof calcWeekdayExpectancy>,
+	label: string,
+): BarChartData {
+	return {
+		labels: buckets.map((bucket) => `${bucket.label} (n=${bucket.n})`),
+		datasets: [
+			{
+				label,
+				data: buckets.map((bucket) => bucket.meanPnl),
+				backgroundColor: buckets.map((bucket) => {
+					if (bucket.n === 0 || bucket.muted) return financialColors.neutral;
+					return bucket.meanPnl >= 0
+						? financialColors.profit
+						: financialColors.loss;
+				}),
+				borderWidth: 0,
+				borderRadius: 4,
+			},
+		],
+	};
+}
+
+export function createWeekdayExpectancyData(trades: Trade[]): BarChartData {
+	return bucketsToBarData(calcWeekdayExpectancy(trades), 'Mean PnL by weekday (UTC)');
+}
+
+export function createHourExpectancyData(trades: Trade[]): BarChartData {
+	return bucketsToBarData(
+		calcHourExpectancy(trades).filter((bucket) => bucket.n > 0),
+		'Mean PnL by open hour (UTC)',
+	);
 }
 
 export type SymbolStatsRow = {

@@ -3,6 +3,7 @@ export { default as DatePicker } from './date-time-picker.svelte';
 export { default as StatusBadge } from './status-badge.svelte';
 export { default as SymbolStatsTable } from './symbol-stats-table.svelte';
 export { default as TagStatsTable } from './tag-stats-table.svelte';
+export { default as RankedGroupTable } from './ranked-group-table.svelte';
 export { default as TradeTypeStats } from './trade-type-stats.svelte';
 export { default as EmptyState } from './empty-state.svelte';
 export { default as SectionCard } from './section-card.svelte';

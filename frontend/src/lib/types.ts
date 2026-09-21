@@ -214,3 +214,44 @@ export type ItemOption = {
 }
 
 export type CalendarHeatmapItemData = { date: string, pnl: number, tradesCount: number } | null;
+
+export type CoachingHero = {
+	n: number;
+	sampleOk: boolean;
+	expectancy: number;
+	expectancyR: number | null;
+	winrate: number;
+	requiredWinrate: number | null;
+	winrateVsRequired: number | null;
+	plannedRR: number | null;
+	realizedR: number | null;
+	captureGap: number | null;
+	percentWithSl: number;
+	percentWithSlAndTp: number;
+	profitFactor: number;
+};
+
+export type HoldTimeSplit = {
+	winnersMs: number | null;
+	losersMs: number | null;
+	hoping: boolean;
+};
+
+export type HonorRates = {
+	slHonorRate: number | null;
+	cutWinnerRate: number | null;
+};
+
+export type StreakVsMax = {
+	currentLossStreak: number;
+	maxLossStreak: number;
+	atWorst: boolean;
+};
+
+export type RankedGroup = {
+	key: string;
+	n: number;
+	expectancy: number;
+	pnl: number;
+	winrate: number;
+};

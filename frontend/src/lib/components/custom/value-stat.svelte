@@ -16,6 +16,8 @@
 		bordered = true,
 		className = '',
 		baselineValue,
+		muted = false,
+		hint,
 	}: {
 		label: string;
 		value: string | number;
@@ -23,11 +25,13 @@
 		bordered?: boolean;
 		className?: string;
 		baselineValue?: number;
+		muted?: boolean;
+		hint?: string;
 	} = $props();
 
 	const numValue = $derived(Number(value));
 
-	const data = $derived(() => {
+	const data = $derived.by(() => {
 		if (type === 'money') {
 			return formatIntToCurrency(numValue, $localeStore.currency);
 		} else if (type === 'percentage') {
@@ -43,11 +47,11 @@
 		}
 	});
 
-	const colorClass = $derived(() => {
-		if (
-			baselineValue !== undefined &&
-			(type === 'money' || type === 'percentage')
-		) {
+	const colorClass = $derived.by(() => {
+		if (muted || baselineValue === undefined) {
+			return '';
+		}
+		if (type === 'money' || type === 'percentage' || type === 'decimal') {
 			return getFinancialColor(numValue, baselineValue);
 		}
 		return '';
@@ -62,14 +66,17 @@
 		<div
 			class="bg-gray-100 rounded flex-1 w-full h-full flex items-center justify-center"
 		>
-			<span class={cn('text-xl font-semibold', colorClass())}>{data()}</span>
+			<span class={cn('text-xl font-semibold', colorClass)}>{data}</span>
 		</div>
 	</SectionCard>
 {:else}
 	<div class={className}>
 		<p class="text-l font-bold text-gray-500">{label}</p>
+		{#if hint}
+			<p class="text-xs text-gray-400">{hint}</p>
+		{/if}
 		<div class="pt-2">
-			<span class={cn('text-xl font-semibold', colorClass())}>{data()}</span>
+			<span class={cn('text-xl font-semibold', colorClass)}>{data}</span>
 		</div>
 	</div>
 {/if}

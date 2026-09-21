@@ -38,9 +38,7 @@
 						</span>
 					</td>
 					<td class="py-2 px-3 text-right">
-						<span class={getFinancialColor(row.winrate, 0.5)}>
-							{formatNumberPercentage(row.winrate)}
-						</span>
+						{formatNumberPercentage(row.winrate)}
 					</td>
 				</tr>
 			{/each}

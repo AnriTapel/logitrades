@@ -36,12 +36,7 @@
 					class="bg-gray-100 rounded-lg p-3 flex flex-col justify-center items-center"
 				>
 					<span class="text-xs text-slate-500 mb-1">Winrate</span>
-					<span
-						class="text-xl font-bold {getFinancialColor(
-							longStats?.winrate ?? 0,
-							50,
-						)}"
-					>
+					<span class="text-xl font-bold">
 						{(longStats?.winrate ?? 0).toFixed(1)}%
 					</span>
 				</div>
@@ -79,12 +74,7 @@
 					class="bg-gray-100 rounded-lg p-3 flex flex-col justify-center items-center"
 				>
 					<span class="text-xs text-slate-500 mb-1">Winrate</span>
-					<span
-						class="text-xl font-bold {getFinancialColor(
-							shortStats?.winrate ?? 0,
-							50,
-						)}"
-					>
+					<span class="text-xl font-bold">
 						{(shortStats?.winrate ?? 0).toFixed(1)}%
 					</span>
 				</div>
