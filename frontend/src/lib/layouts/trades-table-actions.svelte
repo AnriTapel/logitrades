@@ -29,6 +29,7 @@
 			size: 'icon',
 			class: 'relative h-8 w-8 p-0',
 		})}
+		onclick={(e) => e.stopPropagation()}
 	>
 		<Ellipsis class="h-4 w-4" />
 	</DropdownMenu.Trigger>

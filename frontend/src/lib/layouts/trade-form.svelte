@@ -24,6 +24,7 @@
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import { DatePicker } from '$lib';
 	import ToggleGroup from '$lib/components/custom/toggle-group.svelte';
+	import TradeFormField from '$lib/components/custom/trade-form-field.svelte';
 	import LeverageSlider from '$lib/components/custom/leverage-slider.svelte';
 	import PositionSizeCalculator from '$lib/components/custom/position-size-calculator.svelte';
 	import { showServerErrors } from '$lib/stores/error';
@@ -53,6 +54,7 @@
 		existingSymbols,
 		existingTags,
 		isEdit = false,
+		mode = 'write',
 		portfolios = [],
 		activePortfolioId = undefined,
 		plan = 'free',
@@ -61,6 +63,7 @@
 	}: {
 		data: SuperValidated<TradeFormData>;
 		isEdit?: boolean;
+		mode?: 'write' | 'read';
 		existingSymbols: string[];
 		existingTags: string[];
 		portfolios?: Portfolio[];
@@ -111,8 +114,20 @@
 	let symbolSearch = $state($formData.symbol ?? '');
 	let symbolTriggerRef = $state<HTMLButtonElement | null>(null);
 
+	const isWriteMode = $derived(mode === 'write');
+
 	const pageTitle = $derived(
 		isEdit ? `Edit Trade Note #${$formData.id}` : 'Create Trade Note',
+	);
+
+	const tradeTypeDisplay = $derived(
+		$formData.tradeType === 'buy' ? 'LONG' : 'SHORT',
+	);
+
+	const leverageDisplay = $derived(
+		!$formData.useLeverage || !$formData.leverage
+			? 'Off'
+			: `${$formData.leverage}x`,
 	);
 
 	const fieldLabelClass =
@@ -257,29 +272,34 @@
 	};
 </script>
 
-<div class="flex flex-col -m-4 sm:-m-8">
-	<div class="flex-1 overflow-y-auto px-4 py-6 sm:px-8 sm:py-8">
-		<header class="mb-8 md:mb-10 flex items-center justify-between gap-4">
-			<h1 class="text-2xl font-extrabold tracking-tight text-[#1a1c1f]">
-				{pageTitle}
-			</h1>
-			<Button
-				type="button"
-				variant="outline"
-				class="shrink-0 font-semibold"
-				onclick={() => {
-					calculatorOpen = true;
-				}}
-			>
-				Position calculator
-			</Button>
-		</header>
+<div class={['flex flex-col', isWriteMode && '-m-4 sm:-m-8']}>
+	<div class={['flex-1 overflow-y-auto', isWriteMode && 'px-4 py-6 sm:px-8 sm:py-8']}>
+		{#if isWriteMode}
+			<header class="mb-8 md:mb-10 flex items-center justify-between gap-4">
+				<h1 class="text-2xl font-extrabold tracking-tight text-[#1a1c1f]">
+					{pageTitle}
+				</h1>
+				<Button
+					type="button"
+					variant="outline"
+					class="shrink-0 font-semibold"
+					onclick={() => {
+						calculatorOpen = true;
+					}}
+				>
+					Position calculator
+				</Button>
+			</header>
+		{/if}
 
 		<form
 			method="POST"
 			use:enhance
 			action={isEdit ? '?/update' : '?/create'}
 			class="flex flex-col gap-10 md:gap-12"
+			onsubmit={(e) => {
+				if (!isWriteMode) e.preventDefault();
+			}}
 		>
 			{#if isEdit && $formData.id}
 				<input type="hidden" name="id" value={$formData.id} />
@@ -309,30 +329,36 @@
 					<div class="flex flex-col gap-2 max-w-md">
 						<Field {form} name="portfolioId">
 							<Control>
-								<SelectRoot
-									type="single"
-									value={$formData.portfolioId?.toString()}
-									onValueChange={(value) =>
-										($formData.portfolioId = parseInt(value))}
+								<TradeFormField
+									{mode}
+									format="string"
+									value={activePortfolio?.name ?? ''}
 								>
-									<SelectTrigger
-										class="w-full border-[#e2e8f0] bg-white px-2 py-1.5 text-sm text-[#1a1c1f] shadow-none"
-										placeholder="Select a portfolio"
+									<SelectRoot
+										type="single"
+										value={$formData.portfolioId?.toString()}
+										onValueChange={(value) =>
+											($formData.portfolioId = parseInt(value))}
 									>
-										<span>{activePortfolio?.name ?? 'Select a portfolio'}</span>
-									</SelectTrigger>
-									<SelectContent>
-										{#each portfolios as portfolio (portfolio.id)}
-											{@const label =
-												portfolio.status === 'archived'
-													? `${portfolio.name} [Archived]`
-													: portfolio.name}
-											<SelectItem value={String(portfolio.id)} {label}>
-												{label}
-											</SelectItem>
-										{/each}
-									</SelectContent>
-								</SelectRoot>
+										<SelectTrigger
+											class="w-full border-[#e2e8f0] bg-white px-2 py-1.5 text-sm text-[#1a1c1f] shadow-none"
+											placeholder="Select a portfolio"
+										>
+											<span>{activePortfolio?.name ?? 'Select a portfolio'}</span>
+										</SelectTrigger>
+										<SelectContent>
+											{#each portfolios as portfolio (portfolio.id)}
+												{@const label =
+													portfolio.status === 'archived'
+														? `${portfolio.name} [Archived]`
+														: portfolio.name}
+												<SelectItem value={String(portfolio.id)} {label}>
+													{label}
+												</SelectItem>
+											{/each}
+										</SelectContent>
+									</SelectRoot>
+								</TradeFormField>
 							</Control>
 
 							{#if isArchivedPortfolio}
@@ -355,17 +381,23 @@
 						<Control>
 							{#snippet children({ props })}
 								<FormLabel class={fieldLabelClass}>Side *</FormLabel>
-								<ToggleGroup
-									{...props}
-									name="tradeType"
-									bind:value={$formData.tradeType}
-									class="h-11 w-full gap-0 rounded bg-[#f3f3f7] p-1"
-									itemClass="h-full flex-1 rounded text-xs font-bold uppercase data-[state=on]:bg-white data-[state=on]:text-[#003d6d] data-[state=on]:shadow-sm data-[state=off]:text-[#64748b]"
-									options={[
-										{ label: 'LONG', value: 'buy', icon: TrendingUp },
-										{ label: 'SHORT', value: 'sell', icon: TrendingDown },
-									]}
-								/>
+								<TradeFormField
+									{mode}
+									format="string"
+									value={tradeTypeDisplay}
+								>
+									<ToggleGroup
+										{...props}
+										name="tradeType"
+										bind:value={$formData.tradeType}
+										class="h-11 w-full gap-0 rounded bg-[#f3f3f7] p-1"
+										itemClass="h-full flex-1 rounded text-xs font-bold uppercase data-[state=on]:bg-white data-[state=on]:text-[#003d6d] data-[state=on]:shadow-sm data-[state=off]:text-[#64748b]"
+										options={[
+											{ label: 'LONG', value: 'buy', icon: TrendingUp },
+											{ label: 'SHORT', value: 'sell', icon: TrendingDown },
+										]}
+									/>
+								</TradeFormField>
 							{/snippet}
 						</Control>
 						<FieldErrors>
@@ -385,85 +417,93 @@
 						<Control>
 							{#snippet children({ props })}
 								<FormLabel class={fieldLabelClass}>Symbol *</FormLabel>
-								<input
-									type="hidden"
-									name={props.name}
-									value={$formData.symbol}
-								/>
-								<Popover.Root bind:open={symbolOpen}>
-									<Popover.Trigger bind:ref={symbolTriggerRef}>
-										{#snippet child({ props: triggerProps })}
-											<Button
-												{...triggerProps}
-												id={props.id}
-												variant="outline"
-												class={cn(
-													filledInputClass,
-													'w-full justify-between px-3 text-left font-normal uppercase hover:bg-[#f3f3f7]',
-													!$formData.symbol && 'text-muted-foreground',
-												)}
-												role="combobox"
-												aria-expanded={symbolOpen}
-												aria-invalid={props['aria-invalid']}
-												aria-describedby={props['aria-describedby']}
-											>
-												<span class="truncate">
-													{$formData.symbol || 'e.g. AAPL'}
-												</span>
-												<ChevronsUpDown
-													class="ml-2 size-4 shrink-0 opacity-50"
+								<TradeFormField
+									{mode}
+									format="string"
+									value={$formData.symbol ?? ''}
+								>
+									<input
+										type="hidden"
+										name={props.name}
+										value={$formData.symbol}
+									/>
+									<Popover.Root
+										bind:open={symbolOpen}
+									>
+										<Popover.Trigger bind:ref={symbolTriggerRef}>
+											{#snippet child({ props: triggerProps })}
+												<Button
+													{...triggerProps}
+													id={props.id}
+													variant="outline"
+													class={cn(
+														filledInputClass,
+														'w-full justify-between px-3 text-left font-normal uppercase hover:bg-[#f3f3f7]',
+														!$formData.symbol && 'text-muted-foreground',
+													)}
+													role="combobox"
+													aria-expanded={symbolOpen}
+													aria-invalid={props['aria-invalid']}
+													aria-describedby={props['aria-describedby']}
+												>
+													<span class="truncate">
+														{$formData.symbol || 'e.g. AAPL'}
+													</span>
+													<ChevronsUpDown
+														class="ml-2 size-4 shrink-0 opacity-50"
+													/>
+												</Button>
+											{/snippet}
+										</Popover.Trigger>
+										<Popover.Content class="w-[240px] p-0" align="start">
+											<Command.Root>
+												<Command.Input
+													class="h-9"
+													placeholder="Search or enter symbol..."
+													bind:value={symbolSearch}
+													oninput={() => setSymbolValue(symbolSearch)}
+													onkeydown={(event) => {
+														if (event.key === 'Enter' && symbolSearch) {
+															event.preventDefault();
+															selectSymbol(symbolSearch.trim().toUpperCase());
+														}
+													}}
 												/>
-											</Button>
-										{/snippet}
-									</Popover.Trigger>
-									<Popover.Content class="w-[240px] p-0" align="start">
-										<Command.Root>
-											<Command.Input
-												class="h-9"
-												placeholder="Search or enter symbol..."
-												bind:value={symbolSearch}
-												oninput={() => setSymbolValue(symbolSearch)}
-												onkeydown={(event) => {
-													if (event.key === 'Enter' && symbolSearch) {
-														event.preventDefault();
-														selectSymbol(symbolSearch.trim().toUpperCase());
-													}
-												}}
-											/>
-											<Command.List class="max-h-[220px] overflow-y-auto">
-												{#if filteredSymbolOptions.length === 0 && !symbolSearch}
-													<Command.Empty>No symbols found.</Command.Empty>
-												{/if}
-												<Command.Group>
-													{#if symbolSearch && !hasExactSymbolOption}
-														<Command.Item
-															value={symbolSearch}
-															onSelect={() => selectSymbol(symbolSearch)}
-														>
-															Use "{symbolSearch}"
-														</Command.Item>
+												<Command.List class="max-h-[220px] overflow-y-auto">
+													{#if filteredSymbolOptions.length === 0 && !symbolSearch}
+														<Command.Empty>No symbols found.</Command.Empty>
 													{/if}
-													{#each filteredSymbolOptions as symbol (symbol)}
-														<Command.Item
-															value={symbol}
-															onSelect={() => selectSymbol(symbol)}
-														>
-															<span>{symbol}</span>
-															<Check
-																class={cn(
-																	'ml-auto size-4 shrink-0',
-																	$formData.symbol === symbol
-																		? 'opacity-100'
-																		: 'opacity-0',
-																)}
-															/>
-														</Command.Item>
-													{/each}
-												</Command.Group>
-											</Command.List>
-										</Command.Root>
-									</Popover.Content>
-								</Popover.Root>
+													<Command.Group>
+														{#if symbolSearch && !hasExactSymbolOption}
+															<Command.Item
+																value={symbolSearch}
+																onSelect={() => selectSymbol(symbolSearch)}
+															>
+																Use "{symbolSearch}"
+															</Command.Item>
+														{/if}
+														{#each filteredSymbolOptions as symbol (symbol)}
+															<Command.Item
+																value={symbol}
+																onSelect={() => selectSymbol(symbol)}
+															>
+																<span>{symbol}</span>
+																<Check
+																	class={cn(
+																		'ml-auto size-4 shrink-0',
+																		$formData.symbol === symbol
+																			? 'opacity-100'
+																			: 'opacity-0',
+																	)}
+																/>
+															</Command.Item>
+														{/each}
+													</Command.Group>
+												</Command.List>
+											</Command.Root>
+										</Popover.Content>
+									</Popover.Root>
+								</TradeFormField>
 							{/snippet}
 						</Control>
 						<FieldErrors>
@@ -483,18 +523,24 @@
 						<Control>
 							{#snippet children({ props })}
 								<FormLabel class={fieldLabelClass}>Quantity *</FormLabel>
-								<Input
-									{...props}
-									type="number"
-									class={filledInputClass}
-									required
-									step="0.000000001"
-									min="0.000000001"
-									placeholder="0"
-									value={$formData.quantity ?? ''}
-									oninput={(e) =>
-										setDecimalField('quantity', e.currentTarget.value)}
-								/>
+								<TradeFormField
+									{mode}
+									format="number"
+									value={$formData.quantity ?? null}
+								>
+									<Input
+										{...props}
+										type="number"
+										class={filledInputClass}
+										required
+										step="0.000000001"
+										min="0.000000001"
+										placeholder="0"
+										value={$formData.quantity ?? ''}
+										oninput={(e) =>
+											setDecimalField('quantity', e.currentTarget.value)}
+									/>
+								</TradeFormField>
 							{/snippet}
 						</Control>
 						<FieldErrors>
@@ -517,18 +563,25 @@
 							<Control>
 								{#snippet children({ props })}
 									<FormLabel class={fieldLabelClass}>Open Price *</FormLabel>
-									<Input
-										{...props}
-										type="number"
-										class={filledInputClass}
-										required
-										step="0.000000001"
-										min="0.000000001"
-										placeholder="0.00"
-										value={$formData.openPrice ?? ''}
-										oninput={(e) =>
-											setDecimalField('openPrice', e.currentTarget.value)}
-									/>
+									<TradeFormField
+										{mode}
+										format="money"
+										currency={calculatorCurrency}
+										value={$formData.openPrice ?? null}
+									>
+										<Input
+											{...props}
+											type="number"
+											class={filledInputClass}
+											required
+											step="0.000000001"
+											min="0.000000001"
+											placeholder="0.00"
+											value={$formData.openPrice ?? ''}
+											oninput={(e) =>
+												setDecimalField('openPrice', e.currentTarget.value)}
+										/>
+									</TradeFormField>
 								{/snippet}
 							</Control>
 							<FieldErrors>
@@ -544,12 +597,18 @@
 							<Control>
 								{#snippet children({ props })}
 									<FormLabel class={fieldLabelClass}>Opened At *</FormLabel>
-									<DatePicker
-										{...props}
-										name="openedAt"
-										bind:value={$formData.openedAt}
-										withTime
-									/>
+									<TradeFormField
+										{mode}
+										format="datetime"
+										value={$formData.openedAt ?? null}
+									>
+										<DatePicker
+											{...props}
+											name="openedAt"
+											bind:value={$formData.openedAt}
+											withTime
+										/>
+									</TradeFormField>
 								{/snippet}
 							</Control>
 							<FieldErrors>
@@ -573,15 +632,22 @@
 							<Control>
 								{#snippet children({ props })}
 									<FormLabel class={fieldLabelClass}>Close Price</FormLabel>
-									<Input
-										{...props}
-										type="number"
-										class={filledInputClass}
-										step="0.000000001"
-										min="0.000000001"
-										placeholder="0.00"
-										bind:value={$formData.closePrice}
-									/>
+									<TradeFormField
+										{mode}
+										format="money"
+										currency={calculatorCurrency}
+										value={$formData.closePrice ?? null}
+									>
+										<Input
+											{...props}
+											type="number"
+											class={filledInputClass}
+											step="0.000000001"
+											min="0.000000001"
+											placeholder="0.00"
+											bind:value={$formData.closePrice}
+										/>
+									</TradeFormField>
 								{/snippet}
 							</Control>
 							<FieldErrors>
@@ -597,12 +663,18 @@
 							<Control>
 								{#snippet children({ props })}
 									<FormLabel class={fieldLabelClass}>Closed At</FormLabel>
-									<DatePicker
-										{...props}
-										name="closedAt"
-										bind:value={$formData.closedAt}
-										withTime
-									/>
+									<TradeFormField
+										{mode}
+										format="datetime"
+										value={$formData.closedAt ?? null}
+									>
+										<DatePicker
+											{...props}
+											name="closedAt"
+											bind:value={$formData.closedAt}
+											withTime
+										/>
+									</TradeFormField>
 								{/snippet}
 							</Control>
 							<FieldErrors>
@@ -636,15 +708,22 @@
 						<Control>
 							{#snippet children({ props })}
 								<FormLabel class={fieldLabelClass}>Fee</FormLabel>
-								<Input
-									{...props}
-									type="number"
-									class={filledInputClass}
-									step="0.000000001"
-									min="0"
-									placeholder="Total fees (optional)"
-									bind:value={$formData.fee}
-								/>
+								<TradeFormField
+									{mode}
+									format="money"
+									currency={calculatorCurrency}
+									value={$formData.fee ?? null}
+								>
+									<Input
+										{...props}
+										type="number"
+										class={filledInputClass}
+										step="0.000000001"
+										min="0"
+										placeholder="Total fees (optional)"
+										bind:value={$formData.fee}
+									/>
+								</TradeFormField>
 							{/snippet}
 						</Control>
 						<FieldErrors>
@@ -664,112 +743,118 @@
 						<Control>
 							{#snippet children({ props })}
 								<FormLabel class={fieldLabelClass}>Tags</FormLabel>
-								{#each tradeTags as tag}
-									<input type="hidden" name="tags" value={tag} />
-								{/each}
-								<div class="grid grid-cols-1 gap-4 md:grid-cols-6">
-									<div class="md:col-span-3">
-										<Popover.Root bind:open={tagOpen}>
-											<Popover.Trigger bind:ref={tagTriggerRef}>
-												{#snippet child({ props: triggerProps })}
-													<Button
-														{...triggerProps}
-														id={props.id}
-														variant="outline"
-														disabled={!canAddMoreTags}
-														class={cn(
-															filledInputClass,
-															'w-full justify-between px-3 text-left font-normal hover:bg-[#f3f3f7]',
-															!canAddMoreTags && 'opacity-50',
-														)}
-														role="combobox"
-														aria-expanded={tagOpen}
-													>
-														<span class="truncate text-muted-foreground">
-															{canAddMoreTags
-																? 'Add tag...'
-																: 'Max tags reached'}
-														</span>
-														<ChevronsUpDown
-															class="ml-2 size-4 shrink-0 opacity-50"
-														/>
-													</Button>
-												{/snippet}
-											</Popover.Trigger>
-											<Popover.Content
-												class="w-[240px] p-0"
-												align="start"
-												onCloseAutoFocus={(e) => e.preventDefault()}
-											>
-												<Command.Root shouldFilter={false}>
-													<Command.Input
-														class="h-9"
-														placeholder="Search or enter tag..."
-														bind:value={tagSearch}
-														onkeydown={(event) => {
-															if (event.key === 'Enter' && tagSearch.trim()) {
-																event.preventDefault();
-																event.stopPropagation();
-																selectTag(tagSearch);
-															}
-														}}
-													/>
-													<Command.List class="max-h-[220px] overflow-y-auto">
-														{#if filteredTagOptions.length === 0 && !tagSearch.trim()}
-															<Command.Empty>No tags found.</Command.Empty>
-														{/if}
-														<Command.Group>
-															{#if tagSearch.trim() && !hasExactTagOption && !hasTag(tagSearch.trim())}
-																{@const pendingTag = tagSearch.trim()}
-																<Command.Item
-																	value={pendingTag}
-																	onSelect={() => selectTag(pendingTag)}
-																	onpointerdown={(e) => e.preventDefault()}
-																>
-																	Use "{pendingTag}"
-																</Command.Item>
-															{/if}
-															{#each filteredTagOptions as tag (tag)}
-																<Command.Item
-																	value={tag}
-																	onSelect={() => selectTag(tag)}
-																	onpointerdown={(e) => e.preventDefault()}
-																>
-																	<span>{tag}</span>
-																</Command.Item>
-															{/each}
-														</Command.Group>
-													</Command.List>
-												</Command.Root>
-											</Popover.Content>
-										</Popover.Root>
-									</div>
-									<div
-										class="flex min-h-11 flex-wrap items-center gap-2 md:col-span-3"
-									>
-										{#each tradeTags as tag, index (tag)}
-											<Badge variant="outline" class="gap-1 pr-1">
-												{tag}
-												<button
-													type="button"
-													class="rounded-sm p-0.5 hover:bg-muted"
-													aria-label="Remove tag {tag}"
-													onclick={() => removeTag(index)}
+								<TradeFormField
+									{mode}
+									format="string"
+									value={tradeTags}
+								>
+									{#each tradeTags as tag}
+										<input type="hidden" name="tags" value={tag} />
+									{/each}
+									<div class="grid grid-cols-1 gap-4 md:grid-cols-6">
+										<div class="md:col-span-3">
+											<Popover.Root bind:open={tagOpen}>
+												<Popover.Trigger bind:ref={tagTriggerRef}>
+													{#snippet child({ props: triggerProps })}
+														<Button
+															{...triggerProps}
+															id={props.id}
+															variant="outline"
+															disabled={!canAddMoreTags}
+															class={cn(
+																filledInputClass,
+																'w-full justify-between px-3 text-left font-normal hover:bg-[#f3f3f7]',
+																!canAddMoreTags && 'opacity-50',
+															)}
+															role="combobox"
+															aria-expanded={tagOpen}
+														>
+															<span class="truncate text-muted-foreground">
+																{canAddMoreTags
+																	? 'Add tag...'
+																	: 'Max tags reached'}
+															</span>
+															<ChevronsUpDown
+																class="ml-2 size-4 shrink-0 opacity-50"
+															/>
+														</Button>
+													{/snippet}
+												</Popover.Trigger>
+												<Popover.Content
+													class="w-[240px] p-0"
+													align="start"
+													onCloseAutoFocus={(e) => e.preventDefault()}
 												>
-													<X class="size-3" />
-												</button>
-											</Badge>
-										{/each}
-										{#if tradeTags.length === 0}
-											<span class="text-sm text-muted-foreground">-</span>
-										{/if}
+													<Command.Root shouldFilter={false}>
+														<Command.Input
+															class="h-9"
+															placeholder="Search or enter tag..."
+															bind:value={tagSearch}
+															onkeydown={(event) => {
+																if (event.key === 'Enter' && tagSearch.trim()) {
+																	event.preventDefault();
+																	event.stopPropagation();
+																	selectTag(tagSearch);
+																}
+															}}
+														/>
+														<Command.List class="max-h-[220px] overflow-y-auto">
+															{#if filteredTagOptions.length === 0 && !tagSearch.trim()}
+																<Command.Empty>No tags found.</Command.Empty>
+															{/if}
+															<Command.Group>
+																{#if tagSearch.trim() && !hasExactTagOption && !hasTag(tagSearch.trim())}
+																	{@const pendingTag = tagSearch.trim()}
+																	<Command.Item
+																		value={pendingTag}
+																		onSelect={() => selectTag(pendingTag)}
+																		onpointerdown={(e) => e.preventDefault()}
+																	>
+																		Use "{pendingTag}"
+																	</Command.Item>
+																{/if}
+																{#each filteredTagOptions as tag (tag)}
+																	<Command.Item
+																		value={tag}
+																		onSelect={() => selectTag(tag)}
+																		onpointerdown={(e) => e.preventDefault()}
+																	>
+																		<span>{tag}</span>
+																	</Command.Item>
+																{/each}
+															</Command.Group>
+														</Command.List>
+													</Command.Root>
+												</Popover.Content>
+											</Popover.Root>
+										</div>
+										<div
+											class="flex min-h-11 flex-wrap items-center gap-2 md:col-span-3"
+										>
+											{#each tradeTags as tag, index (tag)}
+												<Badge variant="outline" class="gap-1 pr-1">
+													{tag}
+													<button
+														type="button"
+														class="rounded-sm p-0.5 hover:bg-muted"
+														aria-label="Remove tag {tag}"
+														onclick={() => removeTag(index)}
+													>
+														<X class="size-3" />
+													</button>
+												</Badge>
+											{/each}
+											{#if tradeTags.length === 0}
+												<span class="text-sm text-muted-foreground">-</span>
+											{/if}
+										</div>
 									</div>
-								</div>
-								{#if tagInputError}
-									<p class="text-destructive text-sm font-medium">
-										{tagInputError}
-									</p>
-								{/if}
+									{#if tagInputError}
+										<p class="text-destructive text-sm font-medium">
+											{tagInputError}
+										</p>
+									{/if}
+								</TradeFormField>
 							{/snippet}
 						</Control>
 						<FieldErrors>
@@ -789,13 +874,19 @@
 						<Control>
 							{#snippet children({ props })}
 								<FormLabel class={fieldLabelClass}>Comment</FormLabel>
-								<Textarea
-									{...props}
-									class={filledInputClass + ' max-h-30'}
-									rows={4}
-									placeholder="Enter a comment for this trade"
-									bind:value={$formData.comment}
-								/>
+								<TradeFormField
+									{mode}
+									format="string"
+									value={$formData.comment ?? ''}
+								>
+									<Textarea
+										{...props}
+										class={filledInputClass + ' max-h-30'}
+										rows={4}
+										placeholder="Enter a comment for this trade"
+										bind:value={$formData.comment}
+									/>
+								</TradeFormField>
 							{/snippet}
 						</Control>
 						<FieldErrors>
@@ -839,12 +930,18 @@
 												value={$formData.leverage}
 												hidden
 											/>
-											<LeverageSlider
-												bind:enabled={$formData.useLeverage}
-												bind:leverage={$formData.leverage}
-												checkboxProps={useLeverageProps}
-												sliderProps={leverageProps}
-											/>
+											<TradeFormField
+												{mode}
+												format="string"
+												value={leverageDisplay}
+											>
+												<LeverageSlider
+													bind:enabled={$formData.useLeverage}
+													bind:leverage={$formData.leverage}
+													checkboxProps={useLeverageProps}
+													sliderProps={leverageProps}
+												/>
+											</TradeFormField>
 										{/snippet}
 									</Control>
 								</Field>
@@ -857,15 +954,22 @@
 							<Control>
 								{#snippet children({ props })}
 									<FormLabel class={fieldLabelClass}>Take Profit</FormLabel>
-									<Input
-										{...props}
-										type="number"
-										class={filledInputClass}
-										step="0.000000001"
-										min="0.000000001"
-										placeholder="Enter target price"
-										bind:value={$formData.takeProfit}
-									/>
+									<TradeFormField
+										{mode}
+										format="money"
+										currency={calculatorCurrency}
+										value={$formData.takeProfit ?? null}
+									>
+										<Input
+											{...props}
+											type="number"
+											class={filledInputClass}
+											step="0.000000001"
+											min="0.000000001"
+											placeholder="Enter target price"
+											bind:value={$formData.takeProfit}
+										/>
+									</TradeFormField>
 								{/snippet}
 							</Control>
 							<FieldErrors>
@@ -881,15 +985,22 @@
 							<Control>
 								{#snippet children({ props })}
 									<FormLabel class={fieldLabelClass}>Stop Loss</FormLabel>
-									<Input
-										{...props}
-										type="number"
-										class={filledInputClass}
-										step="0.000000001"
-										min="0.000000001"
-										placeholder="Enter exit safety"
-										bind:value={$formData.stopLoss}
-									/>
+									<TradeFormField
+										{mode}
+										format="money"
+										currency={calculatorCurrency}
+										value={$formData.stopLoss ?? null}
+									>
+										<Input
+											{...props}
+											type="number"
+											class={filledInputClass}
+											step="0.000000001"
+											min="0.000000001"
+											placeholder="Enter exit safety"
+											bind:value={$formData.stopLoss}
+										/>
+									</TradeFormField>
 								{/snippet}
 							</Control>
 							<FieldErrors>
@@ -906,30 +1017,33 @@
 		</form>
 	</div>
 
-	<footer
-		class="sticky bottom-0 z-10 flex shrink-0 items-center justify-end gap-3 border-t border-[#e2e8f0]/80 bg-white/90 px-4 py-4 backdrop-blur-sm sm:px-8"
-	>
-		<Button
-			variant="ghost"
-			type="button"
-			class="px-6 font-bold text-[#4c6076] hover:bg-transparent"
-			onclick={handleCancel}
+	{#if isWriteMode}
+		<footer
+			class="sticky bottom-0 z-10 flex shrink-0 items-center justify-end gap-3 border-t border-[#e2e8f0]/80 bg-white/90 px-4 py-4 backdrop-blur-sm sm:px-8"
 		>
-			Cancel
-		</Button>
+			<Button
+				variant="ghost"
+				type="button"
+				class="px-6 font-bold text-[#4c6076] hover:bg-transparent"
+				onclick={handleCancel}
+			>
+				Cancel
+			</Button>
 
-		<Button
-			type="button"
-			class="bg-[#003d6d] hover:bg-[#003d6d]/90 text-white"
-			onclick={handleSubmit}
-			disabled={isArchivedPortfolio}
-		>
-			{isEdit ? 'Update Trade' : 'Submit Trade'}
-		</Button>
-	</footer>
+			<Button
+				type="button"
+				class="bg-[#003d6d] hover:bg-[#003d6d]/90 text-white"
+				onclick={handleSubmit}
+				disabled={isArchivedPortfolio}
+			>
+				{isEdit ? 'Update Trade' : 'Submit Trade'}
+			</Button>
+		</footer>
+	{/if}
 </div>
 
-<Dialog.Root bind:open={calculatorOpen}>
+{#if isWriteMode}
+	<Dialog.Root bind:open={calculatorOpen}>
 	<Dialog.Content class="max-h-[90vh] w-full max-w-3xl overflow-y-auto">
 		<Dialog.Header>
 			<Dialog.Title>Position calculator</Dialog.Title>
@@ -941,3 +1055,4 @@
 		/>
 	</Dialog.Content>
 </Dialog.Root>
+{/if}

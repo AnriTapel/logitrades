@@ -23,6 +23,7 @@
 		onDelete,
 		onEdit,
 		onPageChange,
+		onRowClick,
 	}: {
 		trades: Trade[];
 		total: number;
@@ -36,6 +37,7 @@
 		onDelete: (tradeId: number) => void;
 		onEdit: (tradeId: number) => void;
 		onPageChange?: (pageIndex: number) => void;
+		onRowClick?: (trade: Trade) => void;
 	} = $props();
 
 	let sorting = $state<SortingState>([{ id: 'tradeDates', desc: true }]);
@@ -135,9 +137,17 @@
 				{#each table.getRowModel().rows as row (row.id)}
 					<Table.Row
 						data-state={row.getIsSelected() ? 'selected' : undefined}
+						class={onRowClick ? 'cursor-pointer hover:bg-muted/50' : undefined}
+						on:click={() => onRowClick?.(row.original)}
 					>
 						{#each row.getVisibleCells() as cell (cell.id)}
-							<Table.Cell>
+							<Table.Cell
+								on:click={(e) => {
+									if (cell.column.id === 'actions') {
+										e.stopPropagation();
+									}
+								}}
+							>
 								<FlexRender
 									content={cell.column.columnDef.cell}
 									context={cell.getContext()}

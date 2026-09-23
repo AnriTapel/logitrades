@@ -1,5 +1,15 @@
 import type { UtcIsoDateTime } from '$lib/dates';
 
+/** How display values are formatted (stats, read-only form fields). */
+export type DataType =
+	| 'string'
+	| 'money'
+	| 'percentage'
+	| 'integer'
+	| 'decimal'
+	| 'number'
+	| 'datetime';
+
 export type TradeType = 'buy' | 'sell';
 /** Filter-only side value; domain trades use TradeType only. */
 export type TradeFilterType = TradeType | 'all';

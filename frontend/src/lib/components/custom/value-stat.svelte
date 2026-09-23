@@ -7,6 +7,7 @@
 	} from '$lib/formatters';
 	import { localeStore } from '$lib/stores/locale';
 	import { cn, getFinancialColor } from '$lib/utils';
+	import type { DataType } from '$lib/types';
 	import SectionCard from './section-card.svelte';
 
 	const {
@@ -21,7 +22,7 @@
 	}: {
 		label: string;
 		value: string | number;
-		type?: 'money' | 'percentage' | 'integer' | 'decimal' | 'string' | 'date';
+		type?: DataType;
 		bordered?: boolean;
 		className?: string;
 		baselineValue?: number;
@@ -40,7 +41,9 @@
 			return formatNumber(Math.round(numValue));
 		} else if (type === 'decimal') {
 			return formatNumber(numValue, 2);
-		} else if (type === 'date') {
+		} else if (type === 'number') {
+			return formatNumber(numValue);
+		} else if (type === 'datetime') {
 			return formatTradeDateTimeLocal(value as string);
 		} else {
 			return value.toString();

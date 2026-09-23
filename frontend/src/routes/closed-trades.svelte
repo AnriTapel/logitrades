@@ -15,6 +15,7 @@
 		facets,
 		handleTradeDelete,
 		handleTradeEdit,
+		handleTradeView,
 		isArchived = false,
 		portfolioId,
 	}: {
@@ -23,6 +24,7 @@
 		facets: TradeFacets;
 		handleTradeDelete: (tradeId: number) => void;
 		handleTradeEdit: (tradeId: number) => void;
+		handleTradeView: (trade: Trade) => void;
 		isArchived?: boolean;
 		portfolioId?: number;
 	} = $props();
@@ -124,6 +126,7 @@
 		{loading}
 		onDelete={handleTradeDelete}
 		onEdit={handleTradeEdit}
+		onRowClick={handleTradeView}
 		onPageChange={handlePageChange}
 	/>
 </section>

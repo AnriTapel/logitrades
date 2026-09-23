@@ -1,20 +1,27 @@
 <script lang="ts">
 	import { invalidate, goto } from '$app/navigation';
-	import type {PageData, PageProps} from './$types';
+	import type { PageData, PageProps } from './$types';
 	import ImportDialog from '$lib/layouts/import-dialog.svelte';
 	import StatsSummary from '$lib/layouts/stats-summary.svelte';
 	import ConfirmationModal from '$lib/components/custom/confirmation-modal.svelte';
+	import TradeDetailsDialog from '$lib/layouts/trade-details-dialog.svelte';
 	import OpenedTrades from '../opened-trades.svelte';
 	import ClosedTrades from '../closed-trades.svelte';
+	import type { Trade } from '$lib/types';
 
 	let { data }: PageProps = $props();
 	let isImportDialogOpen = $state(false);
 	let confirmDeleteTradeId = $state<number | null>(null);
+	let viewedTrade = $state<Trade | null>(null);
 
 	async function refreshJournalData(): Promise<void> {
 		await invalidate('journal:trades');
 		await invalidate('journal:facets');
 		await invalidate('journal:summary');
+	}
+
+	function handleTradeView(trade: Trade) {
+		viewedTrade = trade;
 	}
 
 	function handleTradeDelete(tradeId: number) {
@@ -40,9 +47,11 @@
 		});
 
 		await refreshJournalData();
+		handleCloseTradeDetailsDialog();
 	}
 
 	async function handleTradeEdit(tradeId: number) {
+		handleCloseTradeDetailsDialog();
 		await goto(`/trade?edit=${tradeId}`);
 	}
 
@@ -52,6 +61,10 @@
 
 	function handleOpenImportDialog() {
 		isImportDialogOpen = true;
+	}
+
+	function handleCloseTradeDetailsDialog() {
+		viewedTrade = null;
 	}
 
 	async function handleCloseImportDialog() {
@@ -82,6 +95,7 @@
 	facets={data.facets}
 	{handleTradeDelete}
 	{handleTradeEdit}
+	{handleTradeView}
 	{handleOpenTradeForm}
 	{handleOpenImportDialog}
 	isArchived={data.isArchived ?? false}
@@ -94,6 +108,7 @@
 	facets={data.facets}
 	{handleTradeDelete}
 	{handleTradeEdit}
+	{handleTradeView}
 	isArchived={data.isArchived ?? false}
 	portfolioId={data.portfolioId}
 />
@@ -105,6 +120,20 @@
 		isArchived={data.isArchived ?? false}
 	/>
 {/if}
+
+<TradeDetailsDialog
+	open={viewedTrade != null}
+	onClose={handleCloseTradeDetailsDialog}
+	trade={viewedTrade}
+	existingSymbols={data.facets.symbols}
+	existingTags={data.facets.tags}
+	portfolios={data.portfolios ?? []}
+	activePortfolioId={data.portfolioId}
+	plan={data.plan ?? 'free'}
+	portfolioSummary={data.portfolioSummary ?? null}
+	onEdit={handleTradeEdit}
+	onDelete={handleTradeDelete}
+/>
 
 <ConfirmationModal
 	open={confirmDeleteTradeId != null}
